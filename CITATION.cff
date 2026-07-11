@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "wickra-zk"
+abstract: >-
+  A test runner for trading strategies built on the Wickra backtest engine:
+  golden-pins a strategy's BacktestReport, catches regressions in CI, and
+  property-tests strategies against fuzzed market data. The core is a data-driven
+  library exposed as a JSON-over-C-ABI API in ten languages, with a reference CLI
+  and a reusable composite GitHub Action.
+type: software
+authors:
+  - alias: kingchenc
+    website: "https://wickra.org"
+repository-code: "https://github.com/wickra-lib/wickra-zk"
+url: "https://wickra.org"
+license:
+  - MIT
+  - Apache-2.0
+keywords:
+  - trading
+  - backtesting
+  - testing
+  - regression
+  - continuous-integration
+  - finance

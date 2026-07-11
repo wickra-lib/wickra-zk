@@ -1,0 +1,7 @@
+/target
+/fuzz/target
+/fuzz/Cargo.lock
+guest/methods/guest/target
+**/*.bin
+*.proof.json
+/tmp

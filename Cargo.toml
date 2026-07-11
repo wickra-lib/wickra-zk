@@ -1,0 +1,43 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/wickra-zk-host",
+    "crates/wickra-zk-cli",
+    "crates/wickra-zk-bench",
+    "guest/methods",
+]
+# NOT members: guest/methods/guest (detached, riscv target, own toolchain)
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.86"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/wickra-lib/wickra-zk"
+authors = ["wickra-lib"]
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+clap = { version = "4", features = ["derive"] }
+risc0-zkvm = "1.2"
+risc0-build = "1.2"
+wickra-backtest = { git = "https://github.com/wickra-lib/wickra-backtest", version = "0.1" }
+wickra-proof = { git = "https://github.com/wickra-lib/wickra-proof", version = "0.1" }
+wickra-data = { git = "https://github.com/wickra-lib/wickra-data", version = "0.1" }
+criterion = "0.5"
+proptest = "1"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
+# NOTE: NO panic="abort" here — risc0 host proving relies on unwinding; guest has its own profile.
