@@ -1,0 +1,44 @@
+version: 2
+updates:
+  # Rust host workspace (root Cargo.toml + all member crates). The guest crate
+  # under guest/methods/guest is a detached riscv build and is updated manually
+  # in lock-step with the host risc0 version.
+  - package-ecosystem: cargo
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "deps(cargo)"
+    groups:
+      # risc0-zkvm / risc0-build must move together and stay identical across
+      # host, methods and guest (an ImageID/Receipt mismatch otherwise); keep
+      # them in their own PR rather than bundled with unrelated crate bumps.
+      risc0:
+        patterns: ["risc0-zkvm", "risc0-build", "risc0-*"]
+      cargo:
+        patterns: ["*"]
+        exclude-patterns: ["risc0-zkvm", "risc0-build", "risc0-*"]
+
+  # GitHub Actions — keeps the SHA-pinned actions current (Dependabot reads
+  # the version comment after each pinned SHA and bumps both together).
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "deps(actions)"
+    # dtolnay/rust-toolchain@<channel> pins a Rust toolchain (e.g. 1.86 for the
+    # MSRV job), not an action version. Dependabot misreads the channel as a
+    # version and proposes non-existent Rust releases. The toolchain pins are
+    # managed manually with the MSRV policy.
+    ignore:
+      - dependency-name: "dtolnay/rust-toolchain"
+    groups:
+      github-actions:
+        patterns: ["*"]
