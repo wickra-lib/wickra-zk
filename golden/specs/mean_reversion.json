@@ -1,0 +1,28 @@
+{
+  "entry": {
+    "lt": [
+      "rsi",
+      35
+    ]
+  },
+  "exit": {
+    "gt": [
+      "rsi",
+      65
+    ]
+  },
+  "indicators": {
+    "rsi": {
+      "params": [
+        7
+      ],
+      "type": "Rsi"
+    }
+  },
+  "sizing": {
+    "fraction": 0.5,
+    "type": "fixed_fraction"
+  },
+  "symbol": "SYM02",
+  "timeframe": "1h"
+}
