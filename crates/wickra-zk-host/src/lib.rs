@@ -53,6 +53,20 @@ pub fn commit_dataset(candles: &[Candle]) -> String {
     wickra_proof::hash_candles(candles)
 }
 
+/// Compute the canonical report hash of a backtest natively — the value the
+/// zkVM guest must reproduce. Used by the golden test to pin the native side of
+/// the determinism chain independently of the guest.
+///
+/// # Errors
+/// Returns [`Error::Data`] if the backtest fails for the given spec/data.
+///
+/// Provisional: the exact `wickra-proof` entry points settle with the no_std
+/// path; the semantics (`report_hash == blake3(canonical(report))`) do not.
+pub fn native_report_hash(strategy: &StrategySpec, candles: &[Candle]) -> Result<String> {
+    let report = wickra_backtest::run(strategy, candles).map_err(|e| Error::Data(e.to_string()))?;
+    Ok(wickra_proof::hash_report(&report))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

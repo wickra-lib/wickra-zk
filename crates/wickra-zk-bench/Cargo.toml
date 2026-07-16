@@ -1,0 +1,24 @@
+[package]
+name = "wickra-zk-bench"
+description = "Criterion benchmarks for wickra-zk: guest execution (dev-mode) and real proving."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+wickra-zk-host = { path = "../wickra-zk-host" }
+serde_json = { workspace = true }
+
+[dev-dependencies]
+criterion = { workspace = true }
+
+[[bench]]
+name = "prove"
+harness = false

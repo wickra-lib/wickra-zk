@@ -1,0 +1,29 @@
+# Detached fuzz crate (own workspace root) — built with cargo-fuzz on nightly.
+[package]
+name = "wickra-zk-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+wickra-zk-host = { path = "../crates/wickra-zk-host" }
+
+[[bin]]
+name = "zkspec_parse"
+path = "fuzz_targets/zkspec_parse.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "journal_parse"
+path = "fuzz_targets/journal_parse.rs"
+test = false
+doc = false
+bench = false
+
+[workspace]
