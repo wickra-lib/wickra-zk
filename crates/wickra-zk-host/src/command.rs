@@ -27,8 +27,7 @@ enum Command {
 /// Returns [`Error::Parse`] for a malformed envelope and propagates
 /// [`crate::prove`] / [`crate::verify`] errors.
 pub fn command_json(cmd_json: &str) -> Result<String> {
-    let cmd: Command =
-        serde_json::from_str(cmd_json).map_err(|e| Error::Parse(e.to_string()))?;
+    let cmd: Command = serde_json::from_str(cmd_json).map_err(|e| Error::Parse(e.to_string()))?;
     match cmd {
         Command::Prove { spec, candles } => {
             let proof = crate::prove(&spec, &candles, ProveOptions::default())?;

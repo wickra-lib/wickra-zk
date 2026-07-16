@@ -16,7 +16,10 @@ fn prod_prove_and_verify() {
         let proof = prove(&spec, &candles, ProveOptions { dev_mode: false }).unwrap();
         let out = verify(&proof).unwrap();
         // The proof does not change the public outputs — same journal as dev-mode.
-        assert_eq!(out.report_hash, expected.report_hash, "prod hash drift for {name}");
+        assert_eq!(
+            out.report_hash, expected.report_hash,
+            "prod hash drift for {name}"
+        );
         assert_eq!(out.n_trades, expected.n_trades);
     }
 }

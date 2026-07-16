@@ -59,7 +59,7 @@ fn main() {
     let dataset_commitment: String = env::read();
 
     // 2. Bind the data to the commitment.
-    let recomputed = wickra_proof::hash_candles(&candles);
+    let recomputed = proof_core::hash_candles(&candles);
     assert_eq!(
         recomputed, dataset_commitment,
         "dataset_commitment does not match the candles fed to the guest"
@@ -70,7 +70,7 @@ fn main() {
         .expect("backtest must succeed for a valid spec/data pair");
 
     // 4. Canonical report hash, identical to the native wickra-proof hash.
-    let report_hash = wickra_proof::hash_report(&report);
+    let report_hash = proof_core::hash_report(&report);
 
     // 5. Commit the journal only (host adds the image id after decoding).
     let journal = GuestJournal {

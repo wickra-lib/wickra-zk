@@ -27,9 +27,18 @@ fn dev_mode_chain_closes() {
         let expected = load_expected(name);
         let proof = prove(&spec, &candles, ProveOptions { dev_mode: true }).unwrap();
         let out = verify(&proof).unwrap();
-        assert_eq!(out.report_hash, expected.report_hash, "guest hash != native for {name}");
-        assert!((out.sharpe - expected.sharpe).abs() < 1e-8, "sharpe drift for {name}");
-        assert!((out.pnl - expected.pnl).abs() < 1e-8, "pnl drift for {name}");
+        assert_eq!(
+            out.report_hash, expected.report_hash,
+            "guest hash != native for {name}"
+        );
+        assert!(
+            (out.sharpe - expected.sharpe).abs() < 1e-8,
+            "sharpe drift for {name}"
+        );
+        assert!(
+            (out.pnl - expected.pnl).abs() < 1e-8,
+            "pnl drift for {name}"
+        );
         assert_eq!(out.n_trades, expected.n_trades, "n_trades drift for {name}");
     }
 }

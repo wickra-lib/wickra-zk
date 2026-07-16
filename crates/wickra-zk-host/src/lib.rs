@@ -50,7 +50,7 @@ pub fn version() -> &'static str {
 /// function name settles once the no_std hashing path lands upstream.
 #[must_use]
 pub fn commit_dataset(candles: &[Candle]) -> String {
-    wickra_proof::hash_candles(candles)
+    proof_core::hash_candles(candles)
 }
 
 /// Compute the canonical report hash of a backtest natively — the value the
@@ -64,7 +64,7 @@ pub fn commit_dataset(candles: &[Candle]) -> String {
 /// path; the semantics (`report_hash == blake3(canonical(report))`) do not.
 pub fn native_report_hash(strategy: &StrategySpec, candles: &[Candle]) -> Result<String> {
     let report = wickra_backtest::run(strategy, candles).map_err(|e| Error::Data(e.to_string()))?;
-    Ok(wickra_proof::hash_report(&report))
+    Ok(proof_core::hash_report(&report))
 }
 
 #[cfg(test)]
@@ -83,7 +83,7 @@ mod tests {
     }
 
     #[test]
-    fn round_to_matches_wickra_proof() {
+    fn round_to_matches_proof_core() {
         assert!((round_to(1.234_567_891_2, 1e-8) - 1.234_567_89).abs() < 1e-12);
         assert!((round_to(-0.000_000_004, 1e-8)).abs() < 1e-12);
     }

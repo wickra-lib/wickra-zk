@@ -78,8 +78,8 @@ fn load_spec(spec_path: &Path, data_path: &Path) -> Result<ZkSpec, String> {
 
     // Otherwise: either { "strategy": <spec>, ["dataset_commitment": ...] } or a
     // bare StrategySpec. Compute the commitment from the data when missing.
-    let value: serde_json::Value =
-        serde_json::from_str(&content).map_err(|e| format!("parse {}: {e}", spec_path.display()))?;
+    let value: serde_json::Value = serde_json::from_str(&content)
+        .map_err(|e| format!("parse {}: {e}", spec_path.display()))?;
     let (strategy_value, commitment) = match value.get("strategy") {
         Some(strategy) => (
             strategy.clone(),
@@ -105,8 +105,7 @@ fn load_spec(spec_path: &Path, data_path: &Path) -> Result<ZkSpec, String> {
 /// Parse a `time,open,high,low,close,volume` CSV into candles. A non-numeric
 /// first line is treated as a header and skipped.
 fn load_candles(path: &Path) -> Result<Vec<Candle>, String> {
-    let content =
-        fs::read_to_string(path).map_err(|e| format!("read {}: {e}", path.display()))?;
+    let content = fs::read_to_string(path).map_err(|e| format!("read {}: {e}", path.display()))?;
     let mut candles = Vec::new();
     for (idx, line) in content.lines().enumerate() {
         let line = line.trim();
@@ -115,12 +114,18 @@ fn load_candles(path: &Path) -> Result<Vec<Candle>, String> {
         }
         let cols: Vec<&str> = line.split(',').map(str::trim).collect();
         if cols.len() != 6 {
-            return Err(format!("{}: line {}: expected 6 columns", path.display(), idx + 1));
+            return Err(format!(
+                "{}: line {}: expected 6 columns",
+                path.display(),
+                idx + 1
+            ));
         }
         if idx == 0 && cols[0].parse::<i64>().is_err() {
             continue; // header row
         }
-        let time: i64 = cols[0].parse().map_err(|_| format!("line {}: bad time", idx + 1))?;
+        let time: i64 = cols[0]
+            .parse()
+            .map_err(|_| format!("line {}: bad time", idx + 1))?;
         let mut num = [0f64; 5];
         for (slot, raw) in num.iter_mut().zip(&cols[1..]) {
             *slot = raw
