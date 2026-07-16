@@ -1,0 +1,82 @@
+//! The wickra-zk guest program — the code that runs *inside* the zkVM and
+//! whose honest execution a receipt attests to.
+//!
+//! Contract (see `docs/ZK.md` and `docs/DETERMINISM.md`):
+//!
+//! 1. Read the private inputs: the strategy spec, the candle series, and the
+//!    prover-supplied `dataset_commitment`.
+//! 2. Bind the data: recompute the canonical hash of the candles and assert it
+//!    equals the committed value, so the receipt cannot be reused for other
+//!    data than the one it commits to.
+//! 3. Run the exact same deterministic backtest the native `wickra-backtest`
+//!    engine runs.
+//! 4. Hash the report with the exact same canonicalization `wickra-proof`
+//!    uses natively, so `journal.report_hash` is byte-identical to the value
+//!    the rest of the ecosystem computes.
+//! 5. Commit only the public journal — the private data and strategy never
+//!    leave the guest.
+//!
+//! Blind-authored: this program targets the `no_std`/`alloc` build of
+//! `wickra-backtest`/`wickra-proof`. It cannot be compiled until that upstream
+//! conversion lands and a risc0 toolchain is available; see CONTRIBUTING.md.
+
+#![no_main]
+
+use risc0_zkvm::guest::env;
+use serde::{Deserialize, Serialize};
+use wickra_backtest::{Candle, StrategySpec};
+
+risc0_zkvm::guest::entry!(main);
+
+/// The public journal committed by the guest and read back by the host.
+///
+/// Metrics are rounded to a fixed number of decimals before committing so the
+/// journal is stable across platforms; the rounding matches the host's
+/// `round_to` in `wickra-zk-host::model`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct PublicOutputs {
+    /// Canonical `wickra-proof` hash of the backtest report — the same hash the
+    /// native path and every language binding produce.
+    report_hash: String,
+    /// Canonical hash of the candle series the proof was computed over.
+    dataset_commitment: String,
+    sharpe: f64,
+    pnl: f64,
+    n_trades: u32,
+}
+
+/// Round to 8 decimals — mirrors the host `round_to(x, 1e-8)`.
+fn round8(x: f64) -> f64 {
+    (x * 1e8).round() / 1e8
+}
+
+fn main() {
+    // 1. Private inputs, in the order the host writes them in `prove.rs`.
+    let strategy: StrategySpec = env::read();
+    let candles: Vec<Candle> = env::read();
+    let dataset_commitment: String = env::read();
+
+    // 2. Bind the data to the commitment.
+    let recomputed = wickra_proof::hash_candles(&candles);
+    assert_eq!(
+        recomputed, dataset_commitment,
+        "dataset_commitment does not match the candles fed to the guest"
+    );
+
+    // 3. Deterministic backtest — spec first, then candles (engine order).
+    let report = wickra_backtest::run(&strategy, &candles)
+        .expect("backtest must succeed for a valid spec/data pair");
+
+    // 4. Canonical report hash, identical to the native wickra-proof hash.
+    let report_hash = wickra_proof::hash_report(&report);
+
+    // 5. Commit the public journal only.
+    let outputs = PublicOutputs {
+        report_hash,
+        dataset_commitment,
+        sharpe: round8(report.sharpe),
+        pnl: round8(report.pnl),
+        n_trades: report.n_trades,
+    };
+    env::commit(&outputs);
+}

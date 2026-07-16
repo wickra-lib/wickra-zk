@@ -1,0 +1,5 @@
+# The guest always compiles for the risc0 zkVM target, whatever the host's
+# native target is. `wickra-zk-methods`'s build.rs drives this build through
+# risc0-build, which supplies the matching toolchain.
+[build]
+target = "riscv32im-risc0-zkvm-elf"

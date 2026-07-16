@@ -1,0 +1,20 @@
+[package]
+name = "wickra-zk-methods"
+description = "risc0 build wrapper: compiles the wickra-zk guest program to a RISC-V ELF and exposes its ELF bytes and image ID to the host."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+# The methods crate carries no runtime logic of its own: build.rs invokes
+# `risc0_build::embed_methods()`, which builds `guest/` (the detached RISC-V
+# crate) and generates `$OUT_DIR/methods.rs` with `WICKRA_ZK_GUEST_ELF` and
+# `WICKRA_ZK_GUEST_ID`. `src/lib.rs` only re-includes that generated file.
+[build-dependencies]
+risc0-build = { workspace = true }

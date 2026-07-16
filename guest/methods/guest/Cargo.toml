@@ -1,0 +1,36 @@
+# Detached guest crate — built for `riscv32im-risc0-zkvm-elf` by
+# `wickra-zk-methods`'s build.rs, NOT a member of the host workspace. The empty
+# `[workspace]` table below makes this its own workspace root so the host's
+# root Cargo.toml never pulls it into the native build graph.
+[workspace]
+
+[package]
+name = "wickra-zk-guest"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.86"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[[bin]]
+name = "wickra-zk-guest"
+path = "src/main.rs"
+
+[dependencies]
+# risc0 guest runtime. `std` here is risc0's guest std shim (no host OS), the
+# risc0 convention — it provides `env::read`/`env::commit` and the entry macro.
+risc0-zkvm = { version = "1.2", default-features = false, features = ["std"] }
+
+# The engine and the hasher, on their no_std/alloc paths. Both MUST build
+# without `std`/`schemars` for the guest to compile; until the upstream
+# no_std conversion lands (wickra-core -> wickra-backtest -> wickra-proof),
+# this crate cannot be built. See docs/DETERMINISM.md and CONTRIBUTING.md.
+wickra-backtest = { git = "https://github.com/wickra-lib/wickra-backtest", version = "0.1", default-features = false }
+wickra-proof = { git = "https://github.com/wickra-lib/wickra-proof", version = "0.1", default-features = false }
+
+serde = { version = "1", default-features = false, features = ["derive", "alloc"] }
+
+[profile.release]
+opt-level = 3
+codegen-units = 1
+lto = true
