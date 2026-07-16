@@ -28,13 +28,15 @@ use wickra_backtest::{Candle, StrategySpec};
 
 risc0_zkvm::guest::entry!(main);
 
-/// The public journal committed by the guest and read back by the host.
+/// The journal committed by the guest and read back by the host as
+/// `wickra_zk_host::GuestJournal` (same field names, order and types).
 ///
 /// Metrics are rounded to a fixed number of decimals before committing so the
 /// journal is stable across platforms; the rounding matches the host's
-/// `round_to` in `wickra-zk-host::model`.
+/// `round_to` in `wickra-zk-host::model`. The image id is NOT committed here —
+/// a guest cannot know its own id; the host fills it after decoding.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-struct PublicOutputs {
+struct GuestJournal {
     /// Canonical `wickra-proof` hash of the backtest report — the same hash the
     /// native path and every language binding produce.
     report_hash: String,
@@ -42,7 +44,7 @@ struct PublicOutputs {
     dataset_commitment: String,
     sharpe: f64,
     pnl: f64,
-    n_trades: u32,
+    n_trades: u64,
 }
 
 /// Round to 8 decimals — mirrors the host `round_to(x, 1e-8)`.
@@ -70,13 +72,13 @@ fn main() {
     // 4. Canonical report hash, identical to the native wickra-proof hash.
     let report_hash = wickra_proof::hash_report(&report);
 
-    // 5. Commit the public journal only.
-    let outputs = PublicOutputs {
+    // 5. Commit the journal only (host adds the image id after decoding).
+    let journal = GuestJournal {
         report_hash,
         dataset_commitment,
         sharpe: round8(report.sharpe),
         pnl: round8(report.pnl),
-        n_trades: report.n_trades,
+        n_trades: u64::from(report.n_trades),
     };
-    env::commit(&outputs);
+    env::commit(&journal);
 }
