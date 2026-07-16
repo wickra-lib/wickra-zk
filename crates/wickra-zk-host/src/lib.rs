@@ -42,6 +42,17 @@ pub fn version() -> &'static str {
     env!("CARGO_PKG_VERSION")
 }
 
+/// Compute the dataset commitment for a candle slice — the canonical hash the
+/// guest recomputes and binds the proof to. Callers (e.g. the CLI) use this to
+/// fill `ZkSpec::dataset_commitment` when a spec omits it.
+///
+/// Provisional: mirrors the guest's `wickra-proof` candle hash; the exact
+/// function name settles once the no_std hashing path lands upstream.
+#[must_use]
+pub fn commit_dataset(candles: &[Candle]) -> String {
+    wickra_proof::hash_candles(candles)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
