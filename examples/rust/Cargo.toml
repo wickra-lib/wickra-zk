@@ -1,0 +1,12 @@
+# Standalone example (own workspace root) — not a member of the host workspace.
+[package]
+name = "wickra-zk-example"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+wickra-zk-host = { path = "../../crates/wickra-zk-host" }
+serde_json = "1"
+
+[workspace]

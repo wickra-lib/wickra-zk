@@ -1,0 +1,28 @@
+name: Bench (nightly)
+
+on:
+  schedule:
+    - cron: "0 5 * * *" # 05:00 UTC daily
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  criterion:
+    name: Criterion (exec vs prod)
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rust
+      - uses: ./.github/actions/setup-risc0
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      # exec/* runs in dev-mode; prove/* runs a real proof (WICKRA_ZK_BENCH_PROD).
+      # Numbers are transcribed into BENCHMARKS.md.
+      - name: Run benchmarks
+        env:
+          WICKRA_ZK_BENCH_PROD: "1"
+        run: cargo bench -p wickra-zk-bench

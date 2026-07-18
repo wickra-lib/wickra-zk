@@ -1,0 +1,64 @@
+name: Release
+
+# USER-GO / HARD-STOP: this runs only on a pushed `v*` tag and performs the
+# irreversible crates.io publish. Never tag without explicit approval.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write # create the GitHub release + upload assets
+  id-token: write # SLSA build provenance attestation
+
+jobs:
+  publish-crates:
+    name: Publish to crates.io
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rust
+      - uses: ./.github/actions/setup-risc0
+      # Host first, then the CLI that depends on it.
+      - name: Publish wickra-zk-host
+        run: cargo publish -p wickra-zk-host
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+      - name: Publish wickra-zk (CLI)
+        run: cargo publish -p wickra-zk
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+  guest-artifact:
+    name: Guest ELF + image id
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rust
+      - uses: ./.github/actions/setup-risc0
+      # Build the guest and export the ELF + image id so anyone can reproduce
+      # the exact program a receipt is verified against.
+      - name: Build guest and export image id
+        run: |
+          cargo build -p wickra-zk-methods --release
+          cargo run -p wickra-zk -- version > guest-image-id.json
+      - name: Generate SBOM
+        uses: anchore/sbom-action@f325610c9f50a54015d37c8d16cb3b0e2c8f4de0 # v0
+        with:
+          format: cyclonedx-json
+          output-file: sbom.cyclonedx.json
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2
+        with:
+          subject-path: guest-image-id.json
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@e7a8f85e1c67a31e6ed99a94b41bd0b71bbee6b8 # v2
+        with:
+          draft: false
+          generate_release_notes: true
+          files: |
+            guest-image-id.json
+            sbom.cyclonedx.json

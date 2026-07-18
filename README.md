@@ -4,10 +4,17 @@
 
 # wickra-zk
 
+[![Built on Wickra](https://img.shields.io/badge/built%20on-wickra-3b82f6)](https://github.com/wickra-lib/wickra)
+[![Status](https://img.shields.io/badge/status-pre--release-orange)](https://github.com/wickra-lib/wickra-zk)
 [![CI](https://github.com/wickra-lib/wickra-zk/actions/workflows/ci.yml/badge.svg)](https://github.com/wickra-lib/wickra-zk/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/wickra-lib/wickra-zk/actions/workflows/codeql.yml/badge.svg)](https://github.com/wickra-lib/wickra-zk/actions/workflows/codeql.yml)
-[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/wickra-lib/wickra-zk/badge)](https://securityscorecards.dev/viewer/?uri=github.com/wickra-lib/wickra-zk)
+[![codecov](https://codecov.io/gh/wickra-lib/wickra-zk/branch/main/graph/badge.svg)](https://codecov.io/gh/wickra-lib/wickra-zk)
 [![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](#license)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/wickra-lib/wickra-zk/badge)](https://scorecard.dev/viewer/?uri=github.com/wickra-lib/wickra-zk)
+[![OpenSSF Best Practices](https://img.shields.io/badge/OpenSSF-best%20practices-3b82f6)](https://www.bestpractices.dev/)
+[![Build provenance](https://img.shields.io/badge/build-provenance-8957e5)](https://github.com/wickra-lib/wickra-zk/attestations)
+[![Zero-knowledge](https://img.shields.io/badge/proof-zero--knowledge-8b5cf6)](#what-is-proved--what-stays-private)
+[![Docs](https://img.shields.io/badge/docs-wickra.org-3b82f6)](https://wickra.org)
 
 > Prove your backtest — zero-knowledge, on-chain-verifiable performance without
 > revealing your data or strategy.

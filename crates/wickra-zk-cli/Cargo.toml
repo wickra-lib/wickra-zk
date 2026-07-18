@@ -1,0 +1,21 @@
+[package]
+name = "wickra-zk"
+description = "Command-line prover and verifier for wickra-zk: prove a backtest inside the zkVM and check the resulting receipt."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "wickra-zk"
+path = "src/main.rs"
+
+[dependencies]
+wickra-zk-host = { path = "../wickra-zk-host" }
+clap = { workspace = true }
+serde_json = { workspace = true }

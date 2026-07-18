@@ -24,7 +24,7 @@ clap = { version = "4", features = ["derive"] }
 risc0-zkvm = "1.2"
 risc0-build = "1.2"
 wickra-backtest = { git = "https://github.com/wickra-lib/wickra-backtest", version = "0.1" }
-wickra-proof = { git = "https://github.com/wickra-lib/wickra-proof", version = "0.1" }
+proof-core = { git = "https://github.com/wickra-lib/wickra-proof", version = "0.1" }
 wickra-data = { git = "https://github.com/wickra-lib/wickra-data", version = "0.1" }
 criterion = "0.5"
 proptest = "1"
