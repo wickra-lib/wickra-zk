@@ -2093,7 +2093,7 @@ dependencies = [
 [[package]]
 name = "proof-core"
 version = "0.1.0"
-source = "git+https://github.com/wickra-lib/wickra-proof#32ffdaab79a79cd7a825ae6f7d7c48e7978d2e85"
+source = "git+https://github.com/wickra-lib/wickra-proof#d001f111963a98b2f134ae7c5320ce56e7922286"
 dependencies = [
  "blake3",
  "serde",
@@ -3697,7 +3697,7 @@ dependencies = [
 [[package]]
 name = "wickra-backtest"
 version = "0.1.0"
-source = "git+https://github.com/wickra-lib/wickra-backtest#bef35acfefb0c1170812cc27bca58df6d548cff8"
+source = "git+https://github.com/wickra-lib/wickra-backtest#3f5e7b38dc8eac56428d61d6303bb625b0201941"
 dependencies = [
  "wickra-backtest-core",
  "wickra-backtest-data",
@@ -3706,7 +3706,7 @@ dependencies = [
 [[package]]
 name = "wickra-backtest-core"
 version = "0.1.0"
-source = "git+https://github.com/wickra-lib/wickra-backtest#bef35acfefb0c1170812cc27bca58df6d548cff8"
+source = "git+https://github.com/wickra-lib/wickra-backtest#3f5e7b38dc8eac56428d61d6303bb625b0201941"
 dependencies = [
  "schemars 0.8.22",
  "serde",
@@ -3718,7 +3718,7 @@ dependencies = [
 [[package]]
 name = "wickra-backtest-data"
 version = "0.1.0"
-source = "git+https://github.com/wickra-lib/wickra-backtest#bef35acfefb0c1170812cc27bca58df6d548cff8"
+source = "git+https://github.com/wickra-lib/wickra-backtest#3f5e7b38dc8eac56428d61d6303bb625b0201941"
 dependencies = [
  "serde_json",
  "wickra-backtest-core",
