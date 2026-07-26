@@ -2093,7 +2093,7 @@ dependencies = [
 [[package]]
 name = "proof-core"
 version = "0.1.0"
-source = "git+https://github.com/wickra-lib/wickra-proof#32ffdaab79a79cd7a825ae6f7d7c48e7978d2e85"
+source = "git+https://github.com/wickra-lib/wickra-proof#7ec9b708cbeaeb2e6b442138ce267e2eea8c8a23"
 dependencies = [
  "blake3",
  "serde",
@@ -3149,6 +3149,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "syn"
+version = "3.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "53e9bae58849f64dfa4f5d5ae372c8341f7305f82a3868709269343628b659a3"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "unicode-ident",
+]
+
+[[package]]
 name = "sync_wrapper"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3183,22 +3194,22 @@ dependencies = [
 
 [[package]]
 name = "thiserror"
-version = "2.0.18"
+version = "2.0.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4288b5bcbc7920c07a1149a35cf9590a2aa808e0bc1eafaade0b80947865fbc4"
+checksum = "09a43598840e33d5b0331f38c5e30d13bb11c11210a4b58f0d9b18a5a5eefcd9"
 dependencies = [
  "thiserror-impl",
 ]
 
 [[package]]
 name = "thiserror-impl"
-version = "2.0.18"
+version = "2.0.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ebc4ee7f67670e9b64d05fa4253e753e016c6c95ff35b89b7941d6b856dec1d5"
+checksum = "43cbfe0cf76104d42a574802844187e84a305e531ed54455f11fbde0f10541cd"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.119",
+ "syn 3.0.3",
 ]
 
 [[package]]
@@ -3697,7 +3708,7 @@ dependencies = [
 [[package]]
 name = "wickra-backtest"
 version = "0.1.0"
-source = "git+https://github.com/wickra-lib/wickra-backtest#bef35acfefb0c1170812cc27bca58df6d548cff8"
+source = "git+https://github.com/wickra-lib/wickra-backtest#bd50f9733f875bf839ba5ac06b79ca7147d0f104"
 dependencies = [
  "wickra-backtest-core",
  "wickra-backtest-data",
@@ -3706,7 +3717,7 @@ dependencies = [
 [[package]]
 name = "wickra-backtest-core"
 version = "0.1.0"
-source = "git+https://github.com/wickra-lib/wickra-backtest#bef35acfefb0c1170812cc27bca58df6d548cff8"
+source = "git+https://github.com/wickra-lib/wickra-backtest#bd50f9733f875bf839ba5ac06b79ca7147d0f104"
 dependencies = [
  "schemars 0.8.22",
  "serde",
@@ -3718,7 +3729,7 @@ dependencies = [
 [[package]]
 name = "wickra-backtest-data"
 version = "0.1.0"
-source = "git+https://github.com/wickra-lib/wickra-backtest#bef35acfefb0c1170812cc27bca58df6d548cff8"
+source = "git+https://github.com/wickra-lib/wickra-backtest#bd50f9733f875bf839ba5ac06b79ca7147d0f104"
 dependencies = [
  "serde_json",
  "wickra-backtest-core",
