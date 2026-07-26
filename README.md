@@ -70,7 +70,7 @@ cargo build --release
 
 ## Requirements
 
-- Rust 1.86+ (host), risc0 toolchain (guest)
+- Rust 1.88+ (host), risc0 toolchain (guest)
 - See [CONTRIBUTING.md](CONTRIBUTING.md) for the full verify workflow
 
 ## Contributing
