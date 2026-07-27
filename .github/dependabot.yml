@@ -1,4 +1,10 @@
 version: 2
+# Version-update PRs are paused (open-pull-requests-limit: 0) until the zkVM
+# guest program compiles: guest/methods/guest is currently blind-authored
+# against a proof_core/wickra-backtest API that does not exist yet (awaits the
+# upstream no_std/alloc conversion), so the guest ELF build fails and no
+# dependabot PR can go green. Security updates are unaffected. Restore the
+# limits to 10 once the guest integration lands.
 updates:
   # Rust host workspace (root Cargo.toml + all member crates). The guest crate
   # under guest/methods/guest is a detached riscv build and is updated manually
@@ -9,7 +15,7 @@ updates:
       interval: monthly
       time: "06:00"
       timezone: "Etc/UTC"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 0
     cooldown:
       default-days: 7
     commit-message:
@@ -32,7 +38,7 @@ updates:
       interval: monthly
       time: "06:00"
       timezone: "Etc/UTC"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 0
     cooldown:
       default-days: 7
     commit-message:
