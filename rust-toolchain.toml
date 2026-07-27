@@ -2,5 +2,5 @@
 # separately via `cargo risczero install` (see CONTRIBUTING.md and the
 # setup-risc0 composite action); it is not governed by this file.
 [toolchain]
-channel = "1.86"
+channel = "1.88"
 components = ["rustfmt", "clippy"]

@@ -10,7 +10,7 @@ inputs:
   version:
     description: risc0 toolchain version to install (must match the risc0-zkvm crate).
     required: false
-    default: "1.2.6"
+    default: "3.0.6"
 
 runs:
   using: composite

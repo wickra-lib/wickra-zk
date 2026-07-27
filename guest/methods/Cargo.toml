@@ -9,6 +9,13 @@ repository.workspace = true
 authors.workspace = true
 publish = false
 
+# risc0-build's embed_methods() reads this to locate the guest crate(s): each
+# entry is a path (relative to this manifest) to a RISC-V guest package. Without
+# it, risc0-build panics (Risc0Metadata::from_package -> None) and the guest ELF
+# build fails.
+[package.metadata.risc0]
+methods = ["guest"]
+
 [lints]
 workspace = true
 
