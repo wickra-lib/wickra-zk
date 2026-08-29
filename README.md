@@ -20,6 +20,13 @@
 > Prove your backtest — zero-knowledge, on-chain-verifiable performance without
 > revealing your data or strategy.
 
+> **Part of the [Wickra ecosystem](https://github.com/wickra-lib):** the same
+> data-driven core and ten-language binding surface also power
+> [wickra-backtest](https://github.com/wickra-lib/wickra-backtest),
+> [wickra-proof](https://github.com/wickra-lib/wickra-proof),
+> [wickra-verify](https://github.com/wickra-lib/wickra-verify) and 20 more — see
+> [the full list](https://github.com/wickra-lib).
+
 **wickra-zk** runs a deterministic [Wickra](https://github.com/wickra-lib/wickra)
 backtest as a guest program inside the [risc0](https://risczero.com) zkVM and
 produces a succinct **zero-knowledge proof** over it. A verifier — on a server or
