@@ -6,15 +6,16 @@
 
 [![Built on Wickra](https://img.shields.io/badge/built%20on-wickra-3b82f6)](https://github.com/wickra-lib/wickra)
 [![Status](https://img.shields.io/badge/status-pre--release-orange)](https://github.com/wickra-lib/wickra-zk)
-[![CI](https://github.com/wickra-lib/wickra-zk/actions/workflows/ci.yml/badge.svg)](https://github.com/wickra-lib/wickra-zk/actions/workflows/ci.yml)
-[![CodeQL](https://github.com/wickra-lib/wickra-zk/actions/workflows/codeql.yml/badge.svg)](https://github.com/wickra-lib/wickra-zk/actions/workflows/codeql.yml)
-[![codecov](https://codecov.io/gh/wickra-lib/wickra-zk/branch/main/graph/badge.svg)](https://codecov.io/gh/wickra-lib/wickra-zk)
-[![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](#license)
-[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/wickra-lib/wickra-zk/badge)](https://scorecard.dev/viewer/?uri=github.com/wickra-lib/wickra-zk)
-[![OpenSSF Best Practices](https://img.shields.io/badge/OpenSSF-best%20practices-3b82f6)](https://www.bestpractices.dev/)
-[![Build provenance](https://img.shields.io/badge/build-provenance-8957e5)](https://github.com/wickra-lib/wickra-zk/attestations)
+[![CI](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-zk/ci.svg)](https://github.com/wickra-lib/wickra-zk/actions/workflows/ci.yml)
+[![CodeQL](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-zk/codeql.svg)](https://github.com/wickra-lib/wickra-zk/actions/workflows/codeql.yml)
+[![GitHub release](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-zk/release.svg)](https://github.com/wickra-lib/wickra-zk/releases/latest)
+[![crates.io](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-zk/crates.svg)](https://crates.io/crates/wickra-zk)
+[![License: MIT OR Apache-2.0](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-zk/license.svg)](#license)
+[![OpenSSF Scorecard](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-zk/scorecard.svg)](https://scorecard.dev/viewer/?uri=github.com/wickra-lib/wickra-zk)
+[![OpenSSF Best Practices](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-zk/best-practices.svg)](https://www.bestpractices.dev)
+[![Build provenance](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-zk/provenance.svg)](https://github.com/wickra-lib/wickra-zk/attestations)
+[![Docs](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-zk/docs.svg)](https://wickra.org)
 [![Zero-knowledge](https://img.shields.io/badge/proof-zero--knowledge-8b5cf6)](#what-is-proved--what-stays-private)
-[![Docs](https://img.shields.io/badge/docs-wickra.org-3b82f6)](https://wickra.org)
 
 > Prove your backtest — zero-knowledge, on-chain-verifiable performance without
 > revealing your data or strategy.
@@ -93,3 +94,26 @@ This software is provided for research and educational purposes. It is not
 financial advice. A zero-knowledge proof attests only to the honest execution of
 the pinned guest program over the prover's inputs; it makes no claim about the
 quality, provenance, or future performance of a trading strategy.
+
+---
+
+<p align="center">
+  <a href="https://github.com/wickra-lib/wickra-zk">
+    <img alt="GitHub stars" src="https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-zk/stars.svg">
+  </a>
+  <a href="https://github.com/wickra-lib/wickra-zk/network/members">
+    <img alt="GitHub forks" src="https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-zk/forks.svg">
+  </a>
+  <a href="https://github.com/wickra-lib/wickra-zk/issues">
+    <img alt="GitHub issues" src="https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-zk/issues.svg">
+  </a>
+</p>
+
+<p align="center">
+  Built on <a href="https://github.com/wickra-lib/wickra">Wickra</a>. If it saved you time, the cheapest way to say thanks is to ⭐ the repo.
+</p>
+
+<p align="center">
+  <img alt="wickra-zk star history" width="640"
+       src="https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-zk/star-history.svg">
+</p>
