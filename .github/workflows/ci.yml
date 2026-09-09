@@ -36,6 +36,16 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RISC0_DEV_MODE: "1"
+      # Lint the host, and let the guest be linted by clippy-guest and built by
+      # guest-build. `cargo clippy` exports RUSTC_WORKSPACE_WRAPPER, the child
+      # cargo that risc0-build spawns for the guest inherits it, and
+      # clippy-driver then compiles the guest against a stable sysroot that has
+      # no std for riscv32im-risc0-zkvm-elf:
+      #   wickra-zk-guest: error[E0463]: can't find crate for `std`
+      # RISC0_SKIP_BUILD makes embed_methods emit stub constants instead, which
+      # is what it exists for. Nothing about the guest goes unchecked: two other
+      # jobs compile it for real.
+      RISC0_SKIP_BUILD: "1"
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -59,9 +69,18 @@ jobs:
           components: clippy
       - uses: ./.github/actions/setup-risc0
       - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      # `+risc0` is the point. The repository root carries a rust-toolchain.toml
+      # pinning stable 1.88, and rustup applies it to every directory beneath --
+      # including this one. Without the override, clippy runs on stable, which
+      # ships no std for riscv32im-risc0-zkvm-elf, and the job dies with
+      # `error[E0463]: can't find crate for std` on a guest that builds fine.
+      # guest-build never hit this because risc0-build invokes the risc0
+      # toolchain itself instead of going through rustup's directory rules.
+      - name: Show the installed toolchains
+        run: rustup toolchain list
       - name: Clippy the guest for the zkVM target
         working-directory: guest/methods/guest
-        run: cargo clippy --target riscv32im-risc0-zkvm-elf -- -D warnings
+        run: cargo +risc0 clippy --target riscv32im-risc0-zkvm-elf -- -D warnings
 
   guest-build:
     name: Guest build (ELF + image id)
@@ -122,7 +141,7 @@ jobs:
         with:
           components: llvm-tools-preview
       - uses: ./.github/actions/setup-risc0
-      - uses: taiki-e/install-action@6f1af7f89f8c1a5cb7dcb85d7853c05e7c3d4783 # cargo-llvm-cov
+      - uses: taiki-e/install-action@c3ec0de9ae7f1019cea21aa96aa0a895b9552063 # v2.87.9 (cargo-llvm-cov)
         with:
           tool: cargo-llvm-cov
       - run: cargo llvm-cov -p wickra-zk-host --lcov --output-path lcov.info
@@ -159,7 +178,7 @@ jobs:
         with:
           toolchain: nightly
       - uses: ./.github/actions/setup-risc0
-      - uses: taiki-e/install-action@6f1af7f89f8c1a5cb7dcb85d7853c05e7c3d4783 # cargo-fuzz
+      - uses: taiki-e/install-action@c3ec0de9ae7f1019cea21aa96aa0a895b9552063 # v2.87.9 (cargo-fuzz)
         with:
           tool: cargo-fuzz
       - run: cargo +nightly fuzz build

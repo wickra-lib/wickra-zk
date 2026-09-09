@@ -23,9 +23,10 @@ the chain:
 
 The guest must reproduce the native computation exactly. Watch for:
 
-1. **no_std drift** — the guest builds `wickra-backtest`/`wickra-proof` without
-   `std`. Any `std`-only path (e.g. a `HashMap` iteration order, float
-   formatting, `schemars` schema-gen) that changes bytes breaks the hash.
+1. **Platform drift** — the guest compiles the same crates for a 32-bit target
+   under risc0's std shim. Any path whose bytes depend on the platform (an
+   iteration order, a float formatting, a `usize` width reaching the wire)
+   breaks the hash.
 2. **Rounding** — metrics are rounded with `round_to(x, 1e-8)` in both the guest
    and the host; the same rule must apply on both sides.
 3. **serde field order** — the canonical hash is over `canonicalize(report)`, so
@@ -33,7 +34,7 @@ The guest must reproduce the native computation exactly. Watch for:
 
 ## Status
 
-The guest depends on a `no_std` build of the published `wickra-core` /
-`wickra-backtest` / `wickra-proof`. Until that lands (and a risc0 toolchain is
-available), the guest does not compile and the chain is verified only on its
-**native** half; see [../CONTRIBUTING.md](../CONTRIBUTING.md).
+The guest compiles the published `wickra-core` / `wickra-backtest` /
+`wickra-proof` as they are: risc0's guest std shim carries what they use, so no
+`no_std` conversion is required upstream. Building it needs a risc0 toolchain;
+see [../CONTRIBUTING.md](../CONTRIBUTING.md).

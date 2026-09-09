@@ -94,7 +94,7 @@ fn load_spec(spec_path: &Path, data_path: &Path) -> Result<ZkSpec, String> {
         serde_json::from_value(strategy_value).map_err(|e| format!("strategy: {e}"))?;
     let dataset_commitment = match commitment {
         Some(c) => c,
-        None => commit_dataset(&load_candles(data_path)?),
+        None => commit_dataset(&load_candles(data_path)?).map_err(|e| e.to_string())?,
     };
     Ok(ZkSpec {
         strategy,

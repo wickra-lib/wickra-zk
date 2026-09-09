@@ -8,7 +8,7 @@ running a strategy over some private data.
 
 ## Layout
 
-- **`guest/methods/guest/`** — the no_std guest program: the actual code that
+- **`guest/methods/guest/`** — the guest program: the actual code that
   runs inside the zkVM. It reads a spec and candles, runs the deterministic
   `wickra-backtest` engine, canonicalizes with `wickra-proof`, and commits the
   public outputs to the journal.

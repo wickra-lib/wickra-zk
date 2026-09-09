@@ -3,3 +3,15 @@
 # risc0-build, which supplies the matching toolchain.
 [build]
 target = "riscv32im-risc0-zkvm-elf"
+# getrandom 0.3 refuses to compile for a target it does not know, and asks for a
+# custom backend. risc0 supplies one, and risc0-build turns it on by putting
+# `--cfg getrandom_backend="custom"` into CARGO_ENCODED_RUSTFLAGS for the guest
+# build. Anything that compiles this crate *without* going through risc0-build
+# -- `cargo clippy` here, or a plain `cargo check` -- gets no such flag and dies
+# on a guest that builds perfectly well:
+#
+#   error: target is not supported. You may need to define a custom backend
+#
+# Setting it here covers those paths. It does not affect the real build:
+# risc0-build's CARGO_ENCODED_RUSTFLAGS takes precedence over this file.
+rustflags = ["--cfg", "getrandom_backend=\"custom\""]

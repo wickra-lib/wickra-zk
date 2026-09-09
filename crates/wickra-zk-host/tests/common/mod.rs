@@ -68,7 +68,7 @@ pub fn load_candles(data: &str) -> Vec<Candle> {
 pub fn case(name: &str, data: &str) -> (ZkSpec, Vec<Candle>) {
     let strategy = load_strategy(name);
     let candles = load_candles(data);
-    let dataset_commitment = commit_dataset(&candles);
+    let dataset_commitment = commit_dataset(&candles).expect("candles canonicalise");
     (
         ZkSpec {
             strategy,

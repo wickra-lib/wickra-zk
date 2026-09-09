@@ -16,9 +16,11 @@
 //! 5. Commit only the public journal — the private data and strategy never
 //!    leave the guest.
 //!
-//! Blind-authored: this program targets the `no_std`/`alloc` build of
-//! `wickra-backtest`/`wickra-proof`. It cannot be compiled until that upstream
-//! conversion lands and a risc0 toolchain is available; see CONTRIBUTING.md.
+//! Building this needs a risc0 toolchain (see CONTRIBUTING.md); `cargo build -p
+//! wickra-zk-methods` drives it through `risc0-build`. It does not need a
+//! `no_std` build of the engine: risc0's guest std shim carries what
+//! `wickra-backtest` and `wickra-proof` use, and both compile for
+//! `riscv32im-risc0-zkvm-elf` as published.
 
 #![no_main]
 
@@ -47,7 +49,11 @@ struct GuestJournal {
     n_trades: u64,
 }
 
-/// Round to 8 decimals — mirrors the host `round_to(x, 1e-8)`.
+/// Round to 8 decimals. Bit-for-bit the host's `round_to(x, 1e-8)`, which is
+/// the same three operations in the same order: scale up, round, scale back.
+/// The host recomputes these figures and compares them to the ones committed
+/// here, so "close enough" is not enough -- the two expressions have to produce
+/// the identical `f64`.
 fn round8(x: f64) -> f64 {
     (x * 1e8).round() / 1e8
 }
@@ -59,7 +65,8 @@ fn main() {
     let dataset_commitment: String = env::read();
 
     // 2. Bind the data to the commitment.
-    let recomputed = proof_core::hash_candles(&candles);
+    let recomputed =
+        proof_core::hash_candles(&candles).expect("candles must serialise to canonical JSON");
     assert_eq!(
         recomputed, dataset_commitment,
         "dataset_commitment does not match the candles fed to the guest"
@@ -70,15 +77,18 @@ fn main() {
         .expect("backtest must succeed for a valid spec/data pair");
 
     // 4. Canonical report hash, identical to the native wickra-proof hash.
-    let report_hash = proof_core::hash_report(&report);
+    let report_hash =
+        proof_core::hash_report(&report).expect("report must serialise to canonical JSON");
 
     // 5. Commit the journal only (host adds the image id after decoding).
+    // The headline figures live on `report.metrics`, not on the report itself.
     let journal = GuestJournal {
         report_hash,
         dataset_commitment,
-        sharpe: round8(report.sharpe),
-        pnl: round8(report.pnl),
-        n_trades: u64::from(report.n_trades),
+        sharpe: round8(report.metrics.sharpe),
+        pnl: round8(report.metrics.pnl),
+        n_trades: u64::try_from(report.metrics.num_trades)
+            .expect("a trade count cannot exceed u64"),
     };
     env::commit(&journal);
 }
