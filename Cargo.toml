@@ -23,9 +23,13 @@ thiserror = "2"
 clap = { version = "4", features = ["derive"] }
 risc0-zkvm = "3.0"
 risc0-build = "3.0"
-wickra-backtest = { git = "https://github.com/wickra-lib/wickra-backtest", version = "0.1" }
-proof-core = { git = "https://github.com/wickra-lib/wickra-proof", version = "0.1" }
-wickra-data = { git = "https://github.com/wickra-lib/wickra-data", version = "0.1" }
+# Pinned to an exact rev, not to a floating branch. An unpinned git dependency
+# never goes red -- it only gets older, and then one day the API underneath has
+# moved and the build breaks with errors that look like your own. That is how
+# the guest came to call `proof_core::hash_candles`: it was written against a
+# shape of the crate that the branch later left behind. Bump these deliberately.
+wickra-backtest = { git = "https://github.com/wickra-lib/wickra-backtest", rev = "d58e357506dbb95211d2313eae7bae93d1f73777", version = "0.1" }
+proof-core = { git = "https://github.com/wickra-lib/wickra-proof", rev = "44bbd9a41362a53e0650eaf97cc594e46b6b69f5", version = "0.1" }
 criterion = "0.8"
 proptest = "1"
 

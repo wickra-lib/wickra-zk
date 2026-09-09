@@ -59,9 +59,18 @@ jobs:
           components: clippy
       - uses: ./.github/actions/setup-risc0
       - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      # `+risc0` is the point. The repository root carries a rust-toolchain.toml
+      # pinning stable 1.88, and rustup applies it to every directory beneath --
+      # including this one. Without the override, clippy runs on stable, which
+      # ships no std for riscv32im-risc0-zkvm-elf, and the job dies with
+      # `error[E0463]: can't find crate for std` on a guest that builds fine.
+      # guest-build never hit this because risc0-build invokes the risc0
+      # toolchain itself instead of going through rustup's directory rules.
+      - name: Show the installed toolchains
+        run: rustup toolchain list
       - name: Clippy the guest for the zkVM target
         working-directory: guest/methods/guest
-        run: cargo clippy --target riscv32im-risc0-zkvm-elf -- -D warnings
+        run: cargo +risc0 clippy --target riscv32im-risc0-zkvm-elf -- -D warnings
 
   guest-build:
     name: Guest build (ELF + image id)

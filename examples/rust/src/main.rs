@@ -45,7 +45,7 @@ fn main() {
     // Bind the proof to this exact data without revealing it.
     let spec = ZkSpec {
         strategy,
-        dataset_commitment: commit_dataset(&candles),
+        dataset_commitment: commit_dataset(&candles).expect("candles canonicalise"),
     };
 
     // Prove, then verify the receipt and print the public journal.

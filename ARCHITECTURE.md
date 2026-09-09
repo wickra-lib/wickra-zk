@@ -11,8 +11,8 @@ The engine we need to prove — `wickra-backtest` — is ordinary deterministic 
 A general-purpose RISC-V zkVM lets us run that exact code as the guest instead of
 re-expressing the backtest as an arithmetic circuit by hand. risc0 gives us:
 
-- a **Rust guest** (`no_std` + `alloc`) so the proven program *is* the audited
-  engine, not a hand-written reimplementation that could diverge;
+- a **Rust guest** running the real engine, so the proven program *is* the
+  audited one and not a hand-written reimplementation that could diverge;
 - a **`GUEST_ID` (image ID)** that cryptographically names the exact program, so
   a verifier knows the honest engine produced the result;
 - a **journal** — the public commitment — plus a **receipt** that can be verified
@@ -25,7 +25,7 @@ pinned (see the version matrix in the handoff and `Cargo.toml`).
 ## Host / guest split
 
 ```
-guest/methods/guest/   the no_std guest program (runs inside the zkVM)
+guest/methods/guest/   the guest program (runs inside the zkVM)
 guest/methods/         host-side crate; build.rs compiles the guest to a RISC-V
                        ELF and exports WICKRA_ZK_GUEST_ELF + WICKRA_ZK_GUEST_ID
 crates/wickra-zk-host  prove() / verify() / guest_id() / command_json()

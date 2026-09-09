@@ -36,7 +36,7 @@ fn load_case(name: &str, data: &str) -> (ZkSpec, Vec<Candle>) {
         });
         candles.push(serde_json::from_value(value).unwrap());
     }
-    let dataset_commitment = commit_dataset(&candles);
+    let dataset_commitment = commit_dataset(&candles).expect("candles canonicalise");
     (
         ZkSpec {
             strategy,

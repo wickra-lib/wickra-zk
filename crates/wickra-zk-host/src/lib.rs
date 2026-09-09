@@ -46,11 +46,13 @@ pub fn version() -> &'static str {
 /// guest recomputes and binds the proof to. Callers (e.g. the CLI) use this to
 /// fill `ZkSpec::dataset_commitment` when a spec omits it.
 ///
-/// Provisional: mirrors the guest's `wickra-proof` candle hash; the exact
-/// function name settles once the no_std hashing path lands upstream.
-#[must_use]
-pub fn commit_dataset(candles: &[Candle]) -> String {
-    proof_core::hash_candles(candles)
+/// This is the same `proof_core::hash_candles` the guest calls, so host and
+/// circuit cannot disagree about what the commitment covers.
+///
+/// # Errors
+/// Returns [`Error::Data`] if the candles cannot be canonicalised.
+pub fn commit_dataset(candles: &[Candle]) -> Result<String> {
+    proof_core::hash_candles(candles).map_err(|e| Error::Data(e.to_string()))
 }
 
 /// Compute the canonical report hash of a backtest natively — the value the
@@ -58,13 +60,11 @@ pub fn commit_dataset(candles: &[Candle]) -> String {
 /// the determinism chain independently of the guest.
 ///
 /// # Errors
-/// Returns [`Error::Data`] if the backtest fails for the given spec/data.
-///
-/// Provisional: the exact `wickra-proof` entry points settle with the no_std
-/// path; the semantics (`report_hash == blake3(canonical(report))`) do not.
+/// Returns [`Error::Data`] if the backtest fails for the given spec/data, or if
+/// the report cannot be canonicalised.
 pub fn native_report_hash(strategy: &StrategySpec, candles: &[Candle]) -> Result<String> {
     let report = wickra_backtest::run(strategy, candles).map_err(|e| Error::Data(e.to_string()))?;
-    Ok(proof_core::hash_report(&report))
+    proof_core::hash_report(&report).map_err(|e| Error::Data(e.to_string()))
 }
 
 #[cfg(test)]

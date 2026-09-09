@@ -21,12 +21,20 @@ path = "src/main.rs"
 # risc0 convention — it provides `env::read`/`env::commit` and the entry macro.
 risc0-zkvm = { version = "1.2", default-features = false, features = ["std"] }
 
-# The engine and the hasher, on their no_std/alloc paths. Both MUST build
-# without `std`/`schemars` for the guest to compile; until the upstream
-# no_std conversion lands (wickra-core -> wickra-backtest -> wickra-proof),
-# this crate cannot be built. See docs/DETERMINISM.md and CONTRIBUTING.md.
-wickra-backtest = { git = "https://github.com/wickra-lib/wickra-backtest", version = "0.1", default-features = false }
-proof-core = { git = "https://github.com/wickra-lib/wickra-proof", version = "0.1", default-features = false }
+# The engine and the hasher. Both build for riscv32im-risc0-zkvm-elf as they
+# are: risc0's guest std shim carries what they use -- VecDeque, BTreeMap, the
+# float math, serde and schemars -- so no no_std conversion is required upstream
+# and none is waited on here.
+#
+# `default-features = false` is not what makes that work; it is asked for so the
+# guest does not drag rayon in behind wickra-core. rayon compiles for the guest,
+# but a thread pool in a single-threaded zkVM is cycles paid for nothing. Note
+# it currently has no effect: wickra-backtest-core declares no [features] and so
+# forwards nothing to wickra-core. Fixing that lives upstream.
+#
+# Pinned to an exact rev for the reason given in the workspace manifest.
+wickra-backtest = { git = "https://github.com/wickra-lib/wickra-backtest", rev = "d58e357506dbb95211d2313eae7bae93d1f73777", version = "0.1", default-features = false }
+proof-core = { git = "https://github.com/wickra-lib/wickra-proof", rev = "44bbd9a41362a53e0650eaf97cc594e46b6b69f5", version = "0.1", default-features = false }
 
 serde = { version = "1", default-features = false, features = ["derive", "alloc"] }
 
