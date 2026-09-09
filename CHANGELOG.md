@@ -8,6 +8,44 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **The guest and the host rounded differently, and the golden test's tolerance
+  hid it.** `round_to(x, 1e-8)` divided by the precision and multiplied back,
+  while the guest's `round8` scaled up and back down. Those are the same
+  arithmetic on paper and a different `f64` in practice: for a pnl of
+  `1483.61984049` the host produced `1483.6198404900001`. The guest commits its
+  figures into the journal and the host recomputes its own, so the two have to
+  agree bit-for-bit -- and `model.rs` already documented the guest's expression
+  as the contract, so the implementation contradicted its own doc comment. The
+  implementation now matches it. The golden test compares with `< 1e-8`, which
+  is why this survived.
+
+- **The guest ran on a zkVM it was not built for.** It pinned `risc0-zkvm 1.2`
+  while the host executes with 3.0, so every proof aborted at runtime:
+  `Invalid trap address: 0x00000000, cause: IllegalInstruction(0xc0001073, 287)`.
+  The guest is on 3.0 with the workspace. This also clears the **critical**
+  advisory against risc0-zkvm 1.x (arbitrary code execution in the guest via a
+  memory-safety failure in `sys_read`, patched in 2.3.2).
+
+- **`taiki-e/install-action` was pinned to a commit that does not exist**, so
+  Coverage and Fuzz never got past `Set up job`:
+  `Unable to resolve action ... unable to find version 6f1af7f8`. Repinned to
+  the v2.87.9 commit, which is a real object.
+
+- **Three internal path dependencies carried no version**, which `cargo-deny`
+  reads as wildcards and denies. They now declare `version = "0.1.0"` beside
+  the path.
+
+- **`Clippy (host)` could not compile the guest.** `cargo clippy` exports
+  `RUSTC_WORKSPACE_WRAPPER`; the child cargo that `risc0-build` spawns inherits
+  it, and clippy-driver then builds the guest against a stable sysroot with no
+  `std` for the zkVM target. The job sets `RISC0_SKIP_BUILD`, which is what that
+  variable is for -- the guest is still compiled for real by `guest-build` and
+  linted by `clippy-guest`.
+
+- **Golden re-bless.** Only `report_hash` moves: `pnl`, `sharpe` and `n_trades`
+  are byte-identical to the previous fixtures. The hash covers the whole report,
+  and the engine bump added `symbol` and `timeframe` to it.
+
 - **Neither the guest nor the host had ever compiled.** Both called
   `proof_core::hash_candles` and `proof_core::hash_report`, two functions that
   did not exist in `wickra-proof` and never had; the host's own doc comments
@@ -42,6 +80,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   toolchain itself. The job now selects it explicitly with `+risc0`.
 
 ### Changed
+
+- `deny.toml` and `osv-scanner.toml` suppress RUSTSEC-2025-0141 with a reason.
+  bincode 1.3.3 is unmaintained rather than vulnerable -- development ceased
+  after a harassment incident -- and it reaches this repository only as
+  risc0-zkvm's serialisation format, so there is nothing here to replace and no
+  patched version to move to.
 
 - **The documentation no longer claims the guest cannot be built.**
   `ARCHITECTURE.md`, `CONTRIBUTING.md`, `docs/DETERMINISM.md`, the guest's

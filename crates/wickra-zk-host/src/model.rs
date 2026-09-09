@@ -16,9 +16,18 @@ use crate::error::{Error, Result};
 
 /// Round exactly like `wickra-proof` does before hashing/serialising a report:
 /// `round_to(x, 1e-8) == (x * 1e8).round() / 1e8`.
+///
+/// Scale up, round, scale back down -- in that order. Dividing by `precision`
+/// and multiplying back is the same arithmetic on paper and a different `f64`
+/// in practice: for a pnl of 1483.61984049 it returns 1483.6198404900001, while
+/// the guest's `round8` returns 1483.61984049. The guest commits its value into
+/// the journal and the host recomputes its own, so the two have to agree
+/// bit-for-bit, not to within an epsilon. The golden test's 1e-8 tolerance hid
+/// the difference; the fixtures did not.
 #[must_use]
 pub fn round_to(value: f64, precision: f64) -> f64 {
-    (value / precision).round() * precision
+    let scale = 1.0 / precision;
+    (value * scale).round() / scale
 }
 
 /// The prove-time input: a private strategy plus a commitment to the data.

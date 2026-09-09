@@ -2085,7 +2085,7 @@ dependencies = [
 [[package]]
 name = "proof-core"
 version = "0.1.0"
-source = "git+https://github.com/wickra-lib/wickra-proof?rev=574284dc2e27535b57ea3d8aa1b8510da7d30658#574284dc2e27535b57ea3d8aa1b8510da7d30658"
+source = "git+https://github.com/wickra-lib/wickra-proof?rev=b64b875f23d6a2c5bb6cd2e8c10e96ec09aa1582#b64b875f23d6a2c5bb6cd2e8c10e96ec09aa1582"
 dependencies = [
  "blake3",
  "serde",

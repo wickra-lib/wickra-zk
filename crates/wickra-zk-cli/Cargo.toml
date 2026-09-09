@@ -16,6 +16,6 @@ name = "wickra-zk"
 path = "src/main.rs"
 
 [dependencies]
-wickra-zk-host = { path = "../wickra-zk-host" }
+wickra-zk-host = { path = "../wickra-zk-host", version = "0.1.0" }
 clap = { workspace = true }
 serde_json = { workspace = true }

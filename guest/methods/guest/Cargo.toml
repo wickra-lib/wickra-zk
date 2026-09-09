@@ -19,7 +19,7 @@ path = "src/main.rs"
 [dependencies]
 # risc0 guest runtime. `std` here is risc0's guest std shim (no host OS), the
 # risc0 convention — it provides `env::read`/`env::commit` and the entry macro.
-risc0-zkvm = { version = "1.2", default-features = false, features = ["std"] }
+risc0-zkvm = { version = "3.0", default-features = false, features = ["std"] }
 
 # The engine and the hasher. Both build for riscv32im-risc0-zkvm-elf as they
 # are: risc0's guest std shim carries what they use -- VecDeque, BTreeMap, the
@@ -34,7 +34,7 @@ risc0-zkvm = { version = "1.2", default-features = false, features = ["std"] }
 #
 # Pinned to an exact rev for the reason given in the workspace manifest.
 wickra-backtest = { git = "https://github.com/wickra-lib/wickra-backtest", rev = "d58e357506dbb95211d2313eae7bae93d1f73777", version = "0.1", default-features = false }
-proof-core = { git = "https://github.com/wickra-lib/wickra-proof", rev = "574284dc2e27535b57ea3d8aa1b8510da7d30658", version = "0.1", default-features = false }
+proof-core = { git = "https://github.com/wickra-lib/wickra-proof", rev = "b64b875f23d6a2c5bb6cd2e8c10e96ec09aa1582", version = "0.1", default-features = false }
 
 serde = { version = "1", default-features = false, features = ["derive", "alloc"] }
 

@@ -36,6 +36,16 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RISC0_DEV_MODE: "1"
+      # Lint the host, and let the guest be linted by clippy-guest and built by
+      # guest-build. `cargo clippy` exports RUSTC_WORKSPACE_WRAPPER, the child
+      # cargo that risc0-build spawns for the guest inherits it, and
+      # clippy-driver then compiles the guest against a stable sysroot that has
+      # no std for riscv32im-risc0-zkvm-elf:
+      #   wickra-zk-guest: error[E0463]: can't find crate for `std`
+      # RISC0_SKIP_BUILD makes embed_methods emit stub constants instead, which
+      # is what it exists for. Nothing about the guest goes unchecked: two other
+      # jobs compile it for real.
+      RISC0_SKIP_BUILD: "1"
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -131,7 +141,7 @@ jobs:
         with:
           components: llvm-tools-preview
       - uses: ./.github/actions/setup-risc0
-      - uses: taiki-e/install-action@6f1af7f89f8c1a5cb7dcb85d7853c05e7c3d4783 # cargo-llvm-cov
+      - uses: taiki-e/install-action@c3ec0de9ae7f1019cea21aa96aa0a895b9552063 # v2.87.9 (cargo-llvm-cov)
         with:
           tool: cargo-llvm-cov
       - run: cargo llvm-cov -p wickra-zk-host --lcov --output-path lcov.info
@@ -168,7 +178,7 @@ jobs:
         with:
           toolchain: nightly
       - uses: ./.github/actions/setup-risc0
-      - uses: taiki-e/install-action@6f1af7f89f8c1a5cb7dcb85d7853c05e7c3d4783 # cargo-fuzz
+      - uses: taiki-e/install-action@c3ec0de9ae7f1019cea21aa96aa0a895b9552063 # v2.87.9 (cargo-fuzz)
         with:
           tool: cargo-fuzz
       - run: cargo +nightly fuzz build

@@ -49,7 +49,11 @@ struct GuestJournal {
     n_trades: u64,
 }
 
-/// Round to 8 decimals — mirrors the host `round_to(x, 1e-8)`.
+/// Round to 8 decimals. Bit-for-bit the host's `round_to(x, 1e-8)`, which is
+/// the same three operations in the same order: scale up, round, scale back.
+/// The host recomputes these figures and compares them to the ones committed
+/// here, so "close enough" is not enough -- the two expressions have to produce
+/// the identical `f64`.
 fn round8(x: f64) -> f64 {
     (x * 1e8).round() / 1e8
 }
