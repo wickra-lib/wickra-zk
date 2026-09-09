@@ -258,3 +258,22 @@ jobs:
             --out proof.json --dev
           cargo run -p wickra-zk -- verify --proof proof.json | tee out.json
           grep -q '"verified": true' out.json
+
+  # A check script nobody runs is a file, not a check. Each of these reads what
+  # the repository actually ships and each found something on its first run:
+  # a published wheel that declared a licence it did not carry, and version
+  # declarations that had drifted apart across six ecosystems.
+  repo-checks:
+    name: Repository checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15 # backstop against a wedged job, not a budget
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Versions agree across every manifest
+        run: python scripts/check_version_sync.py
+      - name: Published packages carry their licence texts
+        run: python scripts/check_license_copies.py
+      - name: Binding READMEs link only to what travels with them
+        run: python scripts/check_readme_links.py
