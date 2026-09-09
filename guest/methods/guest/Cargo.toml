@@ -34,7 +34,7 @@ risc0-zkvm = { version = "3.0", default-features = false, features = ["std"] }
 #
 # Pinned to an exact rev for the reason given in the workspace manifest.
 wickra-backtest = { git = "https://github.com/wickra-lib/wickra-backtest", rev = "d58e357506dbb95211d2313eae7bae93d1f73777", version = "0.1", default-features = false }
-proof-core = { git = "https://github.com/wickra-lib/wickra-proof", rev = "b64b875f23d6a2c5bb6cd2e8c10e96ec09aa1582", version = "0.1", default-features = false }
+proof-core = { git = "https://github.com/wickra-lib/wickra-proof", rev = "c8bb6e31b66183380ffff79a9388fb2222f7a41b", version = "0.1", default-features = false }
 
 serde = { version = "1", default-features = false, features = ["derive", "alloc"] }
 
