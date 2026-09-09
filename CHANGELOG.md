@@ -8,6 +8,20 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **`serde_with` 3.17.0 -> 3.22.0**, clearing GHSA-7gcf-g7xr-8hxj: `KeyValueMap`
+  serialisation panicked on empty sequence or map entries. Fixed from 3.21.0.
+
+- **The remaining advisory is suppressed with its reason, because it cannot be
+  fixed here.** `tracing-subscriber` 0.2.25 carries CVE-2025-58160 -- ANSI
+  escape sequences can poison log output when untrusted input reaches a log
+  line -- and the fix is 0.3.20. That version is unreachable: `ark-relations`
+  declares the 0.2 line, and the chain to us runs ark-relations <-
+  ark-crypto-primitives <- ark-groth16 <- risc0-groth16 <- risc0-zkvm. A pin
+  that blocks an update raises no PR and reports nothing; recording why is the
+  only honest thing to do with it. Nothing here logs untrusted input through
+  that subscriber either -- it arrives with risc0's groth16 path, which this
+  crate does not drive.
+
 - **The guest and the host rounded differently, and the golden test's tolerance
   hid it.** `round_to(x, 1e-8)` divided by the precision and multiplied back,
   while the guest's `round8` scaled up and back down. Those are the same
