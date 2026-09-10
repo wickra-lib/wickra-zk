@@ -70,3 +70,75 @@ updates:
     groups:
       fuzz-deps:
         patterns: ["*"]
+
+  # The Python binding's own build and test dependencies.
+  - package-ecosystem: pip
+    directory: "/bindings/python"
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "deps(pip)"
+    groups:
+      python-binding:
+        patterns: ["*"]
+
+  # The Java binding: JUnit and the publishing plugins.
+  - package-ecosystem: maven
+    directory: "/bindings/java"
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "deps(maven)"
+    groups:
+      maven:
+        patterns: ["*"]
+
+  # The C# test project.
+  - package-ecosystem: nuget
+    directory: "/bindings/csharp/WickraZk.Tests"
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "deps(nuget)"
+    groups:
+      nuget:
+        patterns: ["*"]
+
+  # The Go module that mirrors out to wickra-zk-go.
+  - package-ecosystem: gomod
+    directory: "/bindings/go"
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "deps(gomod)"
+    groups:
+      go-binding:
+        patterns: ["*"]
+
+  # The Node binding and the napi CLI that generates its loader.
+  - package-ecosystem: npm
+    directory: "/bindings/node"
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "deps(npm)"
+    groups:
+      node-binding:
+        patterns: ["*"]
+
+  # The hash-pinned CI requirements; they only move when something regenerates them.
+  - package-ecosystem: pip
+    directory: "/.github/requirements"
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "deps(pip)"
+    groups:
+      ci-requirements:
+        patterns: ["*"]

@@ -163,43 +163,6 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
-  deny:
-    name: cargo-deny
-    runs-on: ubuntu-latest
-    timeout-minutes: 15 # backstop against a wedged job, not a budget
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          persist-credentials: false
-      - uses: EmbarkStudios/cargo-deny-action@bb137d7af7e4fb67e5f82a49c4fce4fad40782fe # v2
-        with:
-          command: check advisories bans sources licenses
-
-      # osv-scanner.toml exists in this repository and nothing ran it. The file
-      # records the advisories assessed as not affecting the project, with the
-      # reasoning beside each -- an assessment that was load-bearing for nobody,
-      # because no workflow ever consulted it.
-      #
-      # cargo-deny above covers the Rust graph only. This covers the other
-      # ecosystems the repository ships into -- npm, PyPI, Maven, NuGet, Go
-      # modules, R -- which had no vulnerability scanning in CI at all.
-      #
-      # --no-resolve turns off transitive resolution of *manifests*. The default
-      # enricher resolves each pom.xml against Maven Central, and ours depend on
-      # an org.wickra artefact at the version in the tree, which does not exist
-      # there until the release publishes it. Without the flag every version
-      # bump fails this job on a lookup for the artefact the bump exists to
-      # create. Everything pinned in a lockfile is still scanned in full and
-      # transitively, because a lockfile needs no resolution.
-      - name: osv-scanner
-        uses: google/osv-scanner-action/osv-scanner-action@6e4298ebc4db23e847df9b2e2de2939d6f066c67 # v2.5.1
-        with:
-          scan-args: |-
-            --recursive
-            --no-resolve
-            --config=osv-scanner.toml
-            ./
-
   fuzz-smoke:
     name: Fuzz (smoke)
     runs-on: ubuntu-latest
@@ -321,3 +284,424 @@ jobs:
             [ -e "$f" ] || continue
             Rscript -e "invisible(parse('$f'))" 2>/dev/null || echo "R not installed; skipped $f"
           done
+
+  supply-chain:
+    name: cargo-deny
+    runs-on: ubuntu-latest
+    timeout-minutes: 15 # backstop against a wedged job, not a budget
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: taiki-e/install-action@e67fa11c4b9316fa714ddf0abed07a0c3143b95b # v2.87.4
+        with:
+          tool: cargo-deny
+      - run: cargo deny check
+
+      # osv-scanner.toml exists in this repository and nothing ran it. The file
+      # records the advisories assessed as not affecting the project, with the
+      # reasoning beside each -- an assessment that was load-bearing for nobody,
+      # because no workflow ever consulted it.
+      #
+      # cargo-deny above covers the Rust graph only. This covers the other
+      # ecosystems the repository ships into -- npm, PyPI, Maven, NuGet, Go
+      # modules, R -- which had no vulnerability scanning in CI at all.
+      #
+      # --no-resolve turns off transitive resolution of *manifests*. The default
+      # enricher resolves each pom.xml against Maven Central, and ours depend on
+      # an org.wickra artefact at the version in the tree, which does not exist
+      # there until the release publishes it. Without the flag every version
+      # bump fails this job on a lookup for the artefact the bump exists to
+      # create. Everything pinned in a lockfile is still scanned in full and
+      # transitively, because a lockfile needs no resolution.
+      - name: osv-scanner
+        uses: google/osv-scanner-action/osv-scanner-action@6e4298ebc4db23e847df9b2e2de2939d6f066c67 # v2.5.1
+        with:
+          scan-args: |-
+            --recursive
+            --no-resolve
+            --config=osv-scanner.toml
+            ./
+
+  # links.yml runs this on a schedule against the whole tree; this is the
+  # pull-request half, so a README that gains a dead link is caught in review
+  # rather than by a nightly nobody is watching. Non-blocking on purpose: an
+  # external host being down is not this repository's defect.
+  links:
+    name: External links (non-blocking)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    timeout-minutes: 10 # backstop against a wedged job, not a budget
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+        with:
+          args: --config lychee.toml --no-progress --root-dir "${{ github.workspace }}" "*.md" "bindings/*/README.md"
+          fail: true
+
+  # The published API is a promise the version number makes. Nothing checked
+  # that a patch release keeps it, and a rename that slips through review goes
+  # out to six registries in one irreversible run.
+
+  # The published API is a promise the version number makes. Nothing checked
+  # that a patch release keeps it, and a rename that slips through review goes
+  # out to six registries in one irreversible run.
+  semver:
+    name: Public API (cargo-semver-checks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30 # backstop: it builds rustdoc JSON for each crate and its baseline
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rust
+      - uses: ./.github/actions/setup-risc0
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - name: Install cargo-semver-checks
+        uses: taiki-e/install-action@c3ec0de9ae7f1019cea21aa96aa0a895b9552063 # v2.87.9
+        timeout-minutes: 10 # fail fast on a stuck download instead of hanging the job
+        with:
+          tool: cargo-semver-checks
+
+      # Named explicitly rather than --workspace: the bench and binding crates
+      # are not published, so they promise nothing and have no baseline.
+      #
+      # A crate with no release yet has no baseline either, and
+      # cargo-semver-checks fails rather than saying so. That is the honest
+      # state of this repository today, not a defect -- an unpublished crate
+      # cannot have broken its published API. So each crate is checked only
+      # once it exists on crates.io, and the job says which ones it skipped.
+      # The moment the first release lands, this starts guarding for real.
+      - name: Check the published crates
+        shell: bash
+        run: |
+          set -euo pipefail
+          checked=0
+          for crate in wickra-zk-host wickra-zk; do
+            if curl -fsS -A "wickra-ci" "https://crates.io/api/v1/crates/$crate" >/dev/null 2>&1; then
+              echo "::group::cargo semver-checks $crate"
+              cargo semver-checks check-release -p "$crate"
+              echo "::endgroup::"
+              checked=$((checked + 1))
+            else
+              echo "::notice::$crate is not on crates.io yet; no baseline to compare against"
+            fi
+          done
+          echo "$checked crate(s) compared against their published baseline"
+
+  # The release builds the Linux wheels inside manylinux and musllinux images.
+  # Nothing else does, so a wheel that only fails there -- a missing system
+  # library, a Perl module OpenSSL's Configure wants -- is invisible until the
+  # tag, where it is already too late. This builds the same two images on every
+  # pull request.
+
+  python:
+    name: Python ${{ matrix.python-version }} on ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.9", "3.11", "3.12", "3.13"]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30 # backstop against a wedged job, not a budget
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: ./.github/actions/setup-rust
+      - uses: ./.github/actions/setup-risc0
+      - uses: Swatinem/rust-cache@f0d9c3887740aee45f6153b24b3a6b815192ec16 # v2
+      - run: pip install maturin pytest
+      - run: maturin build --out dist
+        working-directory: bindings/python
+      - run: pip install --no-index --find-links bindings/python/dist wickra-zk
+      - run: pytest bindings/python/tests -q
+
+  node:
+    name: Node ${{ matrix.node-version }} on ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node-version: ["22", "24"]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30 # backstop against a wedged job, not a budget
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rust
+      - uses: ./.github/actions/setup-risc0
+      - uses: Swatinem/rust-cache@f0d9c3887740aee45f6153b24b3a6b815192ec16 # v2
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: bindings/node/package-lock.json
+      # npm install (not npm ci): the per-platform optionalDependencies point at
+      # native packages that are not published until the first release.
+      - name: Install Node dependencies
+        run: cd bindings/node && npm install --no-audit --no-fund
+      - name: Build native module
+        run: cd bindings/node && npx napi build --platform --release
+      # The generated glue is platform-independent, so a drift check on one OS is
+      # enough — and avoids a spurious CRLF/LF diff on the Windows runner.
+      - name: Check index.js / index.d.ts are in sync
+        if: runner.os == 'Linux'
+        run: cd bindings/node && git diff --exit-code -- index.js index.d.ts
+      - name: Run Node tests
+        run: cd bindings/node && node --test
+
+  c-abi:
+    name: C ABI on ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30 # backstop against a wedged job, not a budget
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rust
+      - uses: ./.github/actions/setup-risc0
+      - uses: Swatinem/rust-cache@f0d9c3887740aee45f6153b24b3a6b815192ec16 # v2
+      - name: Install cbindgen
+        uses: taiki-e/install-action@e67fa11c4b9316fa714ddf0abed07a0c3143b95b # v2.87.4
+        with:
+          tool: cbindgen
+      - name: Build the C ABI library (cdylib + staticlib)
+        run: cargo build -p wickra-zk-c --release
+      - name: Rust unit tests
+        run: cargo test -p wickra-zk-c
+      # The generated header is platform-independent, so checking drift on one OS
+      # is enough — and avoids a spurious CRLF/LF diff on the Windows runner. This
+      # also validates the vendored Go copy.
+      - name: Check the C header (cbindgen + Go copy) is in sync
+        if: runner.os == 'Linux'
+        shell: bash
+        run: bash .github/scripts/check-cbindgen.sh
+      # The real cross-language test: a foreign C consumer links the generated
+      # header + the compiled library and runs. If this passes on all three OSes,
+      # every C-capable language can link the same way.
+      - name: Build and run the C example (CMake + ctest)
+        shell: bash
+        run: |
+          cmake -S examples/c -B examples/c/build
+          cmake --build examples/c/build --config Release
+          ctest --test-dir examples/c/build -C Release --output-on-failure
+
+  csharp:
+    name: C# on ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45 # backstop against a wedged job, not a budget
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rust
+      - uses: ./.github/actions/setup-risc0
+      - uses: Swatinem/rust-cache@f0d9c3887740aee45f6153b24b3a6b815192ec16 # v2
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: "8.0"
+      # The test project copies the native library from target/release (see the
+      # <Content> items), so build it in the release profile here.
+      - name: Build the C ABI library
+        run: cargo build -p wickra-zk-c --release
+      - name: Test the C# binding
+        run: dotnet test bindings/csharp/WickraZk.Tests/WickraZk.Tests.csproj -c Release
+
+  go:
+    name: Go on ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30 # backstop against a wedged job, not a budget
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "stable"
+          cache: false
+      - uses: ./.github/actions/setup-rust
+      - uses: ./.github/actions/setup-risc0
+      - uses: Swatinem/rust-cache@f0d9c3887740aee45f6153b24b3a6b815192ec16 # v2
+      - name: Build the C ABI library
+        run: cargo build -p wickra-zk-c --release
+      - name: Vendored header in sync with the C ABI
+        shell: bash
+        run: |
+          if ! diff -u bindings/c/include/wickra_zk.h bindings/go/include/wickra_zk.h; then
+            echo "::error::bindings/go/include/wickra_zk.h is stale — copy bindings/c/include/wickra_zk.h over it"
+            exit 1
+          fi
+      - name: Stage the native library
+        shell: bash
+        run: |
+          case "$RUNNER_ARCH" in
+            X64) arch=amd64 ;;
+            ARM64) arch=arm64 ;;
+            *) echo "::error::unsupported RUNNER_ARCH '$RUNNER_ARCH'"; exit 1 ;;
+          esac
+          case "$RUNNER_OS" in
+            Linux)   dir="linux_$arch";   lib=target/release/libwickra_zk.so ;;
+            macOS)   dir="darwin_$arch";  lib=target/release/libwickra_zk.dylib ;;
+            Windows) dir="windows_$arch"; lib=target/release/wickra_zk.dll ;;
+          esac
+          mkdir -p "bindings/go/lib/$dir"
+          cp "$lib" "bindings/go/lib/$dir/"
+          echo "WICKRA_GO_LIBDIR=$PWD/bindings/go/lib/$dir" >> "$GITHUB_ENV"
+      - name: Check gofmt
+        shell: bash
+        run: |
+          unformatted="$(gofmt -l bindings/go)"
+          if [ -n "$unformatted" ]; then
+            echo "gofmt needed on:"; echo "$unformatted"; exit 1
+          fi
+      - name: Vet and test the Go binding
+        shell: bash
+        run: |
+          export PATH="$WICKRA_GO_LIBDIR:$PATH"
+          cd bindings/go
+          go vet ./...
+          go test ./...
+
+  java:
+    name: Java on ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45 # backstop against a wedged job, not a budget
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rust
+      - uses: ./.github/actions/setup-risc0
+      - uses: Swatinem/rust-cache@f0d9c3887740aee45f6153b24b3a6b815192ec16 # v2
+      # The pom points native.lib.dir at target/debug, so build the debug profile.
+      - name: Build the C ABI library
+        run: cargo build -p wickra-zk-c
+      - uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+      - name: Test the Java binding
+        run: mvn -B -f bindings/java test
+
+  r:
+    name: R on ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30 # backstop against a wedged job, not a budget
+    env:
+      WKZK_INC: ${{ github.workspace }}/bindings/c/include
+      WKZK_LIB: ${{ github.workspace }}/target/release
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rust
+      - uses: ./.github/actions/setup-risc0
+      - uses: Swatinem/rust-cache@f0d9c3887740aee45f6153b24b3a6b815192ec16 # v2
+      - name: Build the C ABI library
+        run: cargo build -p wickra-zk-c --release
+      - uses: r-lib/actions/setup-r@465b7d8e732ca3921382b1674c59bada9cbf3399 # v2.13.0
+        with:
+          r-version: "release"
+          use-public-rspm: true
+      - name: Install and test the R binding
+        shell: bash
+        # github.workspace is a backslash path on Windows; Makevars(.win) (sh) and
+        # mingw need forward slashes. The Makevars do not bake an rpath, so the
+        # native library must be on the loader path at run time.
+        run: |
+          export WKZK_INC="${WKZK_INC//\\//}"
+          export WKZK_LIB="${WKZK_LIB//\\//}"
+          if command -v cygpath >/dev/null 2>&1; then
+            export PATH="$(cygpath -u "$WKZK_LIB"):$PATH"
+          else
+            export LD_LIBRARY_PATH="$WKZK_LIB:$LD_LIBRARY_PATH"
+            export DYLD_LIBRARY_PATH="$WKZK_LIB:$DYLD_LIBRARY_PATH"
+          fi
+          R CMD INSTALL bindings/r
+          Rscript bindings/r/tests/run_tests.R
+
+  # A check script nobody runs is a file, not a check. Each of these reads what
+  # the repository actually ships and each found something on its first run:
+  # a published wheel that declared a licence it did not carry, and version
+  # declarations that had drifted apart across six ecosystems.
+
+  # The release builds the Linux wheels inside manylinux and musllinux images.
+  # Nothing else does, so a wheel that only fails there -- a missing system
+  # library, a Perl module OpenSSL's Configure wants -- is invisible until the
+  # tag, where it is already too late. This builds the same two images on every
+  # pull request.
+  python-wheel-container-smoke:
+    name: Python wheel (${{ matrix.manylinux }} smoke)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45 # backstop: vendored OpenSSL adds a from-source compile
+    strategy:
+      fail-fast: false
+      matrix:
+        manylinux: [auto, musllinux_1_2]
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Sync root README into bindings/python so the build matches release
+        run: cp README.md bindings/python/README.md
+      - uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1.51.0
+        with:
+          working-directory: bindings/python
+          target: x86_64
+          args: --release --out dist
+          manylinux: ${{ matrix.manylinux }}
+          # Building OpenSSL from source needs Perl modules the minimal
+          # manylinux image lacks. The musllinux cross image ships a complete
+          # Perl and has no yum, so this is a no-op there.
+          before-script-linux: |
+            if command -v yum >/dev/null 2>&1; then yum install -y perl-core perl-IPC-Cmd perl-Data-Dumper perl-Time-Piece; fi
+
+  # The examples are what a reader copies. Nothing built them, so one could rot
+  # against an API change and stay green -- the worst kind of documentation,
+  # because it looks executable. This compiles each of them; it does not run
+  # them, since several want a network or a built native library.
+
+  # Surface parity is its own concern, not a line inside the repository checks:
+  # it is the claim the whole product rests on. A request built in any language
+  # must produce the same canonical bytes, which only holds if every language can
+  # express the same request.
+  binding-surface:
+    name: Binding surface parity
+    runs-on: ubuntu-latest
+    timeout-minutes: 15 # backstop against a wedged job, not a budget
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Every binding exposes the same surface
+        run: python scripts/check_binding_surface.py
+      - name: The R wrapper matches the C ABI header
+        run: python scripts/check_r_abi_skew.py
