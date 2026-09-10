@@ -2190,19 +2190,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "proof-core"
-version = "0.1.0"
-source = "git+https://github.com/wickra-lib/wickra-proof?rev=c8bb6e31b66183380ffff79a9388fb2222f7a41b#c8bb6e31b66183380ffff79a9388fb2222f7a41b"
-dependencies = [
- "blake3",
- "serde",
- "serde_json",
- "thiserror",
- "toml 1.1.3+spec-1.1.0",
- "wickra-backtest-core",
-]
-
-[[package]]
 name = "proptest"
 version = "1.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3836,6 +3823,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "wickra-proof-core"
+version = "0.1.0"
+source = "git+https://github.com/wickra-lib/wickra-proof?rev=971a41b26512807fdbd37b3f1da4a9b0689a77d0#971a41b26512807fdbd37b3f1da4a9b0689a77d0"
+dependencies = [
+ "blake3",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "toml 1.1.3+spec-1.1.0",
+ "wickra-backtest-core",
+]
+
+[[package]]
 name = "wickra-zk"
 version = "0.1.0"
 dependencies = [
@@ -3857,13 +3857,13 @@ dependencies = [
 name = "wickra-zk-host"
 version = "0.1.0"
 dependencies = [
- "proof-core",
  "proptest",
  "risc0-zkvm",
  "serde",
  "serde_json",
  "thiserror",
  "wickra-backtest",
+ "wickra-proof-core",
  "wickra-zk-methods",
 ]
 
