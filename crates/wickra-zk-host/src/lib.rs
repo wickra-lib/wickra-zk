@@ -46,13 +46,13 @@ pub fn version() -> &'static str {
 /// guest recomputes and binds the proof to. Callers (e.g. the CLI) use this to
 /// fill `ZkSpec::dataset_commitment` when a spec omits it.
 ///
-/// This is the same `proof_core::hash_candles` the guest calls, so host and
+/// This is the same `wickra_proof_core::hash_candles` the guest calls, so host and
 /// circuit cannot disagree about what the commitment covers.
 ///
 /// # Errors
 /// Returns [`Error::Data`] if the candles cannot be canonicalised.
 pub fn commit_dataset(candles: &[Candle]) -> Result<String> {
-    proof_core::hash_candles(candles).map_err(|e| Error::Data(e.to_string()))
+    wickra_proof_core::hash_candles(candles).map_err(|e| Error::Data(e.to_string()))
 }
 
 /// Compute the canonical report hash of a backtest natively — the value the
@@ -64,7 +64,7 @@ pub fn commit_dataset(candles: &[Candle]) -> Result<String> {
 /// the report cannot be canonicalised.
 pub fn native_report_hash(strategy: &StrategySpec, candles: &[Candle]) -> Result<String> {
     let report = wickra_backtest::run(strategy, candles).map_err(|e| Error::Data(e.to_string()))?;
-    proof_core::hash_report(&report).map_err(|e| Error::Data(e.to_string()))
+    wickra_proof_core::hash_report(&report).map_err(|e| Error::Data(e.to_string()))
 }
 
 #[cfg(test)]

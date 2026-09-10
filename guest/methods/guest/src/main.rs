@@ -66,7 +66,7 @@ fn main() {
 
     // 2. Bind the data to the commitment.
     let recomputed =
-        proof_core::hash_candles(&candles).expect("candles must serialise to canonical JSON");
+        wickra_proof_core::hash_candles(&candles).expect("candles must serialise to canonical JSON");
     assert_eq!(
         recomputed, dataset_commitment,
         "dataset_commitment does not match the candles fed to the guest"
@@ -78,7 +78,7 @@ fn main() {
 
     // 4. Canonical report hash, identical to the native wickra-proof hash.
     let report_hash =
-        proof_core::hash_report(&report).expect("report must serialise to canonical JSON");
+        wickra_proof_core::hash_report(&report).expect("report must serialise to canonical JSON");
 
     // 5. Commit the journal only (host adds the image id after decoding).
     // The headline figures live on `report.metrics`, not on the report itself.

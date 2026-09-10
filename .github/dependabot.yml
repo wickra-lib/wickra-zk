@@ -1,7 +1,7 @@
 version: 2
 # Version-update PRs are paused (open-pull-requests-limit: 0) until the zkVM
 # guest program compiles: guest/methods/guest is currently blind-authored
-# against a proof_core/wickra-backtest API that does not exist yet (awaits the
+# against a wickra_proof_core/wickra-backtest API that does not exist yet (awaits the
 # upstream no_std/alloc conversion), so the guest ELF build fails and no
 # dependabot PR can go green. Security updates are unaffected. Restore the
 # limits to 10 once the guest integration lands.

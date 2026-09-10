@@ -8,6 +8,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **Follows wickra-proof's core crate rename.** `proof-core` became
+  `wickra-proof-core` upstream because the old name was taken on crates.io by
+  an unrelated project before wickra-proof had released -- so its first publish
+  would have failed with a permission error after the tag. The guest and the
+  host now call `wickra_proof_core::`, and the pin moves to the commit that
+  carries the rename.
+
 - **`serde_with` 3.17.0 -> 3.22.0**, clearing GHSA-7gcf-g7xr-8hxj: `KeyValueMap`
   serialisation panicked on empty sequence or map entries. Fixed from 3.21.0.
 
@@ -61,7 +68,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   and the engine bump added `symbol` and `timeframe` to it.
 
 - **Neither the guest nor the host had ever compiled.** Both called
-  `proof_core::hash_candles` and `proof_core::hash_report`, two functions that
+  `wickra_proof_core::hash_candles` and `wickra_proof_core::hash_report`, two functions that
   did not exist in `wickra-proof` and never had; the host's own doc comments
   called them *"provisional"* and the guest's module doc called itself
   *"blind-authored"*. CI has 30 runs and no successful one. wickra-proof now
@@ -72,7 +79,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   trade count is `num_trades: usize`, so the journal now reads them from there
   and converts with `u64::try_from`.
 
-- **The git dependencies floated.** `wickra-backtest` and `proof-core` were
+- **The git dependencies floated.** `wickra-backtest` and `wickra-proof-core` were
   taken from a branch with no `rev`, so they tracked whatever upstream had last
   pushed. That is how the guest came to call functions that no longer existed:
   an unpinned git dependency never goes red, it only gets older, and then one
