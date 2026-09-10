@@ -1,0 +1,30 @@
+[build-system]
+requires = ["maturin>=1.7,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "wickra-zk"
+version = "0.1.0"
+description = "Prove your backtest — zero-knowledge, on-chain-verifiable performance without revealing your data or strategy."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT OR Apache-2.0" }
+authors = [{ name = "wickra-lib" }]
+keywords = ["zero-knowledge", "zkvm", "backtest", "risc0", "trading"]
+classifiers = [
+  "Programming Language :: Rust",
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "License :: OSI Approved :: Apache Software License",
+  "Topic :: Office/Business :: Financial :: Investment",
+]
+
+[project.urls]
+Homepage = "https://github.com/wickra-lib/wickra-zk"
+Repository = "https://github.com/wickra-lib/wickra-zk"
+
+[tool.maturin]
+manifest-path = "Cargo.toml"
+python-source = "python"
+module-name = "wickra_zk._wickra_zk"
+features = ["pyo3/extension-module"]
