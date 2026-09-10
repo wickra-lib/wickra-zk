@@ -1,0 +1,4 @@
+useDynLib(wickrazk, .registration = TRUE, .fixes = "C_")
+export(wkzk_version)
+export(wkzk_new)
+export(wkzk_command)

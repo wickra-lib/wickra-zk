@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.9.0" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="4.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../WickraZk/WickraZk.csproj" />
+  </ItemGroup>
+
+  <!--
+    Copy the native C ABI library next to the test assembly so the resolver's
+    default probe finds it. CI builds `cargo build -p wickra-zk-c` before
+    running the tests; the DllImportResolver also probes the Cargo target/ tree.
+  -->
+  <ItemGroup>
+    <Content Include="../../../target/release/wickra_zk.dll" Condition="Exists('../../../target/release/wickra_zk.dll')">
+      <Link>wickra_zk.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="../../../target/debug/wickra_zk.dll" Condition="Exists('../../../target/debug/wickra_zk.dll')">
+      <Link>wickra_zk.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="../../../target/release/libwickra_zk.so" Condition="Exists('../../../target/release/libwickra_zk.so')">
+      <Link>libwickra_zk.so</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="../../../target/release/libwickra_zk.dylib" Condition="Exists('../../../target/release/libwickra_zk.dylib')">
+      <Link>libwickra_zk.dylib</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>
