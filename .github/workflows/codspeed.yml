@@ -1,0 +1,55 @@
+name: CodSpeed
+
+# Performance regressions were the one class of defect nothing here reported.
+# bench.yml runs on a schedule and prints numbers a person has to read, so a
+# regression surfaces weeks after it lands, if at all. This measures every pull
+# request and says so in a comment.
+#
+# It counts instructions under instrumentation rather than timing wall clock.
+# That is what makes a shared runner usable: the number does not move because a
+# neighbouring VM got busy. It matters more here than in most repositories --
+# proving cost is measured in cycles, and a change that adds work inside the
+# guest is paid for by every proof anyone ever generates.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codspeed-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  benchmarks:
+    name: Instruction counts
+    runs-on: ubuntu-latest
+    timeout-minutes: 45 # backstop against a wedged job, not a budget
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rust
+      # The bench crate builds the guest through risc0-build, so the toolchain
+      # has to be here as well; without it the build fails before a single
+      # measurement is taken.
+      - uses: ./.github/actions/setup-risc0
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - name: Install cargo-codspeed
+        uses: taiki-e/install-action@c3ec0de9ae7f1019cea21aa96aa0a895b9552063 # v2.87.9
+        with:
+          tool: cargo-codspeed
+      - name: Build the benchmarks
+        run: cargo codspeed build -p wickra-zk-bench
+      - name: Run the benchmarks
+        uses: CodSpeedHQ/action@373d6868929f444bc08d901fd0eb0ad52a8875ea # v5.2.1
+        with:
+          # Required since action v4, where it used to be inferred. `simulation`
+          # counts instructions under instrumentation; `walltime` needs
+          # CodSpeed's dedicated runners.
+          mode: simulation
+          run: cargo codspeed run
+          token: ${{ secrets.CODSPEED_TOKEN }}

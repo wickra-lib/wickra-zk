@@ -1,10 +1,14 @@
 version: 2
-# Version-update PRs are paused (open-pull-requests-limit: 0) until the zkVM
-# guest program compiles: guest/methods/guest is currently blind-authored
-# against a wickra_proof_core/wickra-backtest API that does not exist yet (awaits the
-# upstream no_std/alloc conversion), so the guest ELF build fails and no
-# dependabot PR can go green. Security updates are unaffected. Restore the
-# limits to 10 once the guest integration lands.
+# Version updates run normally. They were paused with limit 0 while the zkVM
+# guest did not compile -- no dependabot PR could go green against a guest that
+# failed to build, so every one of them would have been noise. The guest builds
+# now, so the pause has outlived its reason.
+#
+# Note what the pause also did while it lasted: `open-pull-requests-limit: 10`
+# suppresses security updates too, not only version updates. A repository can
+# sit unaware of a critical advisory that way, which is close to what happened
+# here -- the risc0-zkvm arbitrary-code-execution advisory was found by reading
+# the alert list, not by a PR arriving.
 updates:
   # Rust host workspace (root Cargo.toml + all member crates). The guest crate
   # under guest/methods/guest is a detached riscv build and is updated manually
@@ -15,7 +19,7 @@ updates:
       interval: monthly
       time: "06:00"
       timezone: "Etc/UTC"
-    open-pull-requests-limit: 0
+    open-pull-requests-limit: 10
     cooldown:
       default-days: 7
     commit-message:
@@ -38,7 +42,7 @@ updates:
       interval: monthly
       time: "06:00"
       timezone: "Etc/UTC"
-    open-pull-requests-limit: 0
+    open-pull-requests-limit: 10
     cooldown:
       default-days: 7
     commit-message:
@@ -47,8 +51,9 @@ updates:
     # MSRV job), not an action version. Dependabot misreads the channel as a
     # version and proposes non-existent Rust releases. The toolchain pins are
     # managed manually with the MSRV policy.
-    ignore:
-      - dependency-name: "dtolnay/rust-toolchain"
+    # No ignore list. Every action here is pinned by commit SHA, so dependabot
+    # cannot misread a version, and an ignore would silence its security
+    # updates as well as its version ones.
     groups:
       github-actions:
         patterns: ["*"]
