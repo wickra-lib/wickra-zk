@@ -1,0 +1,25 @@
+[package]
+name = "wickra-zk-node"
+description = "Node.js bindings for wickra-zk: prove a backtest in zero knowledge."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+readme = "README.md"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[lints]
+workspace = true
+
+[dependencies]
+wickra-zk-host = { path = "../../crates/wickra-zk-host", version = "0.1.0" }
+napi = { version = "3", default-features = false, features = ["napi4"] }
+napi-derive = "3"
+
+[build-dependencies]
+napi-build = "2"

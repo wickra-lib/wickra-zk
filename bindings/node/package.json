@@ -1,0 +1,37 @@
+{
+  "name": "wickra-zk",
+  "version": "0.1.0",
+  "description": "Prove your backtest — zero-knowledge, on-chain-verifiable performance without revealing your data or strategy.",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "license": "MIT OR Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wickra-lib/wickra-zk.git"
+  },
+  "engines": {
+    "node": ">= 20"
+  },
+  "napi": {
+    "binaryName": "wickra-zk",
+    "targets": [
+      "x86_64-unknown-linux-gnu",
+      "aarch64-unknown-linux-gnu",
+      "x86_64-apple-darwin",
+      "aarch64-apple-darwin"
+    ]
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "LICENSE-MIT",
+    "LICENSE-APACHE"
+  ],
+  "scripts": {
+    "build": "napi build --platform --release",
+    "test": "node --test __tests__"
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "^3.9.0"
+  }
+}
