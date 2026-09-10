@@ -68,12 +68,54 @@ wickra-zk prove  --spec examples/specs/momentum.json --data examples/data/BTCUSD
 wickra-zk verify --proof momentum.proof.json
 ```
 
-## Building from source
-
+## Building everything from source
 ```bash
 git clone https://github.com/wickra-lib/wickra-zk && cd wickra-zk
 cargo risczero install
 cargo build --release
+```
+
+## Project layout
+
+```
+crates/wickra-zk-host/     the host: prove, verify, the ZkSpec/PublicOutputs model
+crates/wickra-zk-cli/      the `wickra-zk` command line
+crates/wickra-zk-bench/    criterion benchmarks over the proving path
+guest/methods/             host-side wrapper; build.rs compiles the guest to a
+                           RISC-V ELF and exports its image id
+guest/methods/guest/       the guest program -- the code that runs inside the
+                           zkVM and whose honest execution the receipt attests
+golden/                    frozen (spec, data) -> expected triples
+fuzz/                      libfuzzer targets over the JSON boundary
+```
+
+## Testing
+
+Run the suites with the commands in
+[Building everything from source](#building-everything-from-source).
+
+- **`wickra-zk-host`** — the determinism chain, end to end: the native path's
+  report hash, the dev-mode guest's journal, and the blessed fixtures must all
+  agree. That equality is the product; if the guest and the native engine ever
+  disagree, the proof attests to something other than what the engine computes.
+- **The guest** is compiled for `riscv32im-risc0-zkvm-elf` on every change and
+  linted for that target separately, because a guest that builds on the host
+  proves nothing about the one that runs in the circuit.
+- **`fuzz/`** — libfuzzer targets over the spec and journal parsers, run as a
+  time-boxed smoke in CI.
+- **Nightly** — `prove.yml` runs the real proving path rather than dev mode.
+  Dev mode produces an unsound receipt quickly, which is right for CI and wrong
+  as the only thing ever exercised.
+
+## Benchmarks
+
+`crates/wickra-zk-bench` measures the proving path with criterion, and CodSpeed
+reports instruction counts on every pull request. Absolute proving times depend
+on the machine and on whether the receipt is real or dev-mode; the numbers worth
+watching are relative, which is what CodSpeed reports.
+
+```bash
+cargo bench -p wickra-zk-bench
 ```
 
 ## Requirements
