@@ -3940,6 +3940,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "wickra-zk-c"
+version = "0.1.0"
+dependencies = [
+ "wickra-zk-host",
+]
+
+[[package]]
 name = "wickra-zk-host"
 version = "0.1.0"
 dependencies = [

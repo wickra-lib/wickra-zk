@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = [
+members = ["bindings/c", 
     "crates/wickra-zk-host",
     "crates/wickra-zk-cli",
     "crates/wickra-zk-bench",
