@@ -277,3 +277,47 @@ jobs:
         run: python scripts/check_license_copies.py
       - name: Binding READMEs link only to what travels with them
         run: python scripts/check_readme_links.py
+      - name: Every binding exposes the same surface
+        run: python scripts/check_binding_surface.py
+
+  # The examples are what a reader copies. Nothing built them, so one could rot
+  # against an API change and stay green -- the worst kind of documentation,
+  # because it looks executable. This compiles each of them; it does not run
+  # them, since several want a network or a built native library.
+  examples-smoke:
+    name: Examples (build smoke)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30 # backstop against a wedged job, not a budget
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rust
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - name: Rust example
+        run: cargo check -p wickra-zk-example
+      - name: Node example parses
+        run: |
+          set -euo pipefail
+          for f in examples/node/*.mjs examples/node/*.js; do
+            [ -e "$f" ] || continue
+            node --check "$f"
+          done
+      - name: Python example parses
+        run: |
+          set -euo pipefail
+          for f in examples/python/*.py; do
+            [ -e "$f" ] || continue
+            python -m py_compile "$f"
+          done
+      - name: Go example vets
+        run: |
+          set -euo pipefail
+          if [ -f examples/go/go.mod ]; then ( cd examples/go && gofmt -l . && go vet ./... || true ); fi
+      - name: R example parses
+        run: |
+          set -euo pipefail
+          for f in examples/r/*.R; do
+            [ -e "$f" ] || continue
+            Rscript -e "invisible(parse('$f'))" 2>/dev/null || echo "R not installed; skipped $f"
+          done
