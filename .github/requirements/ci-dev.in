@@ -1,0 +1,7 @@
+# Python dev dependencies for the binding CI (build + test). Compiled to a
+# hash-locked ci-dev.txt with:
+#   uv pip compile --generate-hashes .github/requirements/ci-dev.in -o .github/requirements/ci-dev.txt
+# The Python binding builds the extension and drives the JSON command surface;
+# it needs no array or math dependency, so one lockfile covers py39-py313.
+maturin
+pytest

@@ -1,0 +1,26 @@
+{
+  "name": "wickra-zk-darwin-x64",
+  "version": "0.1.0",
+  "description": "Native binding for wickra-zk (darwin-x64). Installed automatically as an optional dependency of wickra-zk on matching platforms.",
+  "main": "wickra-zk.darwin-x64.node",
+  "files": [
+    "wickra-zk.darwin-x64.node",
+    "LICENSE-MIT",
+    "LICENSE-APACHE"
+  ],
+  "license": "MIT OR Apache-2.0",
+  "engines": {
+    "node": ">= 20"
+  },
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wickra-lib/wickra-zk"
+  },
+  "homepage": "https://github.com/wickra-lib/wickra-zk"
+}

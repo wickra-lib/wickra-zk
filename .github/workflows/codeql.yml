@@ -39,12 +39,53 @@ jobs:
             build-mode: none
           - language: javascript-typescript
             build-mode: none
+          - language: go
+            build-mode: autobuild
+          - language: c-cpp
+            build-mode: manual
+          - language: csharp
+            build-mode: manual
+          - language: java-kotlin
+            build-mode: manual
     steps:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
 
+      - name: Set up JDK 25
+        if: matrix.language == 'java-kotlin'
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with:
+          distribution: temurin
+          java-version: "25"
+      - name: Set up Go
+        if: matrix.language == 'go'
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v6.0.0
+        with:
+          go-version: stable
+          cache: false
+      # `manual` build mode means this workflow owns producing the compiled
+      # artefacts CodeQL analyses. A language in the matrix with no build is a
+      # check that reports success over an empty database.
+      - name: Install Rust toolchain
+        if: matrix.language == 'go' || matrix.language == 'c-cpp'
+        uses: ./.github/actions/setup-rust
+      # The C ABI crate depends on the host, whose build.rs compiles the zkVM
+      # guest, so the risc0 toolchain has to be here too.
+      - name: Install the risc0 toolchain
+        if: matrix.language == 'go' || matrix.language == 'c-cpp'
+        uses: ./.github/actions/setup-risc0
+      - name: Build the C ABI library
+        if: matrix.language == 'go' || matrix.language == 'c-cpp'
+        run: cargo build -p wickra-zk-c --release
+      - name: Stage the native library for cgo
+        if: matrix.language == 'go'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p bindings/go/lib/linux_amd64
+          cp target/release/libwickra_zk.so bindings/go/lib/linux_amd64/
       - name: Initialize CodeQL
         uses: github/codeql-action/init@99df26d4f13ea111d4ec1a7dddef6063f76b97e9 # v4.37.0
         with:
@@ -52,6 +93,12 @@ jobs:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
 
+      - name: Build the C# binding and tests
+        if: matrix.language == 'csharp'
+        run: dotnet build bindings/csharp/WickraZk.Tests/WickraZk.Tests.csproj -c Release
+      - name: Build the Java binding
+        if: matrix.language == 'java-kotlin'
+        run: mvn -B -f bindings/java install -DskipTests
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@99df26d4f13ea111d4ec1a7dddef6063f76b97e9 # v4.37.0
         with:
