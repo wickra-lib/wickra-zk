@@ -60,7 +60,17 @@ fn round8(x: f64) -> f64 {
 
 fn main() {
     // 1. Private inputs, in the order the host writes them in `prove.rs`.
-    let strategy: StrategySpec = env::read();
+    //
+    // The strategy crosses as JSON text, not as a serde value. risc0's guest
+    // serde is a word stream with no field names or tags, and `StrategySpec`
+    // is written for JSON: an `Option` field with `skip_serializing_if` is
+    // simply absent when `None`, and `Operand` is `#[serde(untagged)]`. Fed
+    // through the word stream, the reader takes the next word as the option
+    // tag and fails with `DeserializeBadOption`. JSON carries both faithfully.
+    // The candles are a plain struct and cross as words.
+    let strategy_json: String = env::read();
+    let strategy: StrategySpec =
+        serde_json::from_str(&strategy_json).expect("the host writes a valid StrategySpec");
     let candles: Vec<Candle> = env::read();
     let dataset_commitment: String = env::read();
 

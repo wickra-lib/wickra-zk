@@ -37,6 +37,8 @@ wickra-backtest = { git = "https://github.com/wickra-lib/wickra-backtest", rev =
 wickra-proof-core = { git = "https://github.com/wickra-lib/wickra-proof", rev = "971a41b26512807fdbd37b3f1da4a9b0689a77d0", version = "0.1", default-features = false }
 
 serde = { version = "1", default-features = false, features = ["derive", "alloc"] }
+# The strategy crosses the host/guest boundary as JSON text (see main.rs).
+serde_json = "1"
 
 [profile.release]
 opt-level = 3

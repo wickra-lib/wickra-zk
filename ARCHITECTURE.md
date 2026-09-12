@@ -41,7 +41,11 @@ host build time via `guest/methods/build.rs`.
 
 1. The host loads a strategy spec (`ZkSpec`) and candle data (private inputs).
 2. It writes them into the guest's `ExecutorEnv` and runs the prover against
-   `WICKRA_ZK_GUEST_ELF`.
+   `WICKRA_ZK_GUEST_ELF`. The strategy crosses as JSON text, the candles as
+   a word stream: risc0's serde carries no field names or tags, and
+   `StrategySpec` relies on JSON semantics (`skip_serializing_if` on an
+   `Option`, an `untagged` enum), so written as a value it does not read
+   back.
 3. The guest reads the inputs, runs `wickra-backtest`, canonicalizes the report
    with `wickra-proof`, and `commit`s the public outputs (the `report_hash` and
    a few metrics) to the journal.

@@ -180,7 +180,12 @@ mod tests {
         // Second call with a buffer of len + 1: the response and a NUL.
         let mut buf = vec![0i8; (len as usize) + 1];
         let again = unsafe {
-            wickra_zk_command(handle, cmd.as_ptr(), buf.as_mut_ptr().cast::<c_char>(), buf.len())
+            wickra_zk_command(
+                handle,
+                cmd.as_ptr(),
+                buf.as_mut_ptr().cast::<c_char>(),
+                buf.len(),
+            )
         };
         assert_eq!(again, len);
         let text = unsafe { CStr::from_ptr(buf.as_ptr().cast::<c_char>()) }
@@ -216,7 +221,12 @@ mod tests {
         assert!(len >= 0, "domain errors must not be negative, got {len}");
         let mut buf = vec![0i8; (len as usize) + 1];
         unsafe {
-            wickra_zk_command(handle, cmd.as_ptr(), buf.as_mut_ptr().cast::<c_char>(), buf.len())
+            wickra_zk_command(
+                handle,
+                cmd.as_ptr(),
+                buf.as_mut_ptr().cast::<c_char>(),
+                buf.len(),
+            )
         };
         let text = unsafe { CStr::from_ptr(buf.as_ptr().cast::<c_char>()) }
             .to_str()

@@ -76,15 +76,15 @@ mod tests {
             report_hash: "a".repeat(64),
             dataset_commitment: "b".repeat(64),
             guest_id: "c".repeat(64),
-            sharpe: round_to(1.234_567_891_2, 1e-8),
-            pnl: round_to(1000.123_456_789, 1e-8),
+            sharpe: round_to(1.234_567_891_234, 1e-8),
+            pnl: round_to(1_000.123_456_789_012, 1e-8),
             n_trades: 7,
         }
     }
 
     #[test]
     fn round_to_matches_proof_core() {
-        assert!((round_to(1.234_567_891_2, 1e-8) - 1.234_567_89).abs() < 1e-12);
+        assert!((round_to(1.234_567_891_234, 1e-8) - 1.234_567_89).abs() < 1e-12);
         assert!((round_to(-0.000_000_004, 1e-8)).abs() < 1e-12);
     }
 

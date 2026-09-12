@@ -14,6 +14,9 @@
 
 // PyO3 protocol methods take `self` by value/ref regardless of use.
 #![allow(clippy::needless_pass_by_value)]
+// `Prover` holds no state, but `command` is an instance method in every
+// binding of the family, so it takes `self` it does not read.
+#![allow(clippy::unused_self)]
 
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
@@ -35,8 +38,7 @@ impl PyProver {
 
     /// Apply a command JSON and return the resulting response JSON.
     fn command(&mut self, cmd_json: &str) -> PyResult<String> {
-        wickra_zk_host::command_json(cmd_json)
-            .map_err(|err| PyValueError::new_err(err.to_string()))
+        wickra_zk_host::command_json(cmd_json).map_err(|err| PyValueError::new_err(err.to_string()))
     }
 
     /// The library version.
