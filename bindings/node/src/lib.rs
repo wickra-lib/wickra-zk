@@ -14,6 +14,12 @@
 #![allow(missing_debug_implementations)]
 // napi exposes owned `String` arguments; the bodies only need to borrow them.
 #![allow(clippy::needless_pass_by_value)]
+// The napi surface is consumed from JavaScript: `#[must_use]` and `# Errors`
+// sections would document a Rust caller that does not exist.
+#![allow(clippy::must_use_candidate, clippy::missing_errors_doc)]
+// `Prover` holds no state, but its methods take `self` so every binding in
+// the family reads the same way.
+#![allow(clippy::unused_self)]
 
 use napi::Result;
 use napi_derive::napi;
