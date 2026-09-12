@@ -12,11 +12,11 @@ library(wickrazk)
 
 prover <- wkzk_new()
 cmd <- paste0(
-  '{"cmd":"prove","spec":{"strategy":{...},"dataset_ref":"BTCUSDT/1h"},',
-  '"data":{"BTCUSDT":[{"time":1,"open":100,"high":101,"low":99,"close":100,"volume":1000}]}}'
+  '{"cmd":"prove","spec":{"strategy":{...}},',
+  '"candles":[{"time":1,"open":100,"high":101,"low":99,"close":100,"volume":1000}]}'
 )
 cat(wkzk_command(prover, cmd), "\n")
-# {"engine_version":"…","inputs_hash":"…","report":…,"report_hash":"…"}
+# {"receipt":…,"journal":{"report_hash":"…","dataset_commitment":"…","guest_id":"…",…},"version":"…"}
 cat(wkzk_version(), "\n")
 ```
 
@@ -24,9 +24,15 @@ cat(wkzk_version(), "\n")
 
 | Command | Payload | Response |
 |---------|---------|----------|
-| `prove` | `{spec, data}` | `{report, inputs_hash, report_hash, engine_version}` |
-| `verify` | `{proof, spec, data}` | `{ok: true, valid: bool}` |
-| `version` | — | `{engine_version}` |
+| `prove` | `{spec: {strategy, dataset_commitment?}, candles}` | `{receipt, journal, version}` |
+| `commit` | `{candles}` | `{dataset_commitment}` |
+| `verify` | `{proof}` | `{report_hash, dataset_commitment, guest_id, sharpe, pnl, n_trades}` |
+| `version` | — | `{version, guest_id}` |
+
+The envelope is documented once, in
+[docs/ZK.md](https://github.com/wickra-lib/wickra-zk/blob/main/docs/ZK.md#the-command-envelope).
+`dataset_commitment` may be omitted from a `prove` spec; the host computes it
+from the candles. Proving runs a zkVM: seconds to minutes.
 
 Domain errors are reported in-band as `{"ok":false,"error":"…"}`.
 

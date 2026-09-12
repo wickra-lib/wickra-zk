@@ -38,27 +38,34 @@ func main() {
 	p := wickra.New()
 	defer p.Close()
 
-	cmd := `{"cmd":"prove","spec":{"strategy":{...},"dataset_ref":"BTCUSDT/1h"},` +
-		`"data":{"BTCUSDT":[{"time":1,"open":100,"high":101,"low":99,"close":100,"volume":1000}]}}`
+	cmd := `{"cmd":"prove","spec":{"strategy":{...}},` +
+		`"candles":[{"time":1,"open":100,"high":101,"low":99,"close":100,"volume":1000}]}`
 
 	proof, err := p.Command(cmd)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(proof) // {"engine_version":"…","inputs_hash":"…","report":…,"report_hash":"…"}
+	fmt.Println(proof) // {"receipt":…,"journal":{"report_hash":"…","dataset_commitment":"…","guest_id":"…",…},"version":"…"}
 	fmt.Println(wickra.Version())
 }
 ```
 
 ## Commands
 
-| Command        | Payload                 | Response                                                |
-| -------------- | ----------------------- | ------------------------------------------------------ |
-| `prove`        | `{spec, data}`          | `{report, inputs_hash, report_hash, engine_version}`   |
-| `verify`       | `{proof, spec, data}`   | `{ok: true, valid: bool}`                              |
-| `version`      | —                       | `{engine_version}`                                     |
+| Command | Payload | Response |
+|---------|---------|----------|
+| `prove` | `{spec: {strategy, dataset_commitment?}, candles}` | `{receipt, journal, version}` |
+| `commit` | `{candles}` | `{dataset_commitment}` |
+| `verify` | `{proof}` | `{report_hash, dataset_commitment, guest_id, sharpe, pnl, n_trades}` |
+| `version` | — | `{version, guest_id}` |
 
-Errors are reported in-band as `{"ok":false,"error":"…"}`.
+The envelope is documented once, in
+[docs/ZK.md](https://github.com/wickra-lib/wickra-zk/blob/main/docs/ZK.md#the-command-envelope).
+`dataset_commitment` may be omitted from a `prove` spec; the host computes it
+from the candles. Proving runs a zkVM: seconds to minutes.
+
+Domain errors are reported in-band as `{"ok":false,"error":"…"}`; the Go
+`error` is reserved for ABI-level failures (a null argument, a caught panic).
 
 `wickra-zk-go` is generated from this directory by the release pipeline: it
 mirrors the Go sources, the vendored C ABI header (`include/wickra_zk.h`) and
