@@ -2,6 +2,7 @@ Package: wickrazk
 Type: Package
 Title: Zero-Knowledge Proofs of Backtest Performance
 Version: 0.1.0
+OS_type: unix
 Authors@R: person("kingchenc", role = c("aut", "cre"), email = "support@wickra.org")
 Description: R bindings for wickra-zk over its C ABI hub. Prove that a
     backtest was run honestly - the report, its hash and the headline metrics -

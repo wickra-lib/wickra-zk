@@ -13,10 +13,12 @@ concurrency:
   cancel-in-progress: true
 
 # The host workspace embeds the guest ELF via `risc0_build::embed_methods()`, so
-# every job that builds host/cli/bench needs the risc0 toolchain (Linux/macOS
-# only — risc0 does not ship a Windows target). Tests run under RISC0_DEV_MODE=1
-# for a fast, unsound receipt; the real proving path is exercised nightly in
-# prove.yml.
+# every job that builds host/cli/bench needs the risc0 toolchain. That toolchain
+# has no Windows host: rzup reports `Unsupported architecture` on the runner and
+# the host crate does not link on MSVC. Every binding sits on the host, so no
+# matrix here has a Windows entry, and the release ships Linux and macOS only.
+# Tests run under RISC0_DEV_MODE=1 for a fast, unsound receipt; the real proving
+# path is exercised nightly in prove.yml.
 
 jobs:
   fmt:
@@ -402,7 +404,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest] # risc0 has no Windows host
         python-version: ["3.9", "3.11", "3.12", "3.13"]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30 # backstop against a wedged job, not a budget
@@ -427,7 +429,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest] # risc0 has no Windows host
         node-version: ["22", "24"]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30 # backstop against a wedged job, not a budget
@@ -450,7 +452,7 @@ jobs:
       - name: Build native module
         run: cd bindings/node && npx napi build --platform --release
       # The generated glue is platform-independent, so a drift check on one OS is
-      # enough — and avoids a spurious CRLF/LF diff on the Windows runner.
+      # enough.
       - name: Check index.js / index.d.ts are in sync
         if: runner.os == 'Linux'
         run: cd bindings/node && git diff --exit-code -- index.js index.d.ts
@@ -462,7 +464,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest] # risc0 has no Windows host
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30 # backstop against a wedged job, not a budget
     steps:
@@ -481,14 +483,13 @@ jobs:
       - name: Rust unit tests
         run: cargo test -p wickra-zk-c
       # The generated header is platform-independent, so checking drift on one OS
-      # is enough — and avoids a spurious CRLF/LF diff on the Windows runner. This
-      # also validates the vendored Go copy.
+      # is enough. This also validates the vendored Go copy.
       - name: Check the C header (cbindgen + Go copy) is in sync
         if: runner.os == 'Linux'
         shell: bash
         run: bash .github/scripts/check-cbindgen.sh
       # The real cross-language test: a foreign C consumer links the generated
-      # header + the compiled library and runs. If this passes on all three OSes,
+      # header + the compiled library and runs. If this passes on both OSes,
       # every C-capable language can link the same way.
       - name: Build and run the C example (CMake + ctest)
         shell: bash
@@ -502,7 +503,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest] # risc0 has no Windows host
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45 # backstop against a wedged job, not a budget
     steps:
@@ -527,7 +528,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest] # risc0 has no Windows host
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30 # backstop against a wedged job, not a budget
     steps:
@@ -559,9 +560,9 @@ jobs:
             *) echo "::error::unsupported RUNNER_ARCH '$RUNNER_ARCH'"; exit 1 ;;
           esac
           case "$RUNNER_OS" in
-            Linux)   dir="linux_$arch";   lib=target/release/libwickra_zk.so ;;
-            macOS)   dir="darwin_$arch";  lib=target/release/libwickra_zk.dylib ;;
-            Windows) dir="windows_$arch"; lib=target/release/wickra_zk.dll ;;
+            Linux) dir="linux_$arch";  lib=target/release/libwickra_zk.so ;;
+            macOS) dir="darwin_$arch"; lib=target/release/libwickra_zk.dylib ;;
+            *) echo "::error::unsupported RUNNER_OS '$RUNNER_OS'"; exit 1 ;;
           esac
           mkdir -p "bindings/go/lib/$dir"
           cp "$lib" "bindings/go/lib/$dir/"
@@ -586,7 +587,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest] # risc0 has no Windows host
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45 # backstop against a wedged job, not a budget
     steps:
@@ -612,7 +613,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest] # risc0 has no Windows host
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30 # backstop against a wedged job, not a budget
     env:
@@ -633,18 +634,11 @@ jobs:
           use-public-rspm: true
       - name: Install and test the R binding
         shell: bash
-        # github.workspace is a backslash path on Windows; Makevars(.win) (sh) and
-        # mingw need forward slashes. The Makevars do not bake an rpath, so the
-        # native library must be on the loader path at run time.
+        # The Makevars do not bake an rpath, so the native library must be on
+        # the loader path at run time.
         run: |
-          export WKZK_INC="${WKZK_INC//\\//}"
-          export WKZK_LIB="${WKZK_LIB//\\//}"
-          if command -v cygpath >/dev/null 2>&1; then
-            export PATH="$(cygpath -u "$WKZK_LIB"):$PATH"
-          else
-            export LD_LIBRARY_PATH="$WKZK_LIB:$LD_LIBRARY_PATH"
-            export DYLD_LIBRARY_PATH="$WKZK_LIB:$DYLD_LIBRARY_PATH"
-          fi
+          export LD_LIBRARY_PATH="$WKZK_LIB:$LD_LIBRARY_PATH"
+          export DYLD_LIBRARY_PATH="$WKZK_LIB:$DYLD_LIBRARY_PATH"
           R CMD INSTALL bindings/r
           Rscript bindings/r/tests/run_tests.R
 

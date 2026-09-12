@@ -15,7 +15,7 @@ dotnet add package Wickra.Proof
 ```
 
 The package bundles the prebuilt native C ABI library for every supported runtime
-(`win-x64`, `win-arm64`, `linux-x64`, `linux-arm64`, `osx-x64`, `osx-arm64`) under
+(`linux-x64`, `linux-arm64`, `osx-x64`, `osx-arm64`; risc0 has no Windows host) under
 `runtimes/<rid>/native/`, resolved automatically at run time.
 
 ## Quick start

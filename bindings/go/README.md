@@ -62,8 +62,8 @@ Errors are reported in-band as `{"ok":false,"error":"…"}`.
 
 `wickra-zk-go` is generated from this directory by the release pipeline: it
 mirrors the Go sources, the vendored C ABI header (`include/wickra_zk.h`) and
-the prebuilt libraries under `lib/<goos>_<goarch>/`. On Windows the DLL must be
-discoverable at run time (next to the executable or on `PATH`).
+the prebuilt libraries under `lib/<goos>_<goarch>/` for Linux and macOS (risc0
+has no Windows host, so there is no Windows library to mirror).
 
 ## Building from this repository (contributors)
 

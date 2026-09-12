@@ -11,7 +11,7 @@ the response JSON — the same protocol as every other binding.
 - Run with `--enable-native-access=ALL-UNNAMED`.
 - The native library (`wickra_zk`) must be resolvable — either on the library
   path or via the `native.lib.dir` system property pointing at the directory that
-  holds `libwickra_zk.{so,dylib}` / `wickra_zk.dll`.
+  holds `libwickra_zk.{so,dylib}` (Linux and macOS; risc0 has no Windows host).
 
 ## Usage
 

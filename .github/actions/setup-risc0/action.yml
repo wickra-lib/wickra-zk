@@ -28,8 +28,13 @@ runs:
         curl -L https://risczero.com/install | bash
         echo "$HOME/.risc0/bin" >> "$GITHUB_PATH"
 
+    # rzup resolves each component through the GitHub releases API. Without a
+    # token that is the runner's shared, unauthenticated quota, and a busy hour
+    # ends the job with "API rate limit exceeded" before anything is built.
     - name: Install the pinned risc0 toolchain
       shell: bash
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
       run: |
         export PATH="$HOME/.risc0/bin:$PATH"
         rzup install cargo-risczero ${{ inputs.version }}
