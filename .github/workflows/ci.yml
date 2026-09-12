@@ -408,6 +408,12 @@ jobs:
         python-version: ["3.9", "3.11", "3.12", "3.13"]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30 # backstop against a wedged job, not a budget
+    # The binding tests drive the command envelope, not the proof system: a
+    # dev-mode receipt takes milliseconds, a real one takes minutes. Every
+    # binding sets this for itself where its runtime can reach getenv; .NET's
+    # Environment.SetEnvironmentVariable cannot, so the job sets it for all.
+    env:
+      RISC0_DEV_MODE: "1"
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -433,6 +439,12 @@ jobs:
         node-version: ["22", "24"]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30 # backstop against a wedged job, not a budget
+    # The binding tests drive the command envelope, not the proof system: a
+    # dev-mode receipt takes milliseconds, a real one takes minutes. Every
+    # binding sets this for itself where its runtime can reach getenv; .NET's
+    # Environment.SetEnvironmentVariable cannot, so the job sets it for all.
+    env:
+      RISC0_DEV_MODE: "1"
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -467,6 +479,12 @@ jobs:
         os: [ubuntu-latest, macos-latest] # risc0 has no Windows host
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30 # backstop against a wedged job, not a budget
+    # The binding tests drive the command envelope, not the proof system: a
+    # dev-mode receipt takes milliseconds, a real one takes minutes. Every
+    # binding sets this for itself where its runtime can reach getenv; .NET's
+    # Environment.SetEnvironmentVariable cannot, so the job sets it for all.
+    env:
+      RISC0_DEV_MODE: "1"
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -506,6 +524,12 @@ jobs:
         os: [ubuntu-latest, macos-latest] # risc0 has no Windows host
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45 # backstop against a wedged job, not a budget
+    # The binding tests drive the command envelope, not the proof system: a
+    # dev-mode receipt takes milliseconds, a real one takes minutes. Every
+    # binding sets this for itself where its runtime can reach getenv; .NET's
+    # Environment.SetEnvironmentVariable cannot, so the job sets it for all.
+    env:
+      RISC0_DEV_MODE: "1"
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -531,6 +555,12 @@ jobs:
         os: [ubuntu-latest, macos-latest] # risc0 has no Windows host
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30 # backstop against a wedged job, not a budget
+    # The binding tests drive the command envelope, not the proof system: a
+    # dev-mode receipt takes milliseconds, a real one takes minutes. Every
+    # binding sets this for itself where its runtime can reach getenv; .NET's
+    # Environment.SetEnvironmentVariable cannot, so the job sets it for all.
+    env:
+      RISC0_DEV_MODE: "1"
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -590,6 +620,12 @@ jobs:
         os: [ubuntu-latest, macos-latest] # risc0 has no Windows host
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45 # backstop against a wedged job, not a budget
+    # The binding tests drive the command envelope, not the proof system: a
+    # dev-mode receipt takes milliseconds, a real one takes minutes. Every
+    # binding sets this for itself where its runtime can reach getenv; .NET's
+    # Environment.SetEnvironmentVariable cannot, so the job sets it for all.
+    env:
+      RISC0_DEV_MODE: "1"
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -619,6 +655,7 @@ jobs:
     env:
       WKZK_INC: ${{ github.workspace }}/bindings/c/include
       WKZK_LIB: ${{ github.workspace }}/target/release
+      RISC0_DEV_MODE: "1"
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:

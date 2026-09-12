@@ -11,7 +11,7 @@ protocol as every other binding.
 ## Install
 
 ```bash
-dotnet add package Wickra.Proof
+dotnet add package Wickra.Zk
 ```
 
 The package bundles the prebuilt native C ABI library for every supported runtime
@@ -21,7 +21,7 @@ The package bundles the prebuilt native C ABI library for every supported runtim
 ## Quick start
 
 ```csharp
-using Wickra.Proof;
+using Wickra.Zk;
 
 using var prover = new Prover();
 

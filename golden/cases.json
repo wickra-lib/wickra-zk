@@ -1,0 +1,5 @@
+{
+  "crossover": "sym-03",
+  "mean_reversion": "sym-02",
+  "momentum": "sym-01"
+}

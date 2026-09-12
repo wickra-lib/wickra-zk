@@ -43,10 +43,10 @@ environment variables:
 
 ```bash
 cargo build -p wickra-zk-c --release
-export WKPROOF_INC="$PWD/bindings/c/include"
-export WKPROOF_LIB="$PWD/target/release"
+export WKZK_INC="$PWD/bindings/c/include"
+export WKZK_LIB="$PWD/target/release"
 # ensure the shared library is on the loader path at run time
-export LD_LIBRARY_PATH="$WKPROOF_LIB:$LD_LIBRARY_PATH"   # Linux
+export LD_LIBRARY_PATH="$WKZK_LIB:$LD_LIBRARY_PATH"   # Linux
 R CMD INSTALL bindings/r
 Rscript bindings/r/tests/run_tests.R
 ```

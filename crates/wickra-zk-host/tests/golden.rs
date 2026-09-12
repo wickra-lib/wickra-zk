@@ -2,13 +2,13 @@
 
 mod common;
 
-use common::{case, dev_mode, load_candles, load_expected, load_strategy, CASES};
+use common::{case, cases, dev_mode, load_candles, load_expected, load_strategy};
 use wickra_zk_host::{native_report_hash, prove, verify, ProveOptions};
 
 /// (a) The native path reproduces the blessed `report_hash`.
 #[test]
 fn native_hash_matches_expected() {
-    for (name, data) in CASES {
+    for (name, data) in &cases() {
         let strategy = load_strategy(name);
         let candles = load_candles(data);
         let expected = load_expected(name);
@@ -22,7 +22,7 @@ fn native_hash_matches_expected() {
 #[test]
 fn dev_mode_chain_closes() {
     dev_mode();
-    for (name, data) in CASES {
+    for (name, data) in &cases() {
         let (spec, candles) = case(name, data);
         let expected = load_expected(name);
         let proof = prove(&spec, &candles, ProveOptions { dev_mode: true }).unwrap();
