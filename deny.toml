@@ -24,6 +24,29 @@ ignore = [
   # risc0's groth16 path, which this crate does not drive. Revisit when
   # ark-relations moves.
   "RUSTSEC-2025-0055",
+  # rsa 0.9.10, RUSTSEC-2023-0071 / GHSA-4grx-2x9w-596c, the Marvin attack: a
+  # timing side channel in RSA decryption can leak the private key. No patched
+  # release exists (the 0.10 line is unreleased). It reaches us as a build-time
+  # dependency only --
+  #   rsa 0.9.10 <- rzup 0.5.2 <- risc0-build 3.0.6 <- (build) wickra-zk-methods
+  # -- where rzup verifies the signature on the toolchain it downloads. Nothing
+  # this repository ships links rsa, no private key is ever held, and the only
+  # operation is signature verification on public data. Revisit when rsa 0.10
+  # is released and rzup moves.
+  "RUSTSEC-2023-0071",
+  # derivative 2.2.0, unmaintained (RUSTSEC-2024-0388). A proc-macro crate that
+  # runs at compile time and ships no code of its own into the binary --
+  #   derivative <- ark-crypto-primitives <- ark-groth16 <- risc0-groth16
+  #   <- risc0-zkvm <- wickra-zk-host
+  # -- on risc0's groth16 path, which this crate does not drive. Not ours to
+  # replace; revisit when arkworks moves.
+  "RUSTSEC-2024-0388",
+  # paste 1.0.15, unmaintained (RUSTSEC-2024-0436). The same shape: a
+  # compile-time proc-macro --
+  #   paste <- ark-ff <- ark-bn254 <- risc0-groth16 <- risc0-zkvm <- wickra-zk-host
+  # -- that ships nothing into the binary and arrives with risc0's groth16
+  # path. Revisit when arkworks moves.
+  "RUSTSEC-2024-0436",
 ]
 
 [licenses]

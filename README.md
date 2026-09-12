@@ -122,7 +122,7 @@ cargo bench -p wickra-zk-bench
 
 - Linux or macOS. risc0 has no Windows host, so neither the crates nor any
   binding build there; on Windows use WSL.
-- Rust 1.88+ (host), risc0 toolchain (guest)
+- Rust 1.90+ (host), risc0 toolchain (guest)
 - See [CONTRIBUTING.md](CONTRIBUTING.md) for the full verify workflow
 
 ## Contributing
