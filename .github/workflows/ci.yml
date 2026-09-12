@@ -278,7 +278,7 @@ jobs:
       - name: Go example vets
         run: |
           set -euo pipefail
-          if [ -f examples/go/go.mod ]; then ( cd examples/go && gofmt -l . && go vet ./... || true ); fi
+          if [ -f examples/go/go.mod ]; then ( cd examples/go && gofmt -l . && go vet ./... ); fi
       - name: R example parses
         run: |
           set -euo pipefail
