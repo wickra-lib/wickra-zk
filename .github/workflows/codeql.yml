@@ -93,6 +93,13 @@ jobs:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
 
+      # The C ABI is Rust; what CodeQL sees for c-cpp is the C and C++ that
+      # consume it, compiled after init so the tracer records them.
+      - name: Build the C and C++ examples
+        if: matrix.language == 'c-cpp'
+        run: |
+          cmake -S examples/c -B examples/c/build
+          cmake --build examples/c/build --config Release
       - name: Build the C# binding and tests
         if: matrix.language == 'csharp'
         run: dotnet build bindings/csharp/WickraZk.Tests/WickraZk.Tests.csproj -c Release
