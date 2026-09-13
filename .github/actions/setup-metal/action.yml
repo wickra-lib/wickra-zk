@@ -1,0 +1,21 @@
+name: Setup the Metal toolchain (macOS)
+description: >
+  Download Xcode's Metal toolchain on a macOS runner. risc0-sys compiles its
+  Metal kernels whenever it is built on macOS -- the in-process prover pulls it
+  in -- and the runner's Xcode ships without the `metal` compiler component:
+  "cannot execute tool 'metal' due to missing Metal Toolchain". A no-op on any
+  other operating system, so every job with a macOS entry can use it.
+
+runs:
+  using: composite
+  steps:
+    - name: Download the Metal toolchain component
+      if: runner.os == 'macOS'
+      shell: bash
+      run: |
+        if xcrun --find metal >/dev/null 2>&1; then
+          echo "metal compiler present"
+        else
+          sudo xcodebuild -downloadComponent MetalToolchain
+          xcrun --find metal
+        fi

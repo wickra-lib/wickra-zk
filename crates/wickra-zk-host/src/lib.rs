@@ -6,10 +6,15 @@
 //! who never sees the price data or the strategy can still confirm that the
 //! reported metrics are the honest output of the audited program:
 //!
-//! - [`prove`] executes the guest and returns a receipt plus [`PublicOutputs`].
+//! - [`prove`] executes the guest and returns a receipt plus [`PublicOutputs`]
+//!   (behind the `prove` feature, on by default).
 //! - [`verify`] checks a receipt against the pinned [`guest_id`] and returns
 //!   the public outputs.
 //! - [`command_json`] is the string-in/string-out boundary every binding uses.
+//!
+//! Without the `prove` feature the crate is a verifier: it builds for wasm32
+//! and carries no prover, and `command_json` answers `verify`, `commit` and
+//! `version` while reporting `prove` as unsupported.
 //!
 //! The journal (`report_hash`, `dataset_commitment`, `sharpe`, `pnl`,
 //! `n_trades`) is the only thing that leaves the zkVM; the candles and the
@@ -21,12 +26,14 @@ pub use wickra_backtest::{BacktestReport, Candle, StrategySpec};
 mod command;
 mod error;
 mod model;
+#[cfg(feature = "prove")]
 mod prove;
 mod verify;
 
 pub use command::command_json;
 pub use error::{Error, Result};
 pub use model::{round_to, GuestJournal, ProveOptions, PublicOutputs, ZkProof, ZkSpec};
+#[cfg(feature = "prove")]
 pub use prove::prove;
 pub use verify::verify;
 
@@ -122,6 +129,11 @@ mod tests {
         let out = PublicOutputs::from_journal(journal, "deadbeef".to_string());
         assert_eq!(out.guest_id, "deadbeef");
         assert_eq!(out.report_hash, "a".repeat(64));
+    }
+
+    #[test]
+    fn guest_id_is_the_committed_hex() {
+        assert_eq!(guest_id(), wickra_zk_methods::WICKRA_ZK_GUEST_ID_HEX);
     }
 
     #[test]

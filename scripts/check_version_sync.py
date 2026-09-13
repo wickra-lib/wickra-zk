@@ -108,6 +108,8 @@ def own_versions(rel: str) -> list[str] | None:
 
 CANDIDATES = [
     "Cargo.toml",
+    # Its own workspace, so it cannot inherit the version from the root.
+    "bindings/wasm/Cargo.toml",
     "bindings/python/pyproject.toml",
     "bindings/node/package.json",
     "bindings/node/package-lock.json",

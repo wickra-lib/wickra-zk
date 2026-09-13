@@ -26,16 +26,25 @@ pinned (see the version matrix in the handoff and `Cargo.toml`).
 
 ```
 guest/methods/guest/   the guest program (runs inside the zkVM)
-guest/methods/         host-side crate; build.rs compiles the guest to a RISC-V
-                       ELF and exports WICKRA_ZK_GUEST_ELF + WICKRA_ZK_GUEST_ID
+guest/methods/         host-side crate: the committed guest ELF (elf/) and its
+                       image id (src/guest_id.rs), exported as
+                       WICKRA_ZK_GUEST_ELF + WICKRA_ZK_GUEST_ID
+guest/builder/         compiles the guest through risc0-build and writes the
+                       ELF + id into guest/methods; the only risc0 consumer
 crates/wickra-zk-host  prove() / verify() / guest_id() / command_json()
 crates/wickra-zk-cli   the `wickra-zk` binary (prove | verify | version)
 crates/wickra-zk-bench criterion benchmarks (exec vs. prove)
 ```
 
 The guest is a **detached build** (its own toolchain and `riscv32im-risc0-zkvm-elf`
-target); it is deliberately **not** a workspace member. `risc0-build` runs it at
-host build time via `guest/methods/build.rs`.
+target); it is deliberately **not** a workspace member, and neither is the
+builder. The compiled guest is **committed**: the host, the CLI, the bindings
+and the published crates read `guest/methods/elf/wickra-zk-guest.bin` and need
+no risc0 toolchain -- docs.rs, a wheel built inside a manylinux container and a
+`cargo install` all build with plain Rust. What keeps the commitment honest is
+the `guest-build` job: it rebuilds the guest from source with
+`RISC0_USE_DOCKER=1`, the reproducible build risc0 designs the image id for,
+and fails if a byte of the ELF or the id differs from what is committed.
 
 ## The proving flow
 

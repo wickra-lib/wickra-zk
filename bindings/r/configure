@@ -5,7 +5,7 @@
 # release asset that matches this package's version and stage the shared library
 # into src/ so the compiled wickra_zk.so links against it and bundles it (via
 # install.libs.R), found post-install through an rpath ($ORIGIN on Linux,
-# @loader_path on macOS). Set WKPROOF_INC + WKPROOF_LIB to build
+# @loader_path on macOS). Set WKZK_INC + WKZK_LIB to build
 # against a locally built C ABI instead (dev override; e.g.
 # `cargo build -p wickra-zk-c --release`). Download/extract uses base R (always
 # present at build time), so there is no curl/wget system dependency.
@@ -62,10 +62,10 @@ if [ "$(uname -s)" = "Emscripten" ]; then
   exit 0
 fi
 
-if [ -n "${WKPROOF_INC}" ] && [ -n "${WKPROOF_LIB}" ]; then
-  echo "wickra-zk: using C ABI from WKPROOF_INC / WKPROOF_LIB (dev override)"
-  inc="${WKPROOF_INC}"
-  lib="${WKPROOF_LIB}"
+if [ -n "${WKZK_INC}" ] && [ -n "${WKZK_LIB}" ]; then
+  echo "wickra-zk: using C ABI from WKZK_INC / WKZK_LIB (dev override)"
+  inc="${WKZK_INC}"
+  lib="${WKZK_LIB}"
 else
   version=$(sed -n 's/^Version:[[:space:]]*//p' DESCRIPTION)
   os=$(uname -s)
@@ -75,18 +75,18 @@ else
       case "${arch}" in
         x86_64) triple="x86_64-unknown-linux-gnu" ;;
         aarch64 | arm64) triple="aarch64-unknown-linux-gnu" ;;
-        *) echo "wickra-zk: unsupported Linux arch '${arch}' — set WKPROOF_INC/WKPROOF_LIB"; exit 1 ;;
+        *) echo "wickra-zk: unsupported Linux arch '${arch}' — set WKZK_INC/WKZK_LIB"; exit 1 ;;
       esac
       ;;
     Darwin)
       case "${arch}" in
         x86_64) triple="x86_64-apple-darwin" ;;
         arm64 | aarch64) triple="aarch64-apple-darwin" ;;
-        *) echo "wickra-zk: unsupported macOS arch '${arch}' — set WKPROOF_INC/WKPROOF_LIB"; exit 1 ;;
+        *) echo "wickra-zk: unsupported macOS arch '${arch}' — set WKZK_INC/WKZK_LIB"; exit 1 ;;
       esac
       ;;
     *)
-      echo "wickra-zk: unsupported OS '${os}' — set WKPROOF_INC/WKPROOF_LIB"
+      echo "wickra-zk: unsupported OS '${os}' — set WKZK_INC/WKZK_LIB"
       exit 1
       ;;
   esac

@@ -1,18 +1,16 @@
-# Everything configure stages into src/ at build time. None of it belongs in
-# the source tarball: the tarball is what r-universe and CRAN build *from*, and
-# configure re-fetches the C ABI for the platform actually being built.
-^src/wickra-zk-c\.tar\.gz$
-^src/wickra-zk-c$
+# Every line here is a regular expression, comments included, so no brackets.
+# Keep everything configure stages or the compiler produces out of the R source
+# tarball built by R CMD build. The package is source-distributed: configure
+# fetches the C ABI at install time, or takes it from the INC and LIB dev
+# override, so none of these belong in the distributable. There is no Windows
+# build: risc0 has no Windows host and DESCRIPTION says OS_type unix.
 ^src/wickra_zk\.h$
 ^src/libwickra_zk\.(so|dylib|a)$
-^src/wickra_zk\.dll$
-^src/wickra_zk\.dll\.a$
-^src/wickra_zk\.def$
+^src/wickra-zk-c\.tar\.gz$
+^src/wickra-zk-c$
 ^src/Makevars$
-^src/Makevars\.win$
 ^src/.*\.o$
-^src/.*\.so$
-^src/.*\.dll$
+^src/wickrazk\.(so|dylib)$
 ^src/symbols\.rds$
 ^\.gitignore$
 # The cross-language golden parity test. It looks for golden/ in a parent

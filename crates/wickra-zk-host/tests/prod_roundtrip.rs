@@ -3,13 +3,13 @@
 
 mod common;
 
-use common::{case, load_expected, CASES};
+use common::{case, cases, load_expected};
 use wickra_zk_host::{prove, verify, ProveOptions};
 
 #[test]
 #[ignore = "real proving is slow; run via `cargo test -- --ignored` in prove.yml"]
 fn prod_prove_and_verify() {
-    for (name, data) in CASES {
+    for (name, data) in &cases() {
         let (spec, candles) = case(name, data);
         let expected = load_expected(name);
         // No dev-mode: a real, sound receipt.

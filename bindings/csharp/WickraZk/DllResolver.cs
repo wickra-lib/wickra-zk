@@ -2,7 +2,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace Wickra.Proof;
+namespace Wickra.Zk;
 
 /// <summary>
 /// Locates the native <c>wickra_zk</c> library across the dev, CI and packaged

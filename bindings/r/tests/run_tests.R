@@ -1,117 +1,145 @@
 ## Plain-R tests for the wickra-zk R binding (no testthat dependency).
-## Mirrors the Rust/Python/Node/Go/C#/Java tests and doubles as the completeness
-## guard: it exercises the full public surface (version + new + command).
+##
+## Cross-language golden parity through the command envelope, in dev-mode.
+## Each golden case is proven through the binding without a stated commitment,
+## and the journal must carry the blessed report_hash and metrics -- the same
+## determinism chain crates/wickra-zk-host/tests/golden.rs pins natively. The
+## proof then verifies to the same journal, a proof file whose journal disagrees
+## with its receipt is refused, and a stated commitment that is not the hash of
+## the candles is refused before the zkVM runs.
+##
+## Dev-mode receipts are unsound and fast; this tests the binding's transport
+## of the envelope, not the proof system. The real prover runs nightly. Base R
+## has no JSON reader, so fields are read back by pattern; the journal is flat,
+## so its object is one brace pair.
 
 library(wickrazk)
 
-strategy <- paste0(
-  '{"symbol":"BTCUSDT","timeframe":"1h",',
-  '"indicators":{"ema_fast":{"type":"Ema","params":[5]},',
-  '"ema_slow":{"type":"Ema","params":[15]}},',
-  '"entry":{"cross_above":["ema_fast","ema_slow"]},',
-  '"exit":{"cross_below":["ema_fast","ema_slow"]},',
-  '"sizing":{"type":"fixed_fraction","fraction":0.95},',
-  '"costs":{"taker_bps":5,"slippage":{"type":"fixed_bps","bps":2}},',
-  '"risk":{"trailing_stop_pct":5.0}}'
-)
+## The prover reads this through getenv; Sys.setenv reaches it.
+Sys.setenv(RISC0_DEV_MODE = "1")
 
-candles <- function() {
-  parts <- vapply(0:39, function(i) {
-    b <- 100.0 + sin(i * 0.4) * 8.0
-    paste0(
-      '{"time":', format(1700000000 + i * 3600, scientific = FALSE),
-      ',"open":', b, ',"high":', b + 1.0, ',"low":', b - 1.0,
-      ',"close":', b + 0.5, ',"volume":1000.0}'
-    )
-  }, character(1))
-  paste0("[", paste(parts, collapse = ","), "]")
-}
-
-spec <- paste0('{"strategy":', strategy, ',"dataset_ref":"BTCUSDT/1h/test"}')
-data <- paste0('{"BTCUSDT":', candles(), '}')
-
-prove <- function(prover) {
-  wkzk_command(prover, paste0('{"cmd":"prove","spec":', spec, ',"data":', data, '}'))
-}
-
-hex_field <- function(json, key) {
-  m <- regmatches(json, regexpr(paste0('"', key, '":"[0-9a-f]{64}"'), json))
-  stopifnot(length(m) == 1)
-  m
-}
-
-## version
-stopifnot(nzchar(wkzk_version()))
-
-## prove -> 64-hex report_hash + inputs_hash
-prover <- wkzk_new()
-proof <- prove(prover)
-stopifnot(nchar(hex_field(proof, "report_hash")) == 64 + nchar('"report_hash":""'))
-stopifnot(nchar(hex_field(proof, "inputs_hash")) == 64 + nchar('"inputs_hash":""'))
-
-## prove is reproducible
-stopifnot(identical(
-  hex_field(prove(wkzk_new()), "report_hash"),
-  hex_field(prove(wkzk_new()), "report_hash")
-))
-
-## verify accepts a genuine proof and rejects a tampered one
-good <- wkzk_command(
-  prover,
-  paste0('{"cmd":"verify","proof":', proof, ',"spec":', spec, ',"data":', data, '}')
-)
-stopifnot(identical(good, '{"ok":true,"valid":true}'))
-
-tampered <- sub(
-  '"report_hash":"[0-9a-f]{64}"',
-  paste0('"report_hash":"', strrep("0", 64), '"'),
-  proof
-)
-bad <- wkzk_command(
-  prover,
-  paste0('{"cmd":"verify","proof":', tampered, ',"spec":', spec, ',"data":', data, '}')
-)
-stopifnot(identical(bad, '{"ok":true,"valid":false}'))
-
-## an unknown command is an in-band error, not a hard error
-inband <- wkzk_command(prover, '{"cmd":"nope"}')
-stopifnot(grepl('"ok":false', inband, fixed = TRUE))
-
-## cross-language golden parity: for each committed golden/specs/*.json, prove
-## over the shared golden/data.json and assert the response equals
-## golden/expected/<spec>.json byte-for-byte. The binding returns the core's
-## canonical command output verbatim, so byte equality is the exact
-## cross-language parity check. The fixtures arrive in a later phase; until then
-## the golden section is skipped.
 golden_dir <- function() {
   d <- normalizePath(getwd(), mustWork = FALSE)
-  for (i in seq_len(8)) {
-    g <- file.path(d, "golden")
-    if (dir.exists(file.path(g, "specs"))) {
-      return(g)
+  for (i in seq_len(10)) {
+    candidate <- file.path(d, "golden")
+    if (file.exists(file.path(candidate, "cases.json"))) {
+      return(candidate)
     }
     d <- dirname(d)
   }
-  NULL
+  stop("golden/cases.json not found above the working directory")
 }
 
-g <- golden_dir()
-if (!is.null(g)) {
-  dataset <- trimws(paste(
-    readLines(file.path(g, "data.json"), warn = FALSE), collapse = "\n"
-  ))
-  for (spec_path in list.files(file.path(g, "specs"), pattern = "\\.json$", full.names = TRUE)) {
-    name <- basename(spec_path)
-    spec_json <- trimws(paste(readLines(spec_path, warn = FALSE), collapse = "\n"))
-    expected <- trimws(paste(
-      readLines(file.path(g, "expected", name), warn = FALSE), collapse = "\n"
-    ))
-    gprover <- wkzk_new()
-    got <- wkzk_command(
-      gprover, paste0('{"cmd":"prove","spec":', spec_json, ',"data":', dataset, '}')
-    )
-    stopifnot(identical(trimws(got), expected))
+read_text <- function(path) trimws(paste(readLines(path, warn = FALSE), collapse = "\n"))
+
+string_field <- function(json, key) {
+  m <- regmatches(json, regexpr(paste0('"', key, '"\\s*:\\s*"[^"]*"'), json, perl = TRUE))
+  stopifnot(length(m) == 1)
+  sub(paste0('"', key, '"\\s*:\\s*"([^"]*)"'), "\\1", m, perl = TRUE)
+}
+
+number_field <- function(json, key) {
+  m <- regmatches(json, regexpr(paste0('"', key, '"\\s*:\\s*-?[0-9.eE+-]+'), json, perl = TRUE))
+  stopifnot(length(m) == 1)
+  as.numeric(sub(paste0('"', key, '"\\s*:\\s*'), "", m, perl = TRUE))
+}
+
+in_band_error <- function(response) {
+  if (grepl('^\\{"ok":false,"error":"', response, perl = TRUE)) {
+    sub('^\\{"ok":false,"error":"(.*)"\\}$', "\\1", response, perl = TRUE)
+  } else {
+    NULL
   }
 }
 
-cat("wickra-zk R tests passed\n")
+load_cases <- function(g) {
+  text <- read_text(file.path(g, "cases.json"))
+  pairs <- regmatches(text, gregexpr('"[^"]+"\\s*:\\s*"[^"]+"', text, perl = TRUE))[[1]]
+  stopifnot(length(pairs) > 0)
+  keys <- sub('^"([^"]+)".*$', "\\1", pairs, perl = TRUE)
+  values <- sub('^.*:\\s*"([^"]+)"$', "\\1", pairs, perl = TRUE)
+  setNames(values, keys)[order(keys)]
+}
+
+load_candles <- function(g, dataset) {
+  rows <- character(0)
+  for (line in trimws(readLines(file.path(g, "data", paste0(dataset, ".csv")), warn = FALSE))) {
+    cols <- trimws(strsplit(line, ",")[[1]])
+    if (length(cols) < 6 || !grepl("^[0-9]+$", cols[1])) next # header
+    rows <- c(rows, paste0(
+      '{"time":', cols[1], ',"open":', cols[2], ',"high":', cols[3],
+      ',"low":', cols[4], ',"close":', cols[5], ',"volume":', cols[6], "}"
+    ))
+  }
+  paste0("[", paste(rows, collapse = ","), "]")
+}
+
+## The receipt carries its own "journal" (the committed bytes); the persisted
+## public outputs are the object that opens with report_hash.
+journal_of <- function(proof) {
+  m <- regexpr('"journal":\\{"report_hash":[^{}]*\\}', proof, perl = TRUE)
+  stopifnot(m > 0)
+  list(
+    text = sub('^"journal":', "", regmatches(proof, m), perl = TRUE),
+    start = m,
+    end = m + attr(m, "match.length") - 1L
+  )
+}
+
+g <- golden_dir()
+cases <- load_cases(g)
+prover <- wkzk_new()
+
+## version is reported two ways and they agree
+stopifnot(nzchar(wkzk_version()))
+version <- wkzk_command(prover, '{"cmd":"version"}')
+stopifnot(identical(string_field(version, "version"), wkzk_version()))
+guest_id <- string_field(version, "guest_id")
+
+## a malformed envelope is an in-band error
+stopifnot(!is.null(in_band_error(wkzk_command(prover, "not json"))))
+
+## golden cases prove to the blessed journal
+for (name in names(cases)) {
+  strategy <- read_text(file.path(g, "specs", paste0(name, ".json")))
+  expected <- read_text(file.path(g, "expected", paste0(name, ".json")))
+  candles <- load_candles(g, cases[[name]])
+
+  commit <- wkzk_command(prover, paste0('{"cmd":"commit","candles":', candles, "}"))
+  stopifnot(is.null(in_band_error(commit)))
+  proof <- wkzk_command(prover, paste0(
+    '{"cmd":"prove","spec":{"strategy":', strategy, '},"candles":', candles, "}"
+  ))
+  stopifnot(is.null(in_band_error(proof)))
+  span <- journal_of(proof)
+  journal <- span$text
+
+  stopifnot(identical(string_field(journal, "report_hash"), string_field(expected, "report_hash")))
+  stopifnot(number_field(journal, "n_trades") == number_field(expected, "n_trades"))
+  stopifnot(abs(number_field(journal, "sharpe") - number_field(expected, "sharpe")) < 1e-8)
+  stopifnot(abs(number_field(journal, "pnl") - number_field(expected, "pnl")) < 1e-8)
+  stopifnot(identical(string_field(journal, "dataset_commitment"), string_field(commit, "dataset_commitment")))
+  stopifnot(identical(string_field(journal, "guest_id"), guest_id))
+
+  outputs <- wkzk_command(prover, paste0('{"cmd":"verify","proof":', proof, "}"))
+  stopifnot(identical(outputs, journal))
+
+  lying <- paste0(
+    substr(proof, 1, span$start - 1L),
+    '"journal":',
+    sub('"report_hash":"[0-9a-f]{64}"', paste0('"report_hash":"', strrep("f", 64), '"'), journal, perl = TRUE),
+    substr(proof, span$end + 1L, nchar(proof))
+  )
+  refused <- in_band_error(wkzk_command(prover, paste0('{"cmd":"verify","proof":', lying, "}")))
+  stopifnot(!is.null(refused), grepl("verify", refused, fixed = TRUE))
+}
+
+## a stated commitment is held to
+first <- names(cases)[1]
+refused <- in_band_error(wkzk_command(prover, paste0(
+  '{"cmd":"prove","spec":{"strategy":', read_text(file.path(g, "specs", paste0(first, ".json"))),
+  ',"dataset_commitment":"', strrep("0", 64), '"},"candles":', load_candles(g, cases[[first]]), "}"
+)))
+stopifnot(!is.null(refused), grepl("commitment mismatch", refused, fixed = TRUE))
+
+cat("wickra-zk R tests passed:", length(cases), "golden cases\n")

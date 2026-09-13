@@ -1,27 +1,31 @@
 [package]
 name = "wickra-zk-methods"
-description = "risc0 build wrapper: compiles the wickra-zk guest program to a RISC-V ELF and exposes its ELF bytes and image ID to the host."
+description = "The compiled wickra-zk guest program: the RISC-V ELF the prover runs and the image id the verifier pins, committed alongside the source that produces them."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
-publish = false
 
-# risc0-build's embed_methods() reads this to locate the guest crate(s): each
-# entry is a path (relative to this manifest) to a RISC-V guest package. Without
-# it, risc0-build panics (Risc0Metadata::from_package -> None) and the guest ELF
-# build fails.
-[package.metadata.risc0]
-methods = ["guest"]
+# What ships is what is committed: the guest ELF under elf/ and the generated
+# image id in src/guest_id.rs. Both are produced by ../builder, the one crate
+# that needs the risc0 toolchain, and regenerated in CI with RISC0_USE_DOCKER=1
+# so a diff against the committed bytes proves the source and the artefact
+# agree. This crate itself builds with plain Rust anywhere, docs.rs included.
+include = ["src/**", "elf/**", "LICENSE-*"]
+
+# docs.rs builds with every feature on, so the ELF constant is documented too.
+[package.metadata.docs.rs]
+all-features = true
+
+[features]
+default = ["elf"]
+# The guest program itself, two megabytes of RISC-V. A prover needs it; a
+# verifier needs only the image id, and a WebAssembly verifier would ship the
+# two megabytes to every browser for nothing. The host's `prove` feature
+# turns it on.
+elf = []
 
 [lints]
 workspace = true
-
-# The methods crate carries no runtime logic of its own: build.rs invokes
-# `risc0_build::embed_methods()`, which builds `guest/` (the detached RISC-V
-# crate) and generates `$OUT_DIR/methods.rs` with `WICKRA_ZK_GUEST_ELF` and
-# `WICKRA_ZK_GUEST_ID`. `src/lib.rs` only re-includes that generated file.
-[build-dependencies]
-risc0-build = { workspace = true }

@@ -6,12 +6,14 @@ members = ["bindings/c", "bindings/python", "bindings/node",
     "crates/wickra-zk-bench",
     "guest/methods",
 ]
-# NOT members: guest/methods/guest (detached, riscv target, own toolchain)
+# NOT members: guest/methods/guest (detached, riscv target, own toolchain) and
+# guest/builder (the one crate that needs risc0-build; it writes the committed
+# ELF + image id into guest/methods).
 
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.88"
+rust-version = "1.90"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/wickra-lib/wickra-zk"
 authors = ["wickra-lib"]
@@ -21,8 +23,14 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 thiserror = "2"
 clap = { version = "4", features = ["derive"] }
-risc0-zkvm = "3.0"
-risc0-build = "3.0"
+# Verify-only by default: receipts, journals and `Receipt::verify`, which
+# build for every target including wasm32. The host's `prove` feature (on by
+# default) adds risc0's client and its in-process prover on top. Without the
+# in-process prover risc0 runs `r0vm` as a subprocess -- for dev-mode receipts
+# too -- so every crate, wheel and native package would need the risc0
+# toolchain installed beside it; with it, a `pip install` or a
+# `cargo install` is the whole prover.
+risc0-zkvm = { version = "3.0", default-features = false, features = ["std"] }
 # Pinned to an exact rev, not to a floating branch. An unpinned git dependency
 # never goes red -- it only gets older, and then one day the API underneath has
 # moved and the build breaks with errors that look like your own. That is how

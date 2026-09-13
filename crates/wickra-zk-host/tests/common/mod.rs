@@ -8,12 +8,13 @@ use serde::Deserialize;
 use serde_json::json;
 use wickra_zk_host::{commit_dataset, Candle, StrategySpec, ZkSpec};
 
-/// The golden cases and the dataset each runs over.
-pub const CASES: &[(&str, &str)] = &[
-    ("momentum", "sym-01"),
-    ("mean_reversion", "sym-02"),
-    ("crossover", "sym-03"),
-];
+/// The golden cases and the dataset each runs over, from `golden/cases.json`
+/// -- the one mapping every binding's golden test reads too.
+pub fn cases() -> Vec<(String, String)> {
+    let text = fs::read_to_string(golden_dir().join("cases.json")).unwrap();
+    let map: std::collections::BTreeMap<String, String> = serde_json::from_str(&text).unwrap();
+    map.into_iter().collect()
+}
 
 /// Blessed expected outputs for one case.
 #[derive(Deserialize)]

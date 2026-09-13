@@ -14,6 +14,8 @@ keywords = ["zero-knowledge", "zkvm", "backtest", "risc0", "trading"]
 classifiers = [
   "Programming Language :: Rust",
   "Programming Language :: Python :: 3",
+  "Operating System :: POSIX :: Linux",
+  "Operating System :: MacOS",
   "License :: OSI Approved :: MIT License",
   "License :: OSI Approved :: Apache Software License",
   "Topic :: Office/Business :: Financial :: Investment",

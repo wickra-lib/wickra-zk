@@ -1,7 +1,7 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace Wickra.Proof;
+namespace Wickra.Zk;
 
 /// <summary>Raw P/Invoke surface for the wickra-zk C ABI.</summary>
 internal static partial class Native

@@ -15,6 +15,9 @@ backtest. If any link drifts, `tests/golden.rs` fails.
 
 ### Case → dataset mapping
 
+`cases.json` maps each case to its dataset; every golden test, in Rust and in
+each binding, reads that file rather than carrying its own copy of the table.
+
 | Case | Strategy | Dataset |
 |------|----------|---------|
 | `momentum`       | fast/slow SMA cross | `sym-01` |

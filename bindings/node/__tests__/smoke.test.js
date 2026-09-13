@@ -1,6 +1,8 @@
+"use strict";
+
 // The Node binding reaches the same core as every other one.
-import assert from "node:assert/strict";
-import test from "node:test";
+const assert = require("node:assert/strict");
+const test = require("node:test");
 
 const { Prover, version } = require("../index.js");
 

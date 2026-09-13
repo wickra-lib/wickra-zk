@@ -1,6 +1,10 @@
-//! In-process prove + verify (dev-mode), printing the public journal.
+//! Prove a backtest in zero knowledge from Rust, then verify the proof.
 //!
-//! Run with a fast, unsound dev-mode receipt:
+//! Reads the shared example inputs (`../specs/momentum.json` and
+//! `../data/BTCUSDT.csv`), proves them in-process, verifies the receipt and
+//! prints the public journal. With `RISC0_DEV_MODE=1` the receipt is a fast,
+//! unsound placeholder; without it the real prover runs and this takes
+//! minutes.
 //!
 //! ```text
 //! RISC0_DEV_MODE=1 cargo run
@@ -35,14 +39,15 @@ fn load_candles(path: PathBuf) -> Vec<Candle> {
 }
 
 fn main() {
-    // Private inputs — never leave the guest.
+    // Private inputs -- never leave the guest.
     let strategy: StrategySpec = serde_json::from_str(
         &fs::read_to_string(examples_dir().join("specs/momentum.json")).unwrap(),
     )
     .unwrap();
     let candles = load_candles(examples_dir().join("data/BTCUSDT.csv"));
 
-    // Bind the proof to this exact data without revealing it.
+    // Bind the proof to this exact data without revealing it. (Over the
+    // command envelope the host computes this when the spec omits it.)
     let spec = ZkSpec {
         strategy,
         dataset_commitment: commit_dataset(&candles).expect("candles canonicalise"),
@@ -52,6 +57,9 @@ fn main() {
     let proof = prove(&spec, &candles, ProveOptions { dev_mode: true }).expect("prove");
     let journal = verify(&proof).expect("verify");
 
-    println!("verified proof for guest {}", journal.guest_id);
+    println!("wickra-zk {}", wickra_zk_host::version());
+    println!("guest_id: {}", journal.guest_id);
+    println!("report_hash: {}", journal.report_hash);
+    println!("verify: {}", if journal == proof.journal { "valid" } else { "INVALID" });
     println!("{}", serde_json::to_string_pretty(&journal).unwrap());
 }

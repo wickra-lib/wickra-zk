@@ -17,8 +17,8 @@
 // The napi surface is consumed from JavaScript: `#[must_use]` and `# Errors`
 // sections would document a Rust caller that does not exist.
 #![allow(clippy::must_use_candidate, clippy::missing_errors_doc)]
-// `Prover` holds no state, but its methods take `self` so every binding in
-// the family reads the same way.
+// `command` takes `self` it does not read: the host's command surface is a
+// free function, and the handle shape is what every binding in the family has.
 #![allow(clippy::unused_self)]
 
 use napi::Result;
@@ -37,10 +37,13 @@ pub fn version() -> String {
 
 /// A prover driven by JSON commands.
 ///
-/// Holds no state -- the host's command surface is a free function -- but is
-/// handle-shaped so every binding in the family reads the same way.
+/// The host's command surface is a free function; the handle exists so every
+/// binding in the family reads the same way. It carries the host version it
+/// was created against, which is what `version()` reports.
 #[napi]
-pub struct Prover;
+pub struct Prover {
+    version: &'static str,
+}
 
 #[napi]
 impl Prover {
@@ -48,7 +51,9 @@ impl Prover {
     #[napi(constructor)]
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
-        Self
+        Self {
+            version: wickra_zk_host::version(),
+        }
     }
 
     /// Apply a command JSON and return the resulting response JSON.
@@ -60,6 +65,6 @@ impl Prover {
     /// The library version.
     #[napi]
     pub fn version(&self) -> String {
-        wickra_zk_host::version().to_string()
+        self.version.to_string()
     }
 }

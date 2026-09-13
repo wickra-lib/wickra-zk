@@ -19,11 +19,21 @@ on:
 permissions:
   contents: read
 
+env:
+  # risc0's circuits are C++ kernels compiled by build scripts, and one of
+  # them, risc0-circuit-keccak-sys, is a single generated file that g++ 13
+  # takes 11 minutes to optimise on a desktop core (25 on a runner core) and
+  # clang 18 takes 19 seconds. Every other crate compiles in under a minute.
+  # The runners ship both compilers; this picks the one that finishes.
+  # Apple's default compiler is clang already, so macOS jobs were never slow.
+  CC: clang
+  CXX: clang++
+
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
     runs-on: ubuntu-latest
-    timeout-minutes: 30 # backstop against a wedged job, not a budget
+    timeout-minutes: 90 # the go and c-cpp rows build the prover's C ABI in release: ~30 min cold
     permissions:
       security-events: write # upload CodeQL results to code-scanning
       packages: read
@@ -49,7 +59,7 @@ jobs:
             build-mode: manual
     steps:
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -61,7 +71,7 @@ jobs:
           java-version: "25"
       - name: Set up Go
         if: matrix.language == 'go'
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v6.0.0
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: stable
           cache: false
@@ -71,11 +81,11 @@ jobs:
       - name: Install Rust toolchain
         if: matrix.language == 'go' || matrix.language == 'c-cpp'
         uses: ./.github/actions/setup-rust
-      # The C ABI crate depends on the host, whose build.rs compiles the zkVM
-      # guest, so the risc0 toolchain has to be here too.
-      - name: Install the risc0 toolchain
+      - name: Restore the release build cache the CI jobs share
         if: matrix.language == 'go' || matrix.language == 'c-cpp'
-        uses: ./.github/actions/setup-risc0
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          shared-key: release
       - name: Build the C ABI library
         if: matrix.language == 'go' || matrix.language == 'c-cpp'
         run: cargo build -p wickra-zk-c --release
@@ -87,12 +97,19 @@ jobs:
           mkdir -p bindings/go/lib/linux_amd64
           cp target/release/libwickra_zk.so bindings/go/lib/linux_amd64/
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@99df26d4f13ea111d4ec1a7dddef6063f76b97e9 # v4.37.0
+        uses: github/codeql-action/init@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # v4.37.8
         with:
           config-file: .github/codeql/codeql-config.yml
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
 
+      # The C ABI is Rust; what CodeQL sees for c-cpp is the C and C++ that
+      # consume it, compiled after init so the tracer records them.
+      - name: Build the C and C++ examples
+        if: matrix.language == 'c-cpp'
+        run: |
+          cmake -S examples/c -B examples/c/build
+          cmake --build examples/c/build --config Release
       - name: Build the C# binding and tests
         if: matrix.language == 'csharp'
         run: dotnet build bindings/csharp/WickraZk.Tests/WickraZk.Tests.csproj -c Release
@@ -100,6 +117,6 @@ jobs:
         if: matrix.language == 'java-kotlin'
         run: mvn -B -f bindings/java install -DskipTests
       - name: Perform CodeQL analysis
-        uses: github/codeql-action/analyze@99df26d4f13ea111d4ec1a7dddef6063f76b97e9 # v4.37.0
+        uses: github/codeql-action/analyze@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # v4.37.8
         with:
           category: "/language:${{ matrix.language }}"

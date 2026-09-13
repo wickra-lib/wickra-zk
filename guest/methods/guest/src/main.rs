@@ -75,8 +75,8 @@ fn main() {
     let dataset_commitment: String = env::read();
 
     // 2. Bind the data to the commitment.
-    let recomputed =
-        wickra_proof_core::hash_candles(&candles).expect("candles must serialise to canonical JSON");
+    let recomputed = wickra_proof_core::hash_candles(&candles)
+        .expect("candles must serialise to canonical JSON");
     assert_eq!(
         recomputed, dataset_commitment,
         "dataset_commitment does not match the candles fed to the guest"

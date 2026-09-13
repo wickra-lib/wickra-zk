@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Wickra.Proof;
+namespace Wickra.Zk;
 
 /// <summary>
 /// A stateless prover driven by JSON commands, over the Wickra C ABI. Create one,
