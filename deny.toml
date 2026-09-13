@@ -65,12 +65,33 @@ allow = [
 ]
 confidence-threshold = 0.93
 
-# Scoped license exceptions for individual permissive / public-domain crates
-# pulled in transitively by the risc0 zkVM stack:
+# Scoped license exceptions for individual crates pulled in transitively by
+# the risc0 zkVM stack:
 #   - webpki-roots (CDLA-Permissive-2.0): the Mozilla CA certificate bundle as
 #     data, pulled in via risc0's networked prover client.
+#   - managed (0BSD): a permissive, attribution-free licence; a transitive
+#     dependency of the prover.
+#   - malachite, malachite-base, malachite-nz, malachite-q, malachite-float
+#     (LGPL-3.0-only): the big-integer arithmetic risc0-circuit-rv32im's
+#     prover uses, so with the in-process prover (risc0-zkvm's `prove`
+#     feature) it is linked into wickra-zk-host, the CLI and every binding.
+#     The LGPL's condition for a statically linked library is that a user can
+#     relink against a modified copy; every binary this repository ships is
+#     built from source that is itself available under MIT OR Apache-2.0, so
+#     that condition is met. risc0-zkvm ships the same way. Named in the
+#     README's License section.
+#   - downloader (LGPL-3.0-or-later): a build-dependency of
+#     risc0-circuit-recursion (it fetches the recursion circuit at build
+#     time); it runs at build time and is linked into nothing that ships.
 exceptions = [
     { allow = ["CDLA-Permissive-2.0"], crate = "webpki-roots" },
+    { allow = ["0BSD"], crate = "managed" },
+    { allow = ["LGPL-3.0-only"], crate = "malachite" },
+    { allow = ["LGPL-3.0-only"], crate = "malachite-base" },
+    { allow = ["LGPL-3.0-only"], crate = "malachite-nz" },
+    { allow = ["LGPL-3.0-only"], crate = "malachite-q" },
+    { allow = ["LGPL-3.0-only"], crate = "malachite-float" },
+    { allow = ["LGPL-3.0-or-later"], crate = "downloader" },
 ]
 
 [bans]

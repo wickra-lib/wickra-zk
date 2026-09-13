@@ -141,6 +141,13 @@ Report vulnerabilities privately — see [SECURITY.md](SECURITY.md).
 Dual-licensed under either of [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE)
 at your option.
 
+The in-process prover links risc0's circuit crates, which depend on
+[malachite](https://crates.io/crates/malachite) (LGPL-3.0-only) for big-integer
+arithmetic. Every binary and package this repository publishes is built from
+source available here under the licences above, which satisfies the LGPL's
+relinking condition for statically linked libraries; risc0-zkvm itself ships
+the same way. `deny.toml` names the exception.
+
 ## Disclaimer
 
 This software is provided for research and educational purposes. It is not
