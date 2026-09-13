@@ -24,6 +24,7 @@ guest program changes and is published with each release.
 | `rust/` | In-process: build a `ZkSpec`, `prove`, `verify`, print the journal. |
 | `python/`, `node/`, `go/`, `java/`, `csharp/`, `r/` | Through each binding's command envelope; the dataset commitment is left to the host. |
 | `c/` | The C and C++ examples and the C ABI golden test, built with CMake. |
+| `wasm/` | The verifying side in a browser: fetches a real golden receipt and decodes its journal -- see [`wasm/README.md`](wasm/README.md). |
 | `specs/` | Valid `StrategySpec`s (`momentum`, `mean_reversion`, `crossover`). |
 | `data/` | Deterministic OHLCV series (`BTCUSDT.csv`, `ETHUSDT.csv`), `ts,open,high,low,close,volume`. |
 

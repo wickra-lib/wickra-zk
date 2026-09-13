@@ -13,7 +13,10 @@
 //                  tampered receipt is refused; a prove command is refused,
 //                  this build carrying no prover; an unknown command is an
 //                  in-band error;
-//   identity       the version and guest id match the module exports.
+//   identity       the version and guest id match the module exports;
+//   operating modes
+//                  the committed proof bytes and the proof as the host's JSON
+//                  library re-emits it decode to one journal.
 //
 // The require is hard: a missing build must fail the job, not skip it.
 
@@ -115,3 +118,33 @@ test("an unknown command is an in-band error", () => {
   assert.strictEqual(response.ok, false);
   assert.match(response.error, /nope/);
 });
+
+// Operating-mode equivalence for a verifier: the proof does not depend on how
+// it arrives. The committed proof file can be spliced into the envelope byte
+// for byte, or handed over as what the host's JSON library re-emits -- keys in
+// another order, whitespace, the receipt's numbers re-formatted. Both operating
+// modes must decode to the same journal. This is where a binding that mangles
+// the receipt on the way through is caught.
+function reordered(value) {
+  if (Array.isArray(value)) return value.map(reordered);
+  if (value && typeof value === "object") {
+    const out = {};
+    for (const k of Object.keys(value).sort().reverse()) out[k] = reordered(value[k]);
+    return out;
+  }
+  return value;
+}
+
+for (const file of proofs) {
+  const name = path.basename(file, ".json");
+  test(`${name}: committed bytes and host-re-emitted proof verify alike`, () => {
+    const text = fs.readFileSync(path.join(PROOFS, file), "utf8").trim();
+    const verifier = new Verifier();
+    const committed = JSON.parse(verifier.command(`{"cmd":"verify","proof":${text}}`));
+    const hosted = JSON.parse(
+      verifier.command(JSON.stringify({ cmd: "verify", proof: reordered(JSON.parse(text)) }, null, 2)),
+    );
+    assert.strictEqual(committed.ok, undefined, JSON.stringify(committed));
+    assert.deepStrictEqual(hosted, committed);
+  });
+}

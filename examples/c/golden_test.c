@@ -5,7 +5,8 @@
  * determinism chain crates/wickra-zk-host/tests/golden.rs pins natively. The
  * proof then verifies to the same journal, a proof file whose journal disagrees
  * with its receipt is refused, and a stated commitment that is not the hash of
- * the candles is refused before the zkVM runs.
+ * the candles is refused before the zkVM runs. The two operating modes --
+ * commitment left to the host, commitment stated up front -- carry one journal.
  *
  * Until this existed the C ABI was the only reach with no test at all beyond
  * the version command. Four of the seven language reaches go through this ABI,
@@ -364,6 +365,52 @@ int main(void) {
             }
             free(refused);
             free(verify_cmd.buf);
+        }
+
+        /* Operating-mode equivalence: the caller may state the commitment up
+         * front instead of leaving it to the host. The journal must not depend
+         * on which, and the stated proof verifies to the same journal. Only
+         * the receipt bytes may differ between two runs. */
+        if (commit && !in_band_error(commit) && journal) {
+            char commitment[80];
+            Str stated_cmd = {0};
+            char *stated = NULL;
+            if (string_field(commit, "dataset_commitment", commitment, sizeof commitment)) {
+                str_puts(&stated_cmd, "{\"cmd\":\"prove\",\"spec\":{\"strategy\":");
+                str_puts(&stated_cmd, strategy);
+                str_puts(&stated_cmd, ",\"dataset_commitment\":\"");
+                str_puts(&stated_cmd, commitment);
+                str_puts(&stated_cmd, "\"},\"candles\":");
+                str_puts(&stated_cmd, candles.buf);
+                str_puts(&stated_cmd, "}");
+                stated = run(prover, stated_cmd.buf);
+            }
+            const char *stated_journal = stated ? strstr(stated, "\"journal\":{\"report_hash\":") : NULL;
+            if (!stated || in_band_error(stated) || !stated_journal) {
+                fprintf(stderr, "%s: stated-commitment prove failed: %s\n", name, stated ? stated : "(no response)");
+                failures++;
+            } else {
+                stated_journal += strlen("\"journal\":");
+                size_t stated_len = (size_t)(strchr(stated_journal, '}') - stated_journal) + 1;
+                size_t journal_len = (size_t)(strchr(journal, '}') - journal) + 1;
+                if (stated_len != journal_len || strncmp(stated_journal, journal, journal_len) != 0) {
+                    fprintf(stderr, "%s: journals differ between operating modes\n", name);
+                    failures++;
+                }
+                Str verify_stated = {0};
+                str_puts(&verify_stated, "{\"cmd\":\"verify\",\"proof\":");
+                str_puts(&verify_stated, stated);
+                str_puts(&verify_stated, "}");
+                char *outputs = run(prover, verify_stated.buf);
+                if (!outputs || strlen(outputs) != journal_len || strncmp(outputs, journal, journal_len) != 0) {
+                    fprintf(stderr, "%s: verify(stated) returned %s\n", name, outputs ? outputs : "(none)");
+                    failures++;
+                }
+                free(outputs);
+                free(verify_stated.buf);
+            }
+            free(stated);
+            free(stated_cmd.buf);
         }
 
         /* A stated commitment is held to. */
