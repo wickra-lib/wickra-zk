@@ -13,10 +13,31 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-# The in-process prover is heavy to build: risc0's circuits are C++ and the
-# release profile links with fat LTO, ~30 minutes on a cold 4-core runner. The
-# jobs that build it share one rust-cache key per profile (`release`, `debug`)
-# so only the first cold job pays, and carry timeouts that cover that build.
+env:
+  CARGO_TERM_COLOR: always
+  # Network-flake resilience: retry transient registry/DNS failures at the tool
+  # level so a blip fetching crates.io inside a build retries automatically
+  # instead of failing the job.
+  CARGO_NET_RETRY: "10"
+  CARGO_NET_GIT_FETCH_WITH_CLI: "true"
+  # risc0's circuits are C++ kernels compiled by build scripts, and one of
+  # them, risc0-circuit-keccak-sys, is a single generated file that g++ 13
+  # takes 11 minutes to optimise on a desktop core (25 on a runner core) and
+  # clang 18 takes 19 seconds. Every other crate compiles in under a minute.
+  # The runners ship both compilers; this picks the one that finishes.
+  # Apple's default compiler is clang already, so macOS jobs were never slow.
+  CC: clang
+  CXX: clang++
+
+# The in-process prover is heavy to build: risc0's circuits are C++ kernels
+# (see the CC/CXX note above), and a cold release build took ~30 minutes on a
+# 4-core runner with g++. The jobs that build it share one rust-cache key per
+# profile (`release`, `debug`) so only the first cold job pays, and carry
+# timeouts sized for that cold build as a backstop.
+# The Node jobs and the Examples job build with an explicit cargo target (the
+# napi CLI always passes one), which lands under target/<triple>/ instead of
+# target/ -- a cache of one is useless to the other, so those two carry their
+# own key, `release-target`.
 #
 # The guest ELF and its image id are committed under guest/methods, so the host,
 # the CLI and every binding build with plain Rust; only guest-build (which
@@ -281,18 +302,26 @@ jobs:
 
   # The examples are what a reader copies. Nothing built them, so one could rot
   # against an API change and stay green -- the worst kind of documentation,
-  # because it looks executable. This compiles each of them; it does not run
-  # them, since several want a network or a built native library.
-  # Every example proves the same inputs and prints the same report_hash --
-  # examples/README.md promises one value for every language, and each run is
-  # held to it here, so the document and the code cannot drift apart. An
-  # example that starts and prints nothing fails.
+  # because it looks executable. This runs each of them: every example proves
+  # the same inputs and prints the same report_hash -- examples/README.md
+  # promises one value for every language, and each run is held to it here,
+  # so the document and the code cannot drift apart. An example that starts
+  # and prints nothing fails.
+  #
+  # One prover build serves every language. The napi CLI always passes an
+  # explicit `--target` to cargo, which puts its output under
+  # target/<triple>/ -- a different directory from a plain `cargo build`, so
+  # without this the Node example rebuilt the prover from scratch, a second
+  # cold half hour. CARGO_BUILD_TARGET sends every cargo invocation in this
+  # job (the C ABI, maturin, napi) to that same directory, and the native
+  # library is staged once where the other bindings look for it.
   examples:
     name: Examples
     runs-on: ubuntu-latest
     timeout-minutes: 90 # a cold release build of the prover takes ~30 min on a 4-core runner
     env:
       RISC0_DEV_MODE: "1"
+      CARGO_BUILD_TARGET: x86_64-unknown-linux-gnu
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -300,16 +329,17 @@ jobs:
       - uses: ./.github/actions/setup-rust
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
-          shared-key: release
+          shared-key: release-target
 
       - name: Build the C ABI library the non-native bindings link against
         run: cargo build -p wickra-zk-c --release
 
-      - name: Stage the native library for Go and put it on the loader path
+      - name: Stage the native library where the bindings look for it
         shell: bash
         run: |
-          mkdir -p bindings/go/lib/linux_amd64
-          cp target/release/libwickra_zk.so bindings/go/lib/linux_amd64/
+          mkdir -p target/release bindings/go/lib/linux_amd64
+          cp "target/$CARGO_BUILD_TARGET/release/libwickra_zk.so" target/release/
+          cp "target/$CARGO_BUILD_TARGET/release/libwickra_zk.so" bindings/go/lib/linux_amd64/
           echo "LD_LIBRARY_PATH=$PWD/target/release:$LD_LIBRARY_PATH" >> "$GITHUB_ENV"
 
       - name: The hash the README promises
@@ -525,12 +555,6 @@ jobs:
           done
           echo "$checked crate(s) compared against their published baseline"
 
-  # The release builds the Linux wheels inside manylinux and musllinux images.
-  # Nothing else does, so a wheel that only fails there -- a missing system
-  # library, a Perl module OpenSSL's Configure wants -- is invisible until the
-  # tag, where it is already too late. This builds the same two images on every
-  # pull request.
-
   python:
     name: Python ${{ matrix.python-version }} on ${{ matrix.os }}
     strategy:
@@ -594,7 +618,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
-          shared-key: release
+          shared-key: release-target
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ matrix.node-version }}
@@ -896,18 +920,23 @@ jobs:
   # a published wheel that declared a licence it did not carry, and version
   # declarations that had drifted apart across six ecosystems.
 
-  # The release builds the Linux wheels inside manylinux and musllinux images.
-  # Nothing else does, so a wheel that only fails there -- a missing system
-  # library, a Perl module OpenSSL's Configure wants -- is invisible until the
-  # tag, where it is already too late. This builds the same two images on every
-  # pull request.
+  # The release builds the Linux wheels inside manylinux and musllinux images,
+  # and the aarch64 ones with a cross toolchain. Nothing else does, so a wheel
+  # that only fails there -- a missing system library, a Perl module OpenSSL's
+  # Configure wants, a C++ cross compiler risc0's circuits do not build with --
+  # is invisible until the tag, where it is already too late. This builds the
+  # same four Linux wheels on every pull request.
   python-wheel-container-smoke:
-    name: Python wheel (${{ matrix.manylinux }} smoke)
+    name: Python wheel (${{ matrix.target }} ${{ matrix.manylinux }} smoke)
     runs-on: ubuntu-latest
-    timeout-minutes: 45 # backstop: vendored OpenSSL adds a from-source compile
+    # The prover's C++ circuits and a fat-LTO link inside a container with no
+    # cache: the manylinux x86_64 wheel takes ~15 minutes, the musllinux one
+    # crossed 45 without finishing. The budget is what the release job gets.
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
+        target: [x86_64, aarch64]
         manylinux: [auto, musllinux_1_2]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -918,7 +947,7 @@ jobs:
       - uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1.51.0
         with:
           working-directory: bindings/python
-          target: x86_64
+          target: ${{ matrix.target }}
           args: --release --out dist
           manylinux: ${{ matrix.manylinux }}
           # Building OpenSSL from source needs Perl modules the minimal
@@ -926,11 +955,6 @@ jobs:
           # Perl and has no yum, so this is a no-op there.
           before-script-linux: |
             if command -v yum >/dev/null 2>&1; then yum install -y perl-core perl-IPC-Cmd perl-Data-Dumper perl-Time-Piece; fi
-
-  # The examples are what a reader copies. Nothing built them, so one could rot
-  # against an API change and stay green -- the worst kind of documentation,
-  # because it looks executable. This compiles each of them; it does not run
-  # them, since several want a network or a built native library.
 
   # Surface parity is its own concern, not a line inside the repository checks:
   # it is the claim the whole product rests on. A request built in any language

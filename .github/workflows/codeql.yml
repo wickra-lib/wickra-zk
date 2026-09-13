@@ -19,6 +19,16 @@ on:
 permissions:
   contents: read
 
+env:
+  # risc0's circuits are C++ kernels compiled by build scripts, and one of
+  # them, risc0-circuit-keccak-sys, is a single generated file that g++ 13
+  # takes 11 minutes to optimise on a desktop core (25 on a runner core) and
+  # clang 18 takes 19 seconds. Every other crate compiles in under a minute.
+  # The runners ship both compilers; this picks the one that finishes.
+  # Apple's default compiler is clang already, so macOS jobs were never slow.
+  CC: clang
+  CXX: clang++
+
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})

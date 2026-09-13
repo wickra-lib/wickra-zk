@@ -20,6 +20,14 @@ env:
   # retries automatically instead of failing the job.
   CARGO_NET_RETRY: "10"
   CARGO_NET_GIT_FETCH_WITH_CLI: "true"
+  # risc0's circuits are C++ kernels compiled by build scripts, and one of
+  # them, risc0-circuit-keccak-sys, is a single generated file that g++ 13
+  # takes 11 minutes to optimise on a desktop core (25 on a runner core) and
+  # clang 18 takes 19 seconds. Every other crate compiles in under a minute.
+  # The runners ship both compilers; this picks the one that finishes.
+  # Apple's default compiler is clang already, so macOS jobs were never slow.
+  CC: clang
+  CXX: clang++
   npm_config_fetch_retries: "5"
   npm_config_fetch_retry_maxtimeout: "120000"
   PIP_RETRIES: "5"
@@ -241,7 +249,9 @@ jobs:
   # --------------------------------------------------------------------------
   python-wheels:
     name: Build wheels (${{ matrix.target }}/${{ matrix.manylinux }} on ${{ matrix.os }})
-    timeout-minutes: 45
+    # A cold prover build inside a container: ~15 minutes for manylinux
+    # x86_64, well over 45 for musllinux (measured by the CI smoke job).
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
@@ -264,6 +274,8 @@ jobs:
       - name: Sync root README into bindings/python so it ships with the wheel
         shell: bash
         run: cp README.md bindings/python/README.md
+      # risc0-sys compiles Metal kernels on macOS; a no-op on Linux.
+      - uses: ./.github/actions/setup-metal
       # The guest is committed, so the wheel builds with plain Rust inside the
       # manylinux and musllinux containers: no risc0 toolchain, no docker.
       - uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1.51.0

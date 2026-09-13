@@ -51,6 +51,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   CLI), PyPI wheels and sdist, npm with per-platform packages, NuGet, Maven
   Central, the Go mirror (`wickra-lib/wickra-zk-go`), C ABI archives, CLI
   binaries, the guest ELF and image id, SBOMs and build provenance.
+- CI builds risc0's C++ kernels with clang. One of them,
+  `risc0-circuit-keccak-sys`, is a single generated file that g++ 13 spends
+  25 minutes optimising on a runner core and clang 18 compiles in seconds;
+  every runner job that built the prover cold took over half an hour because
+  of it. The Examples job builds the prover once for every language (the napi
+  CLI's explicit `--target` used to send it into a second cold build), the
+  container wheel smoke covers the four Linux wheels the release ships, and
+  the macOS wheel builds get the Metal toolchain risc0-sys needs.
 
 ### Fixed
 
