@@ -173,7 +173,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   pushed. That is how the guest came to call functions that no longer existed:
   an unpinned git dependency never goes red, it only gets older, and then one
   day the API underneath has moved and the failure looks like your own. Both are
-  pinned to an exact rev.
+  pinned to exact published releases now, `wickra-backtest =0.1.4` and
+  `wickra-proof-core =0.1.2`, in the host and the guest alike (the two must
+  agree: proof-core 0.1.2 requires `wickra-backtest-core =0.1.4`, and two
+  copies of the engine in one graph do not share a `BacktestReport`), and
+  `deny.toml` no longer allows git sources at all.
 
 - **A dependency pointed at a repository that does not exist.** The workspace
   declared `wickra-data = { git = ".../wickra-lib/wickra-data" }`, which 404s --
