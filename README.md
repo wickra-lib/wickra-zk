@@ -17,11 +17,10 @@
 [![Docs](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-zk/docs.svg)](https://wickra.org)
 [![Zero-knowledge](https://img.shields.io/badge/proof-zero--knowledge-8b5cf6)](#what-is-proved--what-stays-private)
 
-> Prove your backtest — zero-knowledge, on-chain-verifiable performance without
-> revealing your data or strategy.
+**Prove a backtest in zero knowledge. The deterministic Wickra engine runs inside a RISC Zero zkVM guest, and the receipt proves the report's hash and headline metrics without revealing the candles or the strategy.**
 
 > **Part of the [Wickra ecosystem](https://github.com/wickra-lib):** the same
-> data-driven core and ten-language binding surface also power
+> data-driven core also powers
 > [wickra-backtest](https://github.com/wickra-lib/wickra-backtest),
 > [wickra-proof](https://github.com/wickra-lib/wickra-proof),
 > [wickra-verify](https://github.com/wickra-lib/wickra-verify) and 20 more — see
@@ -29,13 +28,33 @@
 
 **wickra-zk** runs a deterministic [Wickra](https://github.com/wickra-lib/wickra)
 backtest as a guest program inside the [risc0](https://risczero.com) zkVM and
-produces a succinct **zero-knowledge proof** over it. A verifier — on a server or
-on-chain — can check the proof and trust the reported performance metrics
-**without ever seeing the price data or the strategy internals**.
+produces a succinct **zero-knowledge proof** over it. Anyone holding the proof
+-- a server, an auditor, a browser -- checks it against the pinned guest and
+can trust the reported performance metrics **without ever seeing the price
+data or the strategy internals**. The proof is a constant-size STARK receipt;
+wrapping it for an on-chain verifier is on the [roadmap](ROADMAP.md).
 
 This works only because Wickra computes byte-deterministically: the report the
 guest proves is exactly the one `wickra-backtest` produces natively and
 `wickra-proof` canonicalizes and hashes.
+
+```rust
+use wickra_zk_host::{commit_dataset, prove, verify, ProveOptions, ZkSpec};
+
+// The strategy and the candles are the private inputs; the proof is bound to
+// the candles through their canonical hash, which the guest recomputes.
+let spec = ZkSpec { strategy, dataset_commitment: commit_dataset(&candles)? };
+let proof = prove(&spec, &candles, ProveOptions::default())?;
+
+// Anyone verifies the receipt against the pinned guest and reads the journal
+// from it -- the report hash, the commitment, sharpe, pnl, the trade count.
+let journal = verify(&proof)?;
+println!("report_hash: {}", journal.report_hash);
+```
+
+The same envelope -- `prove`, `commit`, `verify`, `version` as JSON -- is
+what the CLI and every binding speak: Python, Node.js, C, C++, C#, Go, Java and
+R prove and verify natively, and a WebAssembly build verifies in the browser.
 
 ## What is proved
 
@@ -63,17 +82,27 @@ Early development (0.1.0, unreleased). See [ROADMAP.md](ROADMAP.md).
 ## Quickstart
 
 ```bash
-cargo install cargo-risczero && cargo risczero install
+cargo install wickra-zk
 wickra-zk prove  --spec examples/specs/momentum.json --data examples/data/BTCUSDT.csv --out momentum.proof.json
 wickra-zk verify --proof momentum.proof.json
 ```
 
+The prover is in-process and the compiled guest ships inside the crate, so
+nothing else is installed. Add `--dev` (or `RISC0_DEV_MODE=1`) for a fast,
+unsound receipt while developing; a real proof takes minutes. One runnable
+example per language lives under [`examples/`](examples/README.md).
+
 ## Building everything from source
+
 ```bash
 git clone https://github.com/wickra-lib/wickra-zk && cd wickra-zk
-cargo risczero install
-cargo build --release
+cargo build --release                     # host, CLI, C ABI, Python and Node crates
+RISC0_DEV_MODE=1 cargo test --workspace   # dev-mode receipts: seconds, unsound
 ```
+
+The compiled guest is committed, so this needs no risc0 toolchain. Changing
+the guest does -- see [CONTRIBUTING.md](CONTRIBUTING.md) for the builder and
+the reproducible rebuild CI holds it to.
 
 ## Project layout
 
@@ -81,11 +110,16 @@ cargo build --release
 crates/wickra-zk-host/     the host: prove, verify, the ZkSpec/PublicOutputs model
 crates/wickra-zk-cli/      the `wickra-zk` command line
 crates/wickra-zk-bench/    criterion benchmarks over the proving path
-guest/methods/             host-side wrapper; build.rs compiles the guest to a
-                           RISC-V ELF and exports its image id
 guest/methods/guest/       the guest program -- the code that runs inside the
                            zkVM and whose honest execution the receipt attests
-golden/                    frozen (spec, data) -> expected triples
+guest/methods/             the compiled guest, committed: its ELF and image id
+guest/builder/             compiles the guest through risc0-build and writes
+                           the two files above; the only risc0 consumer
+bindings/                  c, python, node, wasm (verify only), go, csharp,
+                           java, r -- one JSON envelope over the host
+examples/                  one runnable prove/verify per language
+golden/                    frozen (spec, data) -> expected journals, one real
+                           receipt, the case-to-dataset map
 fuzz/                      libfuzzer targets over the JSON boundary
 ```
 
@@ -98,9 +132,14 @@ Run the suites with the commands in
   report hash, the dev-mode guest's journal, and the blessed fixtures must all
   agree. That equality is the product; if the guest and the native engine ever
   disagree, the proof attests to something other than what the engine computes.
-- **The guest** is compiled for `riscv32im-risc0-zkvm-elf` on every change and
-  linted for that target separately, because a guest that builds on the host
-  proves nothing about the one that runs in the circuit.
+- **The guest** is rebuilt for `riscv32im-risc0-zkvm-elf` in risc0's build
+  container on every change and compared byte for byte with the committed ELF
+  and image id, and linted for that target separately, because a guest that
+  builds on the host proves nothing about the one that runs in the circuit.
+- **Every binding** proves the golden cases through the envelope in dev-mode
+  and holds the journal to the blessed report hash and metrics; the WebAssembly
+  verifier and the host verify a committed real receipt, so the sound path is
+  exercised on every push without a prover.
 - **`fuzz/`** — libfuzzer targets over the spec and journal parsers, run as a
   time-boxed smoke in CI.
 - **Nightly** — `prove.yml` runs the real proving path rather than dev mode.
@@ -125,7 +164,36 @@ cargo bench -p wickra-zk-bench
 - Rust 1.90+. The prover is in-process and the compiled guest is committed, so
   building, proving and verifying need no risc0 toolchain; changing the guest
   does (see [CONTRIBUTING.md](CONTRIBUTING.md)).
-- See [CONTRIBUTING.md](CONTRIBUTING.md) for the full verify workflow
+- On macOS, Xcode's Metal toolchain: risc0 compiles its Metal kernels whenever
+  the prover is built there. `xcodebuild -downloadComponent MetalToolchain`
+  once; the crate reports `cannot execute tool 'metal'` until then.
+- Per binding: Python 3.9+, Node.js 20+, a C toolchain and CMake, .NET 8 SDK,
+  JDK 22+, Go 1.23+, R 4.1+ -- the floors the manifests declare.
+- See [CONTRIBUTING.md](CONTRIBUTING.md) for the full verify workflow.
+
+## Ecosystem
+
+Part of the [Wickra](https://github.com/wickra-lib/wickra) family — each one a
+data-driven core with a CLI and the same binding surface:
+
+- [**wickra**](https://github.com/wickra-lib/wickra) — main library (Rust core + Python / Node.js / WASM bindings + a C ABI for C / C++ / C# / Go / Java / R)
+- [**wickra-playground**](https://github.com/wickra-lib/wickra-playground) — a polyglot strategy playground: one StrategySpec live side by side in Python, Rust, JS and Go, entirely in the browser
+- [**wickra-exchange**](https://github.com/wickra-lib/wickra-exchange) — unified market-data + execution across ten crypto exchanges
+- [**wickra-backtest**](https://github.com/wickra-lib/wickra-backtest) — event-driven backtester over the Wickra core
+- [**wickra-terminal**](https://github.com/wickra-lib/wickra-terminal) — the trading terminal: a TUI and a browser renderer over the stack
+- [**wickra-screener**](https://github.com/wickra-lib/wickra-screener) — parallel multi-symbol screening over 514 streaming indicators
+- [**wickra-radar**](https://github.com/wickra-lib/wickra-radar) — perp-universe alert radar: OI delta, funding flip, book imbalance, liquidation clusters, OI/price divergence
+- [**wickra-copilot**](https://github.com/wickra-lib/wickra-copilot) — local market copilot grounded in real order-book, liquidation and funding microstructure
+- [**wickra-shazam**](https://github.com/wickra-lib/wickra-shazam) — match an asset's current microstructure fingerprint against its entire history
+- [**wickra-benchmark**](https://github.com/wickra-lib/wickra-benchmark) — reproducible, golden-verified benchmark suite — recompute any (strategy, dataset, report) in ten languages and confirm it byte-for-byte
+- [**wickra-strategy-ci**](https://github.com/wickra-lib/wickra-strategy-ci) — Jest for trading strategies: golden-pin the report, catch regressions in CI, property-test against fuzzed data
+- [**wickra-verify**](https://github.com/wickra-lib/wickra-verify) — confirm or refute a claimed backtest report against its strategy and data, in ten languages
+- [**wickra-proof**](https://github.com/wickra-lib/wickra-proof) — Proof-of-Backtest: deterministic (spec, data) → report + blake3 hash, recomputable byte-for-byte in ten languages
+- [**wickra-zk**](https://github.com/wickra-lib/wickra-zk) — this repository: prove a backtest zero-knowledge, verifiable anywhere without the data or the strategy
+- [**wickra-impact**](https://github.com/wickra-lib/wickra-impact) — the backtester that knows you would have moved the market: agent-based fills on the real historical L2 order book
+- [**wickra-darwin**](https://github.com/wickra-lib/wickra-darwin) — evolutionary strategy search at millions of backtests per second, mutating and crossing JSON specs across the 514-indicator space
+- [**wickra-gym**](https://github.com/wickra-lib/wickra-gym) — a Gymnasium-compatible, microstructure-aware backtest environment with O(1) steps for deterministic RL rollouts
+- [**wickra-feature-store**](https://github.com/wickra-lib/wickra-feature-store) — OHLCV and microstructure streams into ML-ready feature matrices over 514 O(1) streaming indicators
 
 ## Contributing
 

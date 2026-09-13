@@ -24,6 +24,16 @@ Real proving is CPU- and memory-heavy (minutes, gigabytes), so it runs nightly
 outputs are identical to dev-mode — a real proof does not change *what* is
 proved, only *whether it is trustless*.
 
+The prover is in-process (risc0-zkvm's `prove` feature): no `r0vm` binary, no
+risc0 toolchain, nothing beside the crate, the wheel or the native package.
+The receipt it produces is **succinct** — one constant-size STARK whatever
+the backtest's length, a few hundred kilobytes — which is what a proof handed
+to someone else should be. Verification is cheap and needs no prover: the
+host without its `prove` feature, and the WebAssembly build made from it,
+verify a receipt in-process. One real receipt is committed under
+`golden/proofs/` and verified on every push, so the sound path is exercised
+without waiting for the nightly prover.
+
 ## Timing and memory
 
 Numbers land in [../BENCHMARKS.md](../BENCHMARKS.md) from the nightly `bench.yml`
