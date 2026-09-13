@@ -17,6 +17,14 @@ handle = "kingchenc"
 email  = "support@wickra.org"
 github = "wickra-lib"
 
+[platforms]
+# risc0 has no Windows host: neither the crates nor any binding build there,
+# so the release matrix carries no Windows row, the npm package ships four
+# platform stubs rather than six, and the R package has no configure.win.
+# On Windows use WSL. The blueprint auditor reads this declaration.
+windows = false
+reason  = "risc0 has no Windows host; use WSL"
+
 [badges]
 ci_workflow = "ci.yml"
 
