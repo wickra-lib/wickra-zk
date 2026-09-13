@@ -17,9 +17,10 @@ concurrency:
 # rebuilds the guest reproducibly and diffs it) and clippy-guest need the risc0
 # toolchain. That toolchain has no Windows host, and the host crate does not
 # link on MSVC either (risc0-zkvm-platform's sys_alloc_aligned), so no matrix
-# here has a Windows entry and the release ships Linux and macOS only. Tests run
-# under RISC0_DEV_MODE=1 for a fast, unsound receipt that needs no r0vm; the
-# real proving path is exercised nightly in prove.yml.
+# here has a Windows entry and the release ships Linux and macOS only. The
+# prover is in-process (risc0-zkvm's `prove` feature): nothing here needs r0vm.
+# Tests run under RISC0_DEV_MODE=1 for a fast, unsound receipt; the real
+# proving path is exercised nightly in prove.yml.
 
 jobs:
   fmt:

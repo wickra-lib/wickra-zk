@@ -20,12 +20,9 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
-      - uses: ./.github/actions/setup-risc0
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       # No RISC0_DEV_MODE: a real, sound receipt. The #[ignore]d test asserts the
       # production journal matches the blessed expected report hash. The prover
-      # runs r0vm as a separate process, so it has to be on this step's PATH.
+      # is in-process (risc0-zkvm's `prove` feature), so no toolchain is set up.
       - name: Prove for real and verify
-        run: |
-          export PATH="$HOME/.risc0/bin:$PATH"
-          cargo test -p wickra-zk-host prod_roundtrip -- --ignored --nocapture
+        run: cargo test -p wickra-zk-host prod_roundtrip -- --ignored --nocapture

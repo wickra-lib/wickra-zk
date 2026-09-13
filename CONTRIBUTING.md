@@ -40,8 +40,9 @@ builder is a workspace member.
 
 Linux or macOS: risc0 has no Windows host, and the host crate does not link on
 MSVC (on Windows, use WSL). Building and testing the host, the CLI and the
-bindings needs only Rust: the guest is committed. Changing the guest, or
-running the real prover, needs the risc0 toolchain (guest compiler, `r0vm`):
+bindings needs only Rust: the guest is committed and the prover is in-process
+(risc0-zkvm's `prove` feature), dev-mode and real alike. Changing the guest
+needs the risc0 toolchain (the guest compiler):
 
 ```bash
 curl -L https://risczero.com/install | bash
