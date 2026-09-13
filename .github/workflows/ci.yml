@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+    branches: [main]
 
 permissions:
   contents: read
@@ -34,7 +35,13 @@ jobs:
       - uses: ./.github/actions/setup-rust
         with:
           components: rustfmt
-      - run: cargo fmt --all -- --check
+      # Three crates are their own workspace roots -- the guest, its builder
+      # and the WASM verifier -- and `--all` from the root does not reach them.
+      - run: |
+          cargo fmt --all -- --check
+          cargo fmt --manifest-path guest/methods/guest/Cargo.toml -- --check
+          cargo fmt --manifest-path guest/builder/Cargo.toml -- --check
+          cargo fmt --manifest-path bindings/wasm/Cargo.toml -- --check
 
   clippy-host:
     name: Clippy (host)
@@ -51,6 +58,9 @@ jobs:
           components: clippy
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+      # The WASM verifier is its own workspace (the host without `prove`), so
+      # it is linted on its own, natively; the wasm job builds it for wasm32.
+      - run: cargo clippy --manifest-path bindings/wasm/Cargo.toml --all-targets -- -D warnings
 
   clippy-guest:
     name: Clippy (guest, riscv)
@@ -129,6 +139,8 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
+      - uses: ./.github/actions/setup-metal
+
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - run: cargo test --workspace
 
@@ -527,6 +539,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - uses: ./.github/actions/setup-rust
+      - uses: ./.github/actions/setup-metal
+
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       # The build and test tools come from the hash-locked requirements file
       # Dependabot maintains, not from whatever PyPI resolves today. No
@@ -559,6 +573,8 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
+      - uses: ./.github/actions/setup-metal
+
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -579,6 +595,60 @@ jobs:
       - name: Run Node tests
         run: cd bindings/node && node --test
 
+  wasm:
+    name: WASM
+    runs-on: ubuntu-latest
+    timeout-minutes: 45 # backstop against a wedged job, not a budget
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rust
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: bindings/wasm
+      - name: Install wasm-pack
+        uses: taiki-e/install-action@c3ec0de9ae7f1019cea21aa96aa0a895b9552063 # v2.87.9
+        with:
+          tool: wasm-pack
+      # The crate's own unit tests, natively: the envelope answers verify,
+      # commit and version, refuses prove, and reports errors in-band.
+      - name: Unit tests
+        run: cargo test --manifest-path bindings/wasm/Cargo.toml
+      - name: Build the wasm binding (web target)
+        run: wasm-pack build --target web
+        working-directory: bindings/wasm
+      # A second build for node makes the module loadable without a browser;
+      # `pkg/` stays what ships. The tests beside the binding then verify the
+      # committed real receipt through the WebAssembly verifier and hold the
+      # decoded journal to the blessed one -- a real proof, verified with no
+      # prover and no risc0 toolchain anywhere near the job.
+      - name: Build the wasm binding (nodejs target)
+        run: wasm-pack build --target nodejs --out-dir pkg-node
+        working-directory: bindings/wasm
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        id: setup_node_wasm
+        continue-on-error: true
+        with:
+          node-version: "22"
+      - name: Pause before retrying the toolchain download
+        if: steps.setup_node_wasm.outcome == 'failure'
+        run: sleep 30
+        shell: bash
+      - name: Retry the toolchain download
+        if: steps.setup_node_wasm.outcome == 'failure'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+      # An explicit glob rather than `node --test tests/`: Node 22 reads a bare
+      # directory argument as a module path and fails with MODULE_NOT_FOUND.
+      - name: Run the wasm tests
+        shell: bash
+        run: node --test tests/*.test.js
+        working-directory: bindings/wasm
+
   c-abi:
     name: C ABI on ${{ matrix.os }}
     strategy:
@@ -598,6 +668,8 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
+      - uses: ./.github/actions/setup-metal
+
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Install cbindgen
         uses: taiki-e/install-action@c3ec0de9ae7f1019cea21aa96aa0a895b9552063 # v2.87.9
@@ -642,6 +714,8 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
+      - uses: ./.github/actions/setup-metal
+
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
@@ -676,6 +750,8 @@ jobs:
           go-version: "stable"
           cache: false
       - uses: ./.github/actions/setup-rust
+      - uses: ./.github/actions/setup-metal
+
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Build the C ABI library
         run: cargo build -p wickra-zk-c --release
@@ -736,6 +812,8 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
+      - uses: ./.github/actions/setup-metal
+
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       # The pom points native.lib.dir at target/debug, so build the debug profile.
       - name: Build the C ABI library
@@ -765,6 +843,8 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
+      - uses: ./.github/actions/setup-metal
+
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Build the C ABI library
         run: cargo build -p wickra-zk-c --release

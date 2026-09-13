@@ -8,6 +8,14 @@ on:
 permissions:
   contents: read
 
+env:
+  CARGO_TERM_COLOR: always
+  # Network-flake resilience: retry transient registry/DNS failures at the tool
+  # level so a blip fetching crates.io inside the build retries automatically
+  # instead of failing the job.
+  CARGO_NET_RETRY: "10"
+  CARGO_NET_GIT_FETCH_WITH_CLI: "true"
+
 jobs:
   criterion:
     name: Criterion (exec vs prod)
