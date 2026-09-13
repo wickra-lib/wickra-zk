@@ -17,11 +17,15 @@ use serde::Deserialize;
 use wickra_backtest::{Candle, StrategySpec};
 
 use crate::error::{Error, Result};
-use crate::model::{ProveOptions, ZkProof, ZkSpec};
+#[cfg(feature = "prove")]
+use crate::model::{ProveOptions, ZkSpec};
+use crate::model::ZkProof;
 
 /// The `spec` of a `prove` command: a [`ZkSpec`] whose commitment may be left
-/// to the host.
+/// to the host. Parsed in every build so the envelope is the same shape; only
+/// a build with the prover reads it.
 #[derive(Deserialize)]
+#[cfg_attr(not(feature = "prove"), allow(dead_code))]
 struct ProveSpec {
     strategy: StrategySpec,
     #[serde(default)]
@@ -31,6 +35,7 @@ struct ProveSpec {
 #[derive(Deserialize)]
 #[serde(tag = "cmd", rename_all = "snake_case")]
 enum Command {
+    #[cfg_attr(not(feature = "prove"), allow(dead_code))]
     Prove {
         spec: ProveSpec,
         candles: Vec<Candle>,
@@ -56,6 +61,7 @@ fn to_json<T: serde::Serialize>(value: &T) -> Result<String> {
 pub fn command_json(cmd_json: &str) -> Result<String> {
     let cmd: Command = serde_json::from_str(cmd_json).map_err(|e| Error::Parse(e.to_string()))?;
     match cmd {
+        #[cfg(feature = "prove")]
         Command::Prove { spec, candles } => {
             let dataset_commitment = match spec.dataset_commitment {
                 Some(commitment) => commitment,
@@ -68,6 +74,10 @@ pub fn command_json(cmd_json: &str) -> Result<String> {
             let proof = crate::prove(&spec, &candles, ProveOptions::default())?;
             proof.to_json()
         }
+        #[cfg(not(feature = "prove"))]
+        Command::Prove { .. } => Err(Error::Prove(
+            "this build verifies only; it was compiled without the `prove` feature".to_string(),
+        )),
         Command::Commit { candles } => {
             let dataset_commitment = crate::commit_dataset(&candles)?;
             to_json(&serde_json::json!({ "dataset_commitment": dataset_commitment }))

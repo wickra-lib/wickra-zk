@@ -23,11 +23,14 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 thiserror = "2"
 clap = { version = "4", features = ["derive"] }
-# `prove` puts the prover in-process. Without it risc0's default prover runs
-# `r0vm` as a subprocess -- for dev-mode receipts too -- so every crate,
-# wheel and native package would need the risc0 toolchain installed beside
-# it. With it, a `pip install` or a `cargo install` is the whole prover.
-risc0-zkvm = { version = "3.0", features = ["prove"] }
+# Verify-only by default: receipts, journals and `Receipt::verify`, which
+# build for every target including wasm32. The host's `prove` feature (on by
+# default) adds risc0's client and its in-process prover on top. Without the
+# in-process prover risc0 runs `r0vm` as a subprocess -- for dev-mode receipts
+# too -- so every crate, wheel and native package would need the risc0
+# toolchain installed beside it; with it, a `pip install` or a
+# `cargo install` is the whole prover.
+risc0-zkvm = { version = "3.0", default-features = false, features = ["std"] }
 # Pinned to an exact rev, not to a floating branch. An unpinned git dependency
 # never goes red -- it only gets older, and then one day the API underneath has
 # moved and the build breaks with errors that look like your own. That is how

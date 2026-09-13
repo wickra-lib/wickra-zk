@@ -1,6 +1,6 @@
 //! Produce a proof by executing the guest inside the zkVM.
 
-use risc0_zkvm::{default_prover, ExecutorEnv};
+use risc0_zkvm::{default_prover, ExecutorEnv, ProverOpts};
 use wickra_backtest::Candle;
 use wickra_zk_methods::WICKRA_ZK_GUEST_ELF;
 
@@ -40,8 +40,13 @@ pub fn prove(spec: &ZkSpec, candles: &[Candle], _opts: ProveOptions) -> Result<Z
         .build()
         .map_err(|e| Error::Prove(e.to_string()))?;
 
+    // A succinct receipt: one constant-size STARK whatever the backtest's
+    // length, a few hundred kilobytes, which is what a proof that is handed to
+    // someone else should be. A composite receipt carries one proof per
+    // execution segment and grows with the run. In dev-mode the option is
+    // moot: the receipt is a placeholder either way.
     let prove_info = default_prover()
-        .prove(env, WICKRA_ZK_GUEST_ELF)
+        .prove_with_opts(env, WICKRA_ZK_GUEST_ELF, &ProverOpts::succinct())
         .map_err(|e| Error::Prove(e.to_string()))?;
     let receipt = prove_info.receipt;
 

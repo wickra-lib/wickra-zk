@@ -17,9 +17,17 @@ all-features = true
 [lints]
 workspace = true
 
+[features]
+default = ["prove"]
+# The prover, in-process: risc0's client (executor environment, prover
+# selection) and its proving circuits. Off, the crate verifies, commits and
+# hashes only -- and builds for wasm32, which is what the WASM binding is.
+prove = ["risc0-zkvm/client", "risc0-zkvm/prove", "risc0-zkvm/bonsai", "wickra-zk-methods/elf"]
+
 [dependencies]
 risc0-zkvm = { workspace = true }
-wickra-zk-methods = { path = "../../guest/methods", version = "0.1.0" }
+# The image id always; the guest program itself only with the prover.
+wickra-zk-methods = { path = "../../guest/methods", version = "0.1.0", default-features = false }
 wickra-backtest = { workspace = true }
 wickra-proof-core = { workspace = true }
 serde = { workspace = true }

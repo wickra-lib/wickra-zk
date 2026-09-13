@@ -6,10 +6,15 @@
 //! who never sees the price data or the strategy can still confirm that the
 //! reported metrics are the honest output of the audited program:
 //!
-//! - [`prove`] executes the guest and returns a receipt plus [`PublicOutputs`].
+//! - [`prove`] executes the guest and returns a receipt plus [`PublicOutputs`]
+//!   (behind the `prove` feature, on by default).
 //! - [`verify`] checks a receipt against the pinned [`guest_id`] and returns
 //!   the public outputs.
 //! - [`command_json`] is the string-in/string-out boundary every binding uses.
+//!
+//! Without the `prove` feature the crate is a verifier: it builds for wasm32
+//! and carries no prover, and `command_json` answers `verify`, `commit` and
+//! `version` while reporting `prove` as unsupported.
 //!
 //! The journal (`report_hash`, `dataset_commitment`, `sharpe`, `pnl`,
 //! `n_trades`) is the only thing that leaves the zkVM; the candles and the
@@ -21,12 +26,14 @@ pub use wickra_backtest::{BacktestReport, Candle, StrategySpec};
 mod command;
 mod error;
 mod model;
+#[cfg(feature = "prove")]
 mod prove;
 mod verify;
 
 pub use command::command_json;
 pub use error::{Error, Result};
 pub use model::{round_to, GuestJournal, ProveOptions, PublicOutputs, ZkProof, ZkSpec};
+#[cfg(feature = "prove")]
 pub use prove::prove;
 pub use verify::verify;
 

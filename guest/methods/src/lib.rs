@@ -3,7 +3,8 @@
 //! This crate exposes the guest to the host:
 //!
 //! - [`WICKRA_ZK_GUEST_ELF`] — the guest program the prover executes, the
-//!   bytes of `elf/wickra-zk-guest.bin`.
+//!   bytes of `elf/wickra-zk-guest.bin` (behind the `elf` feature, on by
+//!   default; a verifier does without).
 //! - [`WICKRA_ZK_GUEST_ID`] — the image ID the verifier checks a receipt
 //!   against; it is the cryptographic commitment to *which* program ran.
 //!   [`WICKRA_ZK_GUEST_ID_HEX`] is the same id as the hex string a verifier

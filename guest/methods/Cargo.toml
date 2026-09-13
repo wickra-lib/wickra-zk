@@ -15,5 +15,17 @@ authors.workspace = true
 # agree. This crate itself builds with plain Rust anywhere, docs.rs included.
 include = ["src/**", "elf/**", "LICENSE-*"]
 
+# docs.rs builds with every feature on, so the ELF constant is documented too.
+[package.metadata.docs.rs]
+all-features = true
+
+[features]
+default = ["elf"]
+# The guest program itself, two megabytes of RISC-V. A prover needs it; a
+# verifier needs only the image id, and a WebAssembly verifier would ship the
+# two megabytes to every browser for nothing. The host's `prove` feature
+# turns it on.
+elf = []
+
 [lints]
 workspace = true
