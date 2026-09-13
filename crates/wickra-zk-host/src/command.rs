@@ -17,9 +17,9 @@ use serde::Deserialize;
 use wickra_backtest::{Candle, StrategySpec};
 
 use crate::error::{Error, Result};
+use crate::model::ZkProof;
 #[cfg(feature = "prove")]
 use crate::model::{ProveOptions, ZkSpec};
-use crate::model::ZkProof;
 
 /// The `spec` of a `prove` command: a [`ZkSpec`] whose commitment may be left
 /// to the host. Parsed in every build so the envelope is the same shape; only
