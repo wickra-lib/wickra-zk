@@ -17,8 +17,6 @@ import json
 import os
 from pathlib import Path
 
-import pytest
-
 os.environ["RISC0_DEV_MODE"] = "1"
 
 import wickra_zk  # noqa: E402
@@ -59,8 +57,23 @@ def command(prover: wickra_zk.Prover, **envelope):
     return json.loads(prover.command(json.dumps(envelope)))
 
 
-@pytest.mark.parametrize("case", sorted(CASES))
-def test_golden_case_proves_to_the_blessed_journal(case: str) -> None:
+def raises(message: str, **envelope) -> None:
+    """The envelope must be refused with an in-band error naming `message`."""
+    try:
+        command(wickra_zk.Prover(), **envelope)
+    except ValueError as err:
+        assert message in str(err), str(err)
+        return
+    raise AssertionError(f"expected a refusal naming {message!r}")
+
+
+def test_golden_cases_prove_to_the_blessed_journal() -> None:
+    assert CASES, "golden/cases.json names at least one case"
+    for case in sorted(CASES):
+        golden_case(case)
+
+
+def golden_case(case: str) -> None:
     strategy = json.loads((GOLDEN / "specs" / f"{case}.json").read_text())
     expected = json.loads((GOLDEN / "expected" / f"{case}.json").read_text())
     candles = load_candles(CASES[case])
@@ -81,18 +94,16 @@ def test_golden_case_proves_to_the_blessed_journal(case: str) -> None:
 
     lying = json.loads(json.dumps(proof))
     lying["journal"]["report_hash"] = "f" * 64
-    with pytest.raises(ValueError, match="verify"):
-        command(prover, cmd="verify", proof=lying)
+    raises("verify", cmd="verify", proof=lying)
 
 
 def test_a_stated_commitment_is_held_to() -> None:
     case = sorted(CASES)[0]
     strategy = json.loads((GOLDEN / "specs" / f"{case}.json").read_text())
     candles = load_candles(CASES[case])
-    with pytest.raises(ValueError, match="commitment mismatch"):
-        command(
-            wickra_zk.Prover(),
-            cmd="prove",
-            spec={"strategy": strategy, "dataset_commitment": "0" * 64},
-            candles=candles,
-        )
+    raises(
+        "commitment mismatch",
+        cmd="prove",
+        spec={"strategy": strategy, "dataset_commitment": "0" * 64},
+        candles=candles,
+    )

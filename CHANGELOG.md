@@ -8,6 +8,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **The Python 3.9 CI row installs no pytest.** pytest 9.x requires 3.10, so
+  the 3.9 row could only pin 8.4.2, which is below the fix for
+  GHSA-6w46-j5rx-g56g and has no backport. The dev requirements are locked
+  twice now (`ci-dev-py3.txt`, `ci-dev-py39.txt`, both hash-pinned), the 3.9
+  lock carries maturin alone, and the row runs the suite through
+  `run_without_pytest.py` -- the same modules, rewritten as plain functions
+  with plain asserts, which 3.10 and up still run under pytest.
+
 - **The compiled guest is committed, and the prover runs in-process.** The
   methods crate built the guest in its `build.rs`, so every crate above it --
   and every wheel, npm package and C ABI archive built from them -- needed the
