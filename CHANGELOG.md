@@ -6,7 +6,69 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- **The compiled guest is committed, and the prover runs in-process.** The
+  methods crate built the guest in its `build.rs`, so every crate above it --
+  and every wheel, npm package and C ABI archive built from them -- needed the
+  risc0 toolchain, docs.rs could never build the host, and the crate's
+  `publish = false` made the host unpublishable in turn. `guest/builder`, the
+  one crate that needs risc0, now writes `guest/methods/elf/wickra-zk-guest.bin`
+  and the image id in `guest/methods/src/guest_id.rs`; the `guest-build` job
+  rebuilds the guest with `RISC0_USE_DOCKER=1` and fails on a diff. risc0's
+  default prover runs `r0vm` as a subprocess even for dev-mode receipts; with
+  risc0-zkvm's `prove` feature the prover is in-process, so a `pip install` or
+  a `cargo install` is the whole prover. The in-process prover links
+  `malachite` (LGPL-3.0-only); the README's License section says how that is
+  met.
+
+- **The command envelope is usable from a binding.** `dataset_commitment` was
+  required in every `prove` spec and only the host can compute it, so no
+  binding could prove. It is optional now -- the host computes it, a stated one
+  is held to -- and a `commit` command hashes candles for the verifying side;
+  `version` names the guest id. `verify` compared only the persisted
+  `guest_id` with the receipt, so a proof file whose journal copy lied about
+  `report_hash` verified; the whole persisted journal is checked now.
+
+- **Linux and macOS only.** risc0 has no Windows host and the host crate does
+  not link on MSVC; no CI matrix, release matrix or package targets Windows.
+  The R package is `OS_type: unix`. MSRV is Rust 1.90.
+
+- **The C# package is `Wickra.Zk`.** It was `Wickra.Proof` -- wickra-proof's
+  package id, namespace and assembly name -- by copy.
+
+### Added
+
+- Golden tests in every binding: each of Python, Node, Go, C#, Java, R and C
+  proves the three golden cases through the envelope in dev-mode and holds the
+  journal to the blessed `report_hash` and metrics, verifies the proof, refuses
+  a proof whose journal lies, and refuses a false commitment. `golden/cases.json`
+  is the one case-to-dataset mapping every test reads. `examples/c` is the C
+  ABI's first test.
+- One runnable example per language under `examples/`, all proving the same
+  inputs to the same `report_hash`, which the Examples job holds them to.
+- The release front of the family: guard, gate, crates.io (methods, host,
+  CLI), PyPI wheels and sdist, npm with per-platform packages, NuGet, Maven
+  Central, the Go mirror (`wickra-lib/wickra-zk-go`), C ABI archives, CLI
+  binaries, the guest ELF and image id, SBOMs and build provenance.
+
 ### Fixed
+
+- The strategy crosses the host/guest boundary as JSON text. risc0's serde is
+  a word stream, and `StrategySpec` relies on JSON semantics
+  (`skip_serializing_if` on an `Option`, an `untagged` enum), so written as a
+  value it never read back: every dev-mode prove died in the guest with
+  `DeserializeBadOption`.
+- The node binding did not compile: cargo passes the workspace
+  `unsafe_code = "forbid"` on the command line and napi-derive's `allow`
+  cannot overrule it (E0453). The crate declares its own lints now.
+- The R `configure` read `WKPROOF_INC` / `WKPROOF_LIB`; CI sets `WKZK_*`.
+- The Node tests were ESM syntax over a CommonJS `require` and could not run.
+- cargo-deny: `ruint` 1.20.0 fixes RUSTSEC-2026-0220; `rsa`, `derivative` and
+  `paste` have no fixed release and are ignored with their chain and reason.
+- Code scanning: every action pinned at patch level, the risc0 setup action
+  without template expansion or `GITHUB_PATH`, Dependabot cooldowns on every
+  ecosystem, the Python CI tools installed from the hash-locked requirements.
 
 - **Follows wickra-proof's core crate rename.** `proof-core` became
   `wickra-proof-core` upstream because the old name was taken on crates.io by

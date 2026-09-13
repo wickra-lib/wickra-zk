@@ -78,6 +78,13 @@
           <systemPropertyVariables>
             <native.lib.dir>${native.lib.dir}</native.lib.dir>
           </systemPropertyVariables>
+          <!-- The tests drive the command envelope, not the proof system: a
+               dev-mode receipt takes milliseconds, a real one takes minutes.
+               The prover reads this through getenv, which a JVM cannot set for
+               itself, so surefire sets it for the forked JVM. -->
+          <environmentVariables>
+            <RISC0_DEV_MODE>1</RISC0_DEV_MODE>
+          </environmentVariables>
         </configuration>
       </plugin>
     </plugins>

@@ -2,6 +2,8 @@ Package: wickrazk
 Type: Package
 Title: Zero-Knowledge Proofs of Backtest Performance
 Version: 0.1.0
+OS_type: unix
+Depends: R (>= 4.1)
 Authors@R: person("kingchenc", role = c("aut", "cre"), email = "support@wickra.org")
 Description: R bindings for wickra-zk over its C ABI hub. Prove that a
     backtest was run honestly - the report, its hash and the headline metrics -
@@ -14,6 +16,6 @@ URL: https://github.com/wickra-lib/wickra-zk
 BugReports: https://github.com/wickra-lib/wickra-zk/issues
 Encoding: UTF-8
 NeedsCompilation: yes
-SystemRequirements: the wickra-zk C ABI shared library (WKPROOF_LIB) and its
-    header (WKPROOF_INC).
+SystemRequirements: the wickra-zk C ABI shared library (WKZK_LIB) and its
+    header (WKZK_INC).
 RoxygenNote: 7.3.2

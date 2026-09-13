@@ -1,4 +1,4 @@
-# WickraZk — .NET binding
+# Wickra.Zk — .NET binding
 
 The wickra-zk core for .NET, over the C ABI via P/Invoke. The native library ships
 inside the NuGet package for every supported runtime identifier, so there is
@@ -7,7 +7,7 @@ nothing to install alongside it.
 ## Install
 
 ```sh
-dotnet add package WickraZk
+dotnet add package Wickra.Zk
 ```
 
 ## Use
@@ -17,7 +17,7 @@ other binding drives, so a request built here produces the same canonical bytes
 it would in Rust, Python or Go.
 
 ```csharp
-using WickraZk;
+using Wickra.Zk;
 
 using var handle = new Prover();
 string response = handle.Command("""{"cmd":"version"}""");

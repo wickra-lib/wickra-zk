@@ -24,6 +24,37 @@ ignore = [
   # risc0's groth16 path, which this crate does not drive. Revisit when
   # ark-relations moves.
   "RUSTSEC-2025-0055",
+  # rsa 0.9.10, RUSTSEC-2023-0071 / GHSA-4grx-2x9w-596c, the Marvin attack: a
+  # timing side channel in RSA decryption can leak the private key. No patched
+  # release exists (the 0.10 line is unreleased). It arrives with risc0 --
+  #   rsa 0.9.10 <- rzup 0.5.2 <- risc0-build 3.0.6 <- risc0-zkvm 3.0.6
+  #   <- wickra-zk-host
+  # -- where rzup verifies the signature on a toolchain it downloads. This
+  # repository never calls into it (the guest is committed, not built at host
+  # build time), no private key is ever held, and the only operation rsa
+  # performs anywhere in the graph is signature verification on public data.
+  # Revisit when rsa 0.10 is released and rzup moves.
+  "RUSTSEC-2023-0071",
+  # derivative 2.2.0, unmaintained (RUSTSEC-2024-0388). A proc-macro crate that
+  # runs at compile time and ships no code of its own into the binary --
+  #   derivative <- ark-crypto-primitives <- ark-groth16 <- risc0-groth16
+  #   <- risc0-zkvm <- wickra-zk-host
+  # -- on risc0's groth16 path, which this crate does not drive. Not ours to
+  # replace; revisit when arkworks moves.
+  "RUSTSEC-2024-0388",
+  # paste 1.0.15, unmaintained (RUSTSEC-2024-0436). The same shape: a
+  # compile-time proc-macro --
+  #   paste <- ark-ff <- ark-bn254 <- risc0-groth16 <- risc0-zkvm <- wickra-zk-host
+  # -- that ships nothing into the binary and arrives with risc0's groth16
+  # path. Revisit when arkworks moves.
+  "RUSTSEC-2024-0436",
+  # atomic-polyfill 1.0.3, unmaintained (RUSTSEC-2023-0089): a compile-time
+  # polyfill for atomics on targets without them, a no-op on every target this
+  # repository builds. It arrives with the in-process prover --
+  #   atomic-polyfill <- heapless 0.7 <- postcard <- risc0-binfmt <- risc0-zkvm
+  # -- and heapless 0.8, which dropped it, is unreachable while postcard
+  # declares the 0.7 line. Not ours to replace; revisit when postcard moves.
+  "RUSTSEC-2023-0089",
 ]
 
 [licenses]
@@ -41,12 +72,33 @@ allow = [
 ]
 confidence-threshold = 0.93
 
-# Scoped license exceptions for individual permissive / public-domain crates
-# pulled in transitively by the risc0 zkVM stack:
+# Scoped license exceptions for individual crates pulled in transitively by
+# the risc0 zkVM stack:
 #   - webpki-roots (CDLA-Permissive-2.0): the Mozilla CA certificate bundle as
 #     data, pulled in via risc0's networked prover client.
+#   - managed (0BSD): a permissive, attribution-free licence; a transitive
+#     dependency of the prover.
+#   - malachite, malachite-base, malachite-nz, malachite-q, malachite-float
+#     (LGPL-3.0-only): the big-integer arithmetic risc0-circuit-rv32im's
+#     prover uses, so with the in-process prover (risc0-zkvm's `prove`
+#     feature) it is linked into wickra-zk-host, the CLI and every binding.
+#     The LGPL's condition for a statically linked library is that a user can
+#     relink against a modified copy; every binary this repository ships is
+#     built from source that is itself available under MIT OR Apache-2.0, so
+#     that condition is met. risc0-zkvm ships the same way. Named in the
+#     README's License section.
+#   - downloader (LGPL-3.0-or-later): a build-dependency of
+#     risc0-circuit-recursion (it fetches the recursion circuit at build
+#     time); it runs at build time and is linked into nothing that ships.
 exceptions = [
     { allow = ["CDLA-Permissive-2.0"], crate = "webpki-roots" },
+    { allow = ["0BSD"], crate = "managed" },
+    { allow = ["LGPL-3.0-only"], crate = "malachite" },
+    { allow = ["LGPL-3.0-only"], crate = "malachite-base" },
+    { allow = ["LGPL-3.0-only"], crate = "malachite-nz" },
+    { allow = ["LGPL-3.0-only"], crate = "malachite-q" },
+    { allow = ["LGPL-3.0-only"], crate = "malachite-float" },
+    { allow = ["LGPL-3.0-or-later"], crate = "downloader" },
 ]
 
 [bans]

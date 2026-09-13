@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Wickra.Zk.Example</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../bindings/csharp/WickraZk/WickraZk.csproj" />
+  </ItemGroup>
+
+  <!--
+    The DllImportResolver in the binding probes the Cargo target/ tree, so
+    `cargo build -p wickra-zk-c` is enough. This copies the native library
+    next to the example as a belt-and-suspenders fallback. Linux and macOS
+    only: risc0 has no Windows host.
+  -->
+  <ItemGroup>
+    <Content Include="../../../target/release/libwickra_zk.so" Condition="Exists('../../../target/release/libwickra_zk.so')">
+      <Link>libwickra_zk.so</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="../../../target/release/libwickra_zk.dylib" Condition="Exists('../../../target/release/libwickra_zk.dylib')">
+      <Link>libwickra_zk.dylib</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>

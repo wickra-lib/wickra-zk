@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+    branches: [main]
 
 permissions:
   contents: read
@@ -12,11 +13,15 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-# The host workspace embeds the guest ELF via `risc0_build::embed_methods()`, so
-# every job that builds host/cli/bench needs the risc0 toolchain (Linux/macOS
-# only — risc0 does not ship a Windows target). Tests run under RISC0_DEV_MODE=1
-# for a fast, unsound receipt; the real proving path is exercised nightly in
-# prove.yml.
+# The guest ELF and its image id are committed under guest/methods, so the host,
+# the CLI and every binding build with plain Rust; only guest-build (which
+# rebuilds the guest reproducibly and diffs it) and clippy-guest need the risc0
+# toolchain. That toolchain has no Windows host, and the host crate does not
+# link on MSVC either (risc0-zkvm-platform's sys_alloc_aligned), so no matrix
+# here has a Windows entry and the release ships Linux and macOS only. The
+# prover is in-process (risc0-zkvm's `prove` feature): nothing here needs r0vm.
+# Tests run under RISC0_DEV_MODE=1 for a fast, unsound receipt; the real
+# proving path is exercised nightly in prove.yml.
 
 jobs:
   fmt:
@@ -24,13 +29,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15 # backstop against a wedged job, not a budget
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
         with:
           components: rustfmt
-      - run: cargo fmt --all -- --check
+      # Three crates are their own workspace roots -- the guest, its builder
+      # and the WASM verifier -- and `--all` from the root does not reach them.
+      - run: |
+          cargo fmt --all -- --check
+          cargo fmt --manifest-path guest/methods/guest/Cargo.toml -- --check
+          cargo fmt --manifest-path guest/builder/Cargo.toml -- --check
+          cargo fmt --manifest-path bindings/wasm/Cargo.toml -- --check
 
   clippy-host:
     name: Clippy (host)
@@ -38,47 +49,37 @@ jobs:
     timeout-minutes: 30 # backstop against a wedged job, not a budget
     env:
       RISC0_DEV_MODE: "1"
-      # Lint the host, and let the guest be linted by clippy-guest and built by
-      # guest-build. `cargo clippy` exports RUSTC_WORKSPACE_WRAPPER, the child
-      # cargo that risc0-build spawns for the guest inherits it, and
-      # clippy-driver then compiles the guest against a stable sysroot that has
-      # no std for riscv32im-risc0-zkvm-elf:
-      #   wickra-zk-guest: error[E0463]: can't find crate for `std`
-      # RISC0_SKIP_BUILD makes embed_methods emit stub constants instead, which
-      # is what it exists for. Nothing about the guest goes unchecked: two other
-      # jobs compile it for real.
-      RISC0_SKIP_BUILD: "1"
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
         with:
           components: clippy
-      - uses: ./.github/actions/setup-risc0
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+      # The WASM verifier is its own workspace (the host without `prove`), so
+      # it is linted on its own, natively; the wasm job builds it for wasm32.
+      - run: cargo clippy --manifest-path bindings/wasm/Cargo.toml --all-targets -- -D warnings
 
   clippy-guest:
     name: Clippy (guest, riscv)
     runs-on: ubuntu-latest
     timeout-minutes: 45 # backstop against a wedged job, not a budget
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
         with:
           components: clippy
       - uses: ./.github/actions/setup-risc0
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
-      # `+risc0` is the point. The repository root carries a rust-toolchain.toml
-      # pinning stable 1.88, and rustup applies it to every directory beneath --
-      # including this one. Without the override, clippy runs on stable, which
-      # ships no std for riscv32im-risc0-zkvm-elf, and the job dies with
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      # `+risc0` is the point. Without the override, clippy runs on stable,
+      # which ships no std for riscv32im-risc0-zkvm-elf, and the job dies with
       # `error[E0463]: can't find crate for std` on a guest that builds fine.
-      # guest-build never hit this because risc0-build invokes the risc0
-      # toolchain itself instead of going through rustup's directory rules.
+      # guest-build never hits this because risc0-build invokes the risc0
+      # toolchain itself instead of going through rustup.
       - name: Show the installed toolchains
         run: rustup toolchain list
       - name: Clippy the guest for the zkVM target
@@ -90,15 +91,38 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45 # backstop against a wedged job, not a budget
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
       - uses: ./.github/actions/setup-risc0
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
-      # Building the methods crate compiles the guest to a RISC-V ELF and
-      # generates WICKRA_ZK_GUEST_ELF / WICKRA_ZK_GUEST_ID.
-      - run: cargo build -p wickra-zk-methods
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: guest/builder
+      # The guest ELF and its image id are committed under guest/methods; every
+      # other job reads them and needs no risc0 toolchain. This job is what
+      # keeps the commitment honest: it rebuilds the guest from source inside
+      # risc0's build container -- RISC0_USE_DOCKER is the reproducible build
+      # the image id is designed around -- and fails if a byte differs. A
+      # change to the guest source without a regenerated artefact, or an
+      # artefact regenerated with a different toolchain, stops here.
+      - name: Rebuild the guest reproducibly and compare with the committed artefact
+        env:
+          RISC0_USE_DOCKER: "1"
+        run: |
+          cargo run --manifest-path guest/builder/Cargo.toml --release
+          if ! git diff --exit-code -- guest/methods/elf guest/methods/src/guest_id.rs; then
+            echo "::error::the committed guest artefact is not what the committed source builds; run \`RISC0_USE_DOCKER=1 cargo run --manifest-path guest/builder/Cargo.toml --release\` and commit guest/methods/elf and guest/methods/src/guest_id.rs"
+            exit 1
+          fi
+      - name: Upload the rebuilt artefact when it differs
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: guest-artefact-rebuilt
+          path: |
+            guest/methods/elf/wickra-zk-guest.bin
+            guest/methods/src/guest_id.rs
 
   test:
     name: Test (${{ matrix.os }})
@@ -111,27 +135,27 @@ jobs:
     env:
       RISC0_DEV_MODE: "1"
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
-      - uses: ./.github/actions/setup-risc0
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - uses: ./.github/actions/setup-metal
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - run: cargo test --workspace
 
   msrv:
-    name: MSRV (1.88)
+    name: MSRV (1.90)
     runs-on: ubuntu-latest
     timeout-minutes: 30 # backstop against a wedged job, not a budget
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
         with:
-          toolchain: "1.88"
-      - uses: ./.github/actions/setup-risc0
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+          toolchain: "1.90"
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - run: cargo check --workspace
 
   coverage:
@@ -141,13 +165,12 @@ jobs:
     env:
       RISC0_DEV_MODE: "1"
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
         with:
           components: llvm-tools-preview
-      - uses: ./.github/actions/setup-risc0
       - uses: taiki-e/install-action@c3ec0de9ae7f1019cea21aa96aa0a895b9552063 # v2.87.9 (cargo-llvm-cov)
         with:
           tool: cargo-llvm-cov
@@ -168,22 +191,24 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45 # backstop against a wedged job, not a budget
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
         with:
           toolchain: nightly
-      - uses: ./.github/actions/setup-risc0
       - uses: taiki-e/install-action@c3ec0de9ae7f1019cea21aa96aa0a895b9552063 # v2.87.9 (cargo-fuzz)
         with:
           tool: cargo-fuzz
-      - run: cargo +nightly fuzz build
-        working-directory: .
-      - run: |
-          for target in zkspec_parse journal_parse; do
-            cargo +nightly fuzz run "$target" -- -max_total_time=30
-          done
+      # An explicit target: cargo-fuzz's default detection has picked the musl
+      # triple on the runner, where a sanitizer cannot link against a static
+      # libc and the standard library for that target is not installed.
+      - name: Fuzz zkspec_parse (30 s)
+        run: cargo +nightly fuzz run --target x86_64-unknown-linux-gnu zkspec_parse -- -max_total_time=30
+        working-directory: fuzz
+      - name: Fuzz journal_parse (30 s)
+        run: cargo +nightly fuzz run --target x86_64-unknown-linux-gnu journal_parse -- -max_total_time=30
+        working-directory: fuzz
 
   golden:
     name: Golden hash chain (dev-mode)
@@ -192,12 +217,11 @@ jobs:
     env:
       RISC0_DEV_MODE: "1"
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
-      - uses: ./.github/actions/setup-risc0
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - run: cargo test -p wickra-zk-host --test golden
 
   cli-roundtrip:
@@ -207,12 +231,11 @@ jobs:
     env:
       RISC0_DEV_MODE: "1"
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
-      - uses: ./.github/actions/setup-risc0
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Prove then verify a golden case end to end
         run: |
           cargo run -p wickra-zk -- prove \
@@ -220,7 +243,7 @@ jobs:
             --data golden/data/sym-01.csv \
             --out proof.json --dev
           cargo run -p wickra-zk -- verify --proof proof.json | tee out.json
-          grep -q '"verified": true' out.json
+          grep -q '"verified":true' out.json
 
   # A check script nobody runs is a file, not a check. Each of these reads what
   # the repository actually ships and each found something on its first run:
@@ -231,7 +254,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15 # backstop against a wedged job, not a budget
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Versions agree across every manifest
@@ -247,53 +270,146 @@ jobs:
   # against an API change and stay green -- the worst kind of documentation,
   # because it looks executable. This compiles each of them; it does not run
   # them, since several want a network or a built native library.
-  examples-smoke:
-    name: Examples (build smoke)
+  # Every example proves the same inputs and prints the same report_hash --
+  # examples/README.md promises one value for every language, and each run is
+  # held to it here, so the document and the code cannot drift apart. An
+  # example that starts and prints nothing fails.
+  examples:
+    name: Examples
     runs-on: ubuntu-latest
-    timeout-minutes: 30 # backstop against a wedged job, not a budget
+    timeout-minutes: 45 # backstop against a wedged job, not a budget
+    env:
+      RISC0_DEV_MODE: "1"
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-      - name: Rust example
-        run: cargo check -p wickra-zk-example
-      - name: Node example parses
+
+      - name: Build the C ABI library the non-native bindings link against
+        run: cargo build -p wickra-zk-c --release
+
+      - name: Stage the native library for Go and put it on the loader path
+        shell: bash
         run: |
-          set -euo pipefail
-          for f in examples/node/*.mjs examples/node/*.js; do
-            [ -e "$f" ] || continue
-            node --check "$f"
-          done
-      - name: Python example parses
+          mkdir -p bindings/go/lib/linux_amd64
+          cp target/release/libwickra_zk.so bindings/go/lib/linux_amd64/
+          echo "LD_LIBRARY_PATH=$PWD/target/release:$LD_LIBRARY_PATH" >> "$GITHUB_ENV"
+
+      - name: The hash the README promises
+        shell: bash
         run: |
-          set -euo pipefail
-          for f in examples/python/*.py; do
-            [ -e "$f" ] || continue
-            python -m py_compile "$f"
-          done
-      - name: Go example vets
+          hash=$(grep -oE 'report_hash: [0-9a-f]{64}' examples/README.md | head -1 | cut -d' ' -f2)
+          test -n "$hash"
+          echo "EXAMPLE_HASH=$hash" >> "$GITHUB_ENV"
+          echo "README promises report_hash $hash"
+
+      - name: Rust
+        shell: bash
         run: |
-          set -euo pipefail
-          if [ -f examples/go/go.mod ]; then ( cd examples/go && gofmt -l . && go vet ./... || true ); fi
-      - name: R example parses
+          out=$(cargo run -q --manifest-path examples/rust/Cargo.toml)
+          echo "$out"
+          echo "$out" | grep -q 'verify: valid'
+          echo "$out" | grep -q "report_hash: $EXAMPLE_HASH"
+
+      - name: Python
+        shell: bash
         run: |
-          set -euo pipefail
-          for f in examples/r/*.R; do
-            [ -e "$f" ] || continue
-            Rscript -e "invisible(parse('$f'))" 2>/dev/null || echo "R not installed; skipped $f"
-          done
+          python -m pip install --require-hashes -r .github/requirements/ci-dev.txt
+          ( cd bindings/python && maturin build --release --out dist )
+          python -m pip install --no-index --find-links bindings/python/dist wickra-zk
+          out=$(python examples/python/prove.py)
+          echo "$out"
+          echo "$out" | grep -q 'verify: valid'
+          echo "$out" | grep -q "report_hash: $EXAMPLE_HASH"
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        id: setup_node_examples
+        continue-on-error: true
+        with:
+          node-version: "22"
+      - name: Pause before retrying the toolchain download
+        if: steps.setup_node_examples.outcome == 'failure'
+        run: sleep 30
+        shell: bash
+      - name: Retry the toolchain download
+        if: steps.setup_node_examples.outcome == 'failure'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+      - name: Node.js
+        shell: bash
+        run: |
+          ( cd bindings/node && npm install --no-audit --no-fund && npx napi build --platform --release )
+          ( cd examples/node && npm install --no-audit --no-fund )
+          out=$(node examples/node/prove.js)
+          echo "$out"
+          echo "$out" | grep -q 'verify: valid'
+          echo "$out" | grep -q "report_hash: $EXAMPLE_HASH"
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "1.23"
+      - name: Go
+        shell: bash
+        run: |
+          out=$(cd examples/go && go run .)
+          echo "$out"
+          echo "$out" | grep -q 'verify: valid'
+          echo "$out" | grep -q "report_hash: $EXAMPLE_HASH"
+
+      - uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with:
+          distribution: temurin
+          java-version: "22"
+      - name: Java
+        shell: bash
+        run: |
+          mvn -f bindings/java/pom.xml -q package -DskipTests
+          javac -cp bindings/java/target/classes examples/java/Prove.java -d examples/java/out
+          out=$(java --enable-native-access=ALL-UNNAMED \
+            -Dnative.lib.dir="$PWD/target/release" \
+            -cp "bindings/java/target/classes:examples/java/out" Prove examples)
+          echo "$out"
+          echo "$out" | grep -q 'verify: valid'
+          echo "$out" | grep -q "report_hash: $EXAMPLE_HASH"
+
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: "8.0.x"
+      - name: C#
+        shell: bash
+        run: |
+          out=$(dotnet run --project examples/csharp/Prove)
+          echo "$out"
+          echo "$out" | grep -q 'verify: valid'
+          echo "$out" | grep -q "report_hash: $EXAMPLE_HASH"
+
+      - uses: r-lib/actions/setup-r@465b7d8e732ca3921382b1674c59bada9cbf3399 # v2.13.0
+        with:
+          use-public-rspm: true
+      - name: R
+        shell: bash
+        env:
+          WKZK_INC: ${{ github.workspace }}/bindings/c/include
+          WKZK_LIB: ${{ github.workspace }}/target/release
+        run: |
+          R CMD INSTALL bindings/r
+          out=$(Rscript examples/r/prove.R)
+          echo "$out"
+          echo "$out" | grep -q 'verify: valid'
+          echo "$out" | grep -q "report_hash: $EXAMPLE_HASH"
 
   supply-chain:
     name: cargo-deny
     runs-on: ubuntu-latest
     timeout-minutes: 15 # backstop against a wedged job, not a budget
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: taiki-e/install-action@e67fa11c4b9316fa714ddf0abed07a0c3143b95b # v2.87.4
+      - uses: taiki-e/install-action@c3ec0de9ae7f1019cea21aa96aa0a895b9552063 # v2.87.9
         with:
           tool: cargo-deny
       - run: cargo deny check
@@ -333,7 +449,7 @@ jobs:
     continue-on-error: true
     timeout-minutes: 10 # backstop against a wedged job, not a budget
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
@@ -353,11 +469,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30 # backstop: it builds rustdoc JSON for each crate and its baseline
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
-      - uses: ./.github/actions/setup-risc0
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Install cargo-semver-checks
         uses: taiki-e/install-action@c3ec0de9ae7f1019cea21aa96aa0a895b9552063 # v2.87.9
@@ -379,7 +494,11 @@ jobs:
         run: |
           set -euo pipefail
           checked=0
-          for crate in wickra-zk-host wickra-zk; do
+          # Library crates only: the CLI is a binary with no public API, and
+          # cargo-semver-checks ends with "no crates with library targets
+          # selected" on it -- an error, not a pass -- once it is on crates.io
+          # and the loop reaches it.
+          for crate in wickra-zk-methods wickra-zk-host; do
             if curl -fsS -A "wickra-ci" "https://crates.io/api/v1/crates/$crate" >/dev/null 2>&1; then
               echo "::group::cargo semver-checks $crate"
               cargo semver-checks check-release -p "$crate"
@@ -402,24 +521,36 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest] # risc0 has no Windows host
         python-version: ["3.9", "3.11", "3.12", "3.13"]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30 # backstop against a wedged job, not a budget
+    # The binding tests drive the command envelope, not the proof system: a
+    # dev-mode receipt takes milliseconds, a real one takes minutes. Every
+    # binding sets this for itself where its runtime can reach getenv; .NET's
+    # Environment.SetEnvironmentVariable cannot, so the job sets it for all.
+    env:
+      RISC0_DEV_MODE: "1"
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: ${{ matrix.python-version }}
       - uses: ./.github/actions/setup-rust
-      - uses: ./.github/actions/setup-risc0
-      - uses: Swatinem/rust-cache@f0d9c3887740aee45f6153b24b3a6b815192ec16 # v2
-      - run: pip install maturin pytest
+      - uses: ./.github/actions/setup-metal
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      # The build and test tools come from the hash-locked requirements file
+      # Dependabot maintains, not from whatever PyPI resolves today. No
+      # `pip install --upgrade pip` first: that fetch is itself unpinned.
+      - name: Install the pinned Python build and test tools
+        run: python -m pip install --require-hashes -r .github/requirements/ci-dev.txt
       - run: maturin build --out dist
         working-directory: bindings/python
-      - run: pip install --no-index --find-links bindings/python/dist wickra-zk
+      # The wheel this job just built; --no-index means nothing is fetched.
+      - run: python -m pip install --no-index --find-links bindings/python/dist wickra-zk
       - run: pytest bindings/python/tests -q
 
   node:
@@ -427,17 +558,24 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest] # risc0 has no Windows host
         node-version: ["22", "24"]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30 # backstop against a wedged job, not a budget
+    # The binding tests drive the command envelope, not the proof system: a
+    # dev-mode receipt takes milliseconds, a real one takes minutes. Every
+    # binding sets this for itself where its runtime can reach getenv; .NET's
+    # Environment.SetEnvironmentVariable cannot, so the job sets it for all.
+    env:
+      RISC0_DEV_MODE: "1"
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
-      - uses: ./.github/actions/setup-risc0
-      - uses: Swatinem/rust-cache@f0d9c3887740aee45f6153b24b3a6b815192ec16 # v2
+      - uses: ./.github/actions/setup-metal
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ matrix.node-version }}
@@ -450,30 +588,91 @@ jobs:
       - name: Build native module
         run: cd bindings/node && npx napi build --platform --release
       # The generated glue is platform-independent, so a drift check on one OS is
-      # enough — and avoids a spurious CRLF/LF diff on the Windows runner.
+      # enough.
       - name: Check index.js / index.d.ts are in sync
         if: runner.os == 'Linux'
         run: cd bindings/node && git diff --exit-code -- index.js index.d.ts
       - name: Run Node tests
         run: cd bindings/node && node --test
 
+  wasm:
+    name: WASM
+    runs-on: ubuntu-latest
+    timeout-minutes: 45 # backstop against a wedged job, not a budget
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rust
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: bindings/wasm
+      - name: Install wasm-pack
+        uses: taiki-e/install-action@c3ec0de9ae7f1019cea21aa96aa0a895b9552063 # v2.87.9
+        with:
+          tool: wasm-pack
+      # The crate's own unit tests, natively: the envelope answers verify,
+      # commit and version, refuses prove, and reports errors in-band.
+      - name: Unit tests
+        run: cargo test --manifest-path bindings/wasm/Cargo.toml
+      - name: Build the wasm binding (web target)
+        run: wasm-pack build --target web
+        working-directory: bindings/wasm
+      # A second build for node makes the module loadable without a browser;
+      # `pkg/` stays what ships. The tests beside the binding then verify the
+      # committed real receipt through the WebAssembly verifier and hold the
+      # decoded journal to the blessed one -- a real proof, verified with no
+      # prover and no risc0 toolchain anywhere near the job.
+      - name: Build the wasm binding (nodejs target)
+        run: wasm-pack build --target nodejs --out-dir pkg-node
+        working-directory: bindings/wasm
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        id: setup_node_wasm
+        continue-on-error: true
+        with:
+          node-version: "22"
+      - name: Pause before retrying the toolchain download
+        if: steps.setup_node_wasm.outcome == 'failure'
+        run: sleep 30
+        shell: bash
+      - name: Retry the toolchain download
+        if: steps.setup_node_wasm.outcome == 'failure'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+      # An explicit glob rather than `node --test tests/`: Node 22 reads a bare
+      # directory argument as a module path and fails with MODULE_NOT_FOUND.
+      - name: Run the wasm tests
+        shell: bash
+        run: node --test tests/*.test.js
+        working-directory: bindings/wasm
+
   c-abi:
     name: C ABI on ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest] # risc0 has no Windows host
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30 # backstop against a wedged job, not a budget
+    # The binding tests drive the command envelope, not the proof system: a
+    # dev-mode receipt takes milliseconds, a real one takes minutes. Every
+    # binding sets this for itself where its runtime can reach getenv; .NET's
+    # Environment.SetEnvironmentVariable cannot, so the job sets it for all.
+    env:
+      RISC0_DEV_MODE: "1"
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
-      - uses: ./.github/actions/setup-risc0
-      - uses: Swatinem/rust-cache@f0d9c3887740aee45f6153b24b3a6b815192ec16 # v2
+      - uses: ./.github/actions/setup-metal
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Install cbindgen
-        uses: taiki-e/install-action@e67fa11c4b9316fa714ddf0abed07a0c3143b95b # v2.87.4
+        uses: taiki-e/install-action@c3ec0de9ae7f1019cea21aa96aa0a895b9552063 # v2.87.9
         with:
           tool: cbindgen
       - name: Build the C ABI library (cdylib + staticlib)
@@ -481,14 +680,13 @@ jobs:
       - name: Rust unit tests
         run: cargo test -p wickra-zk-c
       # The generated header is platform-independent, so checking drift on one OS
-      # is enough — and avoids a spurious CRLF/LF diff on the Windows runner. This
-      # also validates the vendored Go copy.
+      # is enough. This also validates the vendored Go copy.
       - name: Check the C header (cbindgen + Go copy) is in sync
         if: runner.os == 'Linux'
         shell: bash
         run: bash .github/scripts/check-cbindgen.sh
       # The real cross-language test: a foreign C consumer links the generated
-      # header + the compiled library and runs. If this passes on all three OSes,
+      # header + the compiled library and runs. If this passes on both OSes,
       # every C-capable language can link the same way.
       - name: Build and run the C example (CMake + ctest)
         shell: bash
@@ -502,16 +700,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest] # risc0 has no Windows host
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45 # backstop against a wedged job, not a budget
+    # The binding tests drive the command envelope, not the proof system: a
+    # dev-mode receipt takes milliseconds, a real one takes minutes. Every
+    # binding sets this for itself where its runtime can reach getenv; .NET's
+    # Environment.SetEnvironmentVariable cannot, so the job sets it for all.
+    env:
+      RISC0_DEV_MODE: "1"
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
-      - uses: ./.github/actions/setup-risc0
-      - uses: Swatinem/rust-cache@f0d9c3887740aee45f6153b24b3a6b815192ec16 # v2
+      - uses: ./.github/actions/setup-metal
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           dotnet-version: "8.0"
@@ -527,11 +732,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest] # risc0 has no Windows host
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30 # backstop against a wedged job, not a budget
+    # The binding tests drive the command envelope, not the proof system: a
+    # dev-mode receipt takes milliseconds, a real one takes minutes. Every
+    # binding sets this for itself where its runtime can reach getenv; .NET's
+    # Environment.SetEnvironmentVariable cannot, so the job sets it for all.
+    env:
+      RISC0_DEV_MODE: "1"
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
@@ -539,8 +750,9 @@ jobs:
           go-version: "stable"
           cache: false
       - uses: ./.github/actions/setup-rust
-      - uses: ./.github/actions/setup-risc0
-      - uses: Swatinem/rust-cache@f0d9c3887740aee45f6153b24b3a6b815192ec16 # v2
+      - uses: ./.github/actions/setup-metal
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Build the C ABI library
         run: cargo build -p wickra-zk-c --release
       - name: Vendored header in sync with the C ABI
@@ -559,9 +771,9 @@ jobs:
             *) echo "::error::unsupported RUNNER_ARCH '$RUNNER_ARCH'"; exit 1 ;;
           esac
           case "$RUNNER_OS" in
-            Linux)   dir="linux_$arch";   lib=target/release/libwickra_zk.so ;;
-            macOS)   dir="darwin_$arch";  lib=target/release/libwickra_zk.dylib ;;
-            Windows) dir="windows_$arch"; lib=target/release/wickra_zk.dll ;;
+            Linux) dir="linux_$arch";  lib=target/release/libwickra_zk.so ;;
+            macOS) dir="darwin_$arch"; lib=target/release/libwickra_zk.dylib ;;
+            *) echo "::error::unsupported RUNNER_OS '$RUNNER_OS'"; exit 1 ;;
           esac
           mkdir -p "bindings/go/lib/$dir"
           cp "$lib" "bindings/go/lib/$dir/"
@@ -586,16 +798,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest] # risc0 has no Windows host
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45 # backstop against a wedged job, not a budget
+    # The binding tests drive the command envelope, not the proof system: a
+    # dev-mode receipt takes milliseconds, a real one takes minutes. Every
+    # binding sets this for itself where its runtime can reach getenv; .NET's
+    # Environment.SetEnvironmentVariable cannot, so the job sets it for all.
+    env:
+      RISC0_DEV_MODE: "1"
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
-      - uses: ./.github/actions/setup-risc0
-      - uses: Swatinem/rust-cache@f0d9c3887740aee45f6153b24b3a6b815192ec16 # v2
+      - uses: ./.github/actions/setup-metal
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       # The pom points native.lib.dir at target/debug, so build the debug profile.
       - name: Build the C ABI library
         run: cargo build -p wickra-zk-c
@@ -612,19 +831,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest] # risc0 has no Windows host
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30 # backstop against a wedged job, not a budget
     env:
       WKZK_INC: ${{ github.workspace }}/bindings/c/include
       WKZK_LIB: ${{ github.workspace }}/target/release
+      RISC0_DEV_MODE: "1"
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
-      - uses: ./.github/actions/setup-risc0
-      - uses: Swatinem/rust-cache@f0d9c3887740aee45f6153b24b3a6b815192ec16 # v2
+      - uses: ./.github/actions/setup-metal
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Build the C ABI library
         run: cargo build -p wickra-zk-c --release
       - uses: r-lib/actions/setup-r@465b7d8e732ca3921382b1674c59bada9cbf3399 # v2.13.0
@@ -633,18 +854,11 @@ jobs:
           use-public-rspm: true
       - name: Install and test the R binding
         shell: bash
-        # github.workspace is a backslash path on Windows; Makevars(.win) (sh) and
-        # mingw need forward slashes. The Makevars do not bake an rpath, so the
-        # native library must be on the loader path at run time.
+        # The Makevars do not bake an rpath, so the native library must be on
+        # the loader path at run time.
         run: |
-          export WKZK_INC="${WKZK_INC//\\//}"
-          export WKZK_LIB="${WKZK_LIB//\\//}"
-          if command -v cygpath >/dev/null 2>&1; then
-            export PATH="$(cygpath -u "$WKZK_LIB"):$PATH"
-          else
-            export LD_LIBRARY_PATH="$WKZK_LIB:$LD_LIBRARY_PATH"
-            export DYLD_LIBRARY_PATH="$WKZK_LIB:$DYLD_LIBRARY_PATH"
-          fi
+          export LD_LIBRARY_PATH="$WKZK_LIB:$LD_LIBRARY_PATH"
+          export DYLD_LIBRARY_PATH="$WKZK_LIB:$DYLD_LIBRARY_PATH"
           R CMD INSTALL bindings/r
           Rscript bindings/r/tests/run_tests.R
 
@@ -667,7 +881,7 @@ jobs:
       matrix:
         manylinux: [auto, musllinux_1_2]
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Sync root README into bindings/python so the build matches release
@@ -698,7 +912,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15 # backstop against a wedged job, not a budget
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Every binding exposes the same surface

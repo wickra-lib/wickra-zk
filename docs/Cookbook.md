@@ -38,10 +38,35 @@ A verifier pins this `guest_id` and rejects receipts for any other program.
 ```rust
 use wickra_zk_host::{commit_dataset, prove, verify, ProveOptions, ZkSpec};
 
-let spec = ZkSpec { strategy, dataset_commitment: commit_dataset(&candles) };
+let spec = ZkSpec { strategy, dataset_commitment: commit_dataset(&candles)? };
 let proof = prove(&spec, &candles, ProveOptions { dev_mode: true })?;
 let journal = verify(&proof)?;
 ```
+
+## Prove from any binding
+
+Every binding hands a JSON envelope to the same host. The dataset commitment
+may be left out of the spec -- the host computes it -- and `commit` hashes
+candles on the verifying side. In Python:
+
+```python
+import json, wickra_zk
+
+prover = wickra_zk.Prover()
+proof = json.loads(prover.command(json.dumps({"cmd": "prove", "spec": {"strategy": strategy}, "candles": candles})))
+journal = json.loads(prover.command(json.dumps({"cmd": "verify", "proof": proof})))
+assert journal == proof["journal"]
+```
+
+The envelope is documented once, in [ZK.md](ZK.md#the-command-envelope);
+`examples/` has the same prove-and-verify in every language.
+
+## Verify in a browser
+
+The WebAssembly build (`bindings/wasm`) is the host without its prover: it
+verifies a proof it is handed, commits to candles the page holds, and names
+the guest it pins. It cannot prove -- a `prove` command is refused in-band.
+See [../bindings/wasm/README.md](../bindings/wasm/README.md).
 
 ## Bless a golden case
 

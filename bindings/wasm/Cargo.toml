@@ -1,0 +1,41 @@
+# Its own workspace root, not a member of the host workspace: a workspace build
+# unifies features, and every native member turns the host's `prove` feature
+# on, which would put the prover into this crate too. Built and tested from
+# this directory (`wasm-pack build`, `cargo test`), as the WASM job does.
+[workspace]
+
+[package]
+name = "wickra-zk-wasm"
+description = "WebAssembly binding for wickra-zk: verify a zero-knowledge proof of backtest performance in the browser, and commit to the data it should be bound to."
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.90"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/wickra-lib/wickra-zk"
+authors = ["wickra-lib"]
+readme = "README.md"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+# Modern rustc emits a wasm feature set (bulk-memory, sign-ext, ...) that the
+# wasm-opt bundled with wasm-pack is too old to validate. The wasm-bindgen output
+# is already valid and functional; skip the optional size-only optimizer pass.
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+
+[dependencies]
+# The host without its `prove` feature: receipts, journals and
+# `Receipt::verify`, the canonical hash for `commit`, and nothing that needs a
+# prover or an operating system. A browser verifies a proof it receives; it
+# does not produce one.
+wickra-zk-host = { path = "../../crates/wickra-zk-host", version = "0.1.0", default-features = false }
+wasm-bindgen = "0.2"

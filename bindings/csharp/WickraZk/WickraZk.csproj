@@ -6,13 +6,13 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <RootNamespace>Wickra.Proof</RootNamespace>
-    <AssemblyName>Wickra.Proof</AssemblyName>
+    <RootNamespace>Wickra.Zk</RootNamespace>
+    <AssemblyName>Wickra.Zk</AssemblyName>
 
-    <PackageId>Wickra.Proof</PackageId>
+    <PackageId>Wickra.Zk</PackageId>
     <Version>0.1.0</Version>
     <Authors>kingchenc</Authors>
-    <Description>Zero-knowledge proofs of backtest performance for .NET over the Wickra C ABI: Prove a backtest in zero knowledge over the Wickra C ABI: create a Prover, prove a (spec, data) pair to a RISC Zero receipt and a public journal, and verify a receipt without seeing the data or the strategy behind it.</Description>
+    <Description>Zero-knowledge proofs of backtest performance for .NET over the Wickra C ABI: create a Prover, prove a (strategy, candles) pair to a RISC Zero receipt and a public journal, and verify a receipt without seeing the data or the strategy behind it.</Description>
     <PackageLicenseExpression>MIT OR Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/wickra-lib/wickra-zk</PackageProjectUrl>
     <RepositoryUrl>https://github.com/wickra-lib/wickra-zk</RepositoryUrl>
@@ -26,7 +26,7 @@
     Supported native runtime identifiers. The release pipeline builds the C ABI
     per target triple and stages the libraries under
     WickraZk/runtimes/<rid>/native/ before `dotnet pack`:
-      win-x64   win-arm64   linux-x64   linux-arm64   osx-x64   osx-arm64
+      linux-x64   linux-arm64   osx-x64   osx-arm64   (no Windows: risc0 has no Windows host)
   -->
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />

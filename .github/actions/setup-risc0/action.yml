@@ -6,6 +6,10 @@ description: >
   The version is pinned to match the risc0-zkvm / risc0-build crate version in
   the workspace (an ImageID/Receipt mismatch results otherwise).
 
+  Nothing is added to PATH: risc0-build and `cargo +risc0` find the toolchain
+  under ~/.risc0 on their own, and a step that runs `r0vm` puts
+  "$HOME/.risc0/bin" on its own PATH.
+
 inputs:
   version:
     description: risc0 toolchain version to install (must match the risc0-zkvm crate).
@@ -24,17 +28,23 @@ runs:
 
     - name: Install rzup
       shell: bash
-      run: |
-        curl -L https://risczero.com/install | bash
-        echo "$HOME/.risc0/bin" >> "$GITHUB_PATH"
+      run: curl -L https://risczero.com/install | bash
 
+    # rzup resolves each component through the GitHub releases API. Without a
+    # token that is the runner's shared, unauthenticated quota, and a busy hour
+    # ends the job with "API rate limit exceeded" before anything is built.
+    # The version arrives through the environment, not template expansion, so
+    # no input can become shell.
     - name: Install the pinned risc0 toolchain
       shell: bash
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+        RISC0_VERSION: ${{ inputs.version }}
       run: |
         export PATH="$HOME/.risc0/bin:$PATH"
-        rzup install cargo-risczero ${{ inputs.version }}
+        rzup install cargo-risczero "$RISC0_VERSION"
         rzup install rust
-        rzup install r0vm ${{ inputs.version }}
+        rzup install r0vm "$RISC0_VERSION"
 
     - name: Report the installed toolchain
       shell: bash

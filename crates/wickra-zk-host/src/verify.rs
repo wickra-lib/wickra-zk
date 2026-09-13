@@ -9,11 +9,15 @@ use crate::model::{GuestJournal, PublicOutputs, ZkProof};
 ///
 /// Checks the receipt against `WICKRA_ZK_GUEST_ID` — a receipt for any other
 /// program fails here — then decodes the journal and, defence-in-depth,
-/// confirms the persisted `guest_id` matches the pinned image id.
+/// confirms the persisted `journal` is what the receipt attests to. The
+/// receipt is the cryptographic object; the persisted copy exists so a reader
+/// of the proof file sees the outputs without decoding it, and a copy that
+/// disagrees with the receipt is a proof file that lies. The returned outputs
+/// are decoded from the receipt, never read from the copy.
 ///
 /// # Errors
 /// Returns [`Error::Verify`] if the receipt is invalid, the image id is wrong,
-/// the journal cannot be decoded, or the persisted `guest_id` disagrees.
+/// the journal cannot be decoded, or the persisted `journal` disagrees with it.
 pub fn verify(proof: &ZkProof) -> Result<PublicOutputs> {
     proof
         .receipt
@@ -27,8 +31,10 @@ pub fn verify(proof: &ZkProof) -> Result<PublicOutputs> {
         .map_err(|e| Error::Verify(e.to_string()))?;
 
     let outputs = PublicOutputs::from_journal(journal, crate::guest_id());
-    if proof.journal.guest_id != outputs.guest_id {
-        return Err(Error::Verify("guest id mismatch".to_string()));
+    if proof.journal != outputs {
+        return Err(Error::Verify(
+            "the persisted journal disagrees with the receipt".to_string(),
+        ));
     }
     Ok(outputs)
 }

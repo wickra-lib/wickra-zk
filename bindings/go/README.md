@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://wickra.org"><img src="https://raw.githubusercontent.com/wickra-lib/.github/main/profile/wickra-banner.webp?v=514" alt="Wickra ZK — deterministic zero-knowledge proof for Go" width="100%"></a>
+  <a href="https://wickra.org"><img src="https://raw.githubusercontent.com/wickra-lib/.github/main/profile/wickra-banner.webp?v=514" alt="Wickra" width="100%"></a>
 </p>
 
 [![Built on Wickra](https://img.shields.io/badge/built%20on-wickra-3b82f6)](https://github.com/wickra-lib/wickra)
@@ -9,9 +9,9 @@
 
 ---
 
-**The deterministic zero-knowledge proof core for Go, over the Wickra C ABI hub via cgo.**
+**Zero-knowledge proofs of backtest performance for Go, over the Wickra C ABI hub via cgo.**
 
-[Wickra ZK](https://github.com/wickra-lib/wickra-zk) folds a `(spec, data)` pair into a deterministic `wickra-backtest` report and a canonical blake3 hash that anyone recomputes byte-for-byte in ten languages. This package is the Go binding: it consumes the C ABI hub through cgo and exposes the stateless `Prover` handle with the same JSON protocol as every other binding.
+[Wickra ZK](https://github.com/wickra-lib/wickra-zk) runs the deterministic `wickra-backtest` engine inside a RISC Zero zkVM guest and turns the receipt into a proof of the report's hash and headline metrics that reveals neither the candles nor the strategy. This package is the Go binding: it consumes the C ABI hub through cgo and exposes the `Prover` handle with the same JSON command envelope as every other binding.
 
 ## Install
 
@@ -38,32 +38,39 @@ func main() {
 	p := wickra.New()
 	defer p.Close()
 
-	cmd := `{"cmd":"prove","spec":{"strategy":{...},"dataset_ref":"BTCUSDT/1h"},` +
-		`"data":{"BTCUSDT":[{"time":1,"open":100,"high":101,"low":99,"close":100,"volume":1000}]}}`
+	cmd := `{"cmd":"prove","spec":{"strategy":{...}},` +
+		`"candles":[{"time":1,"open":100,"high":101,"low":99,"close":100,"volume":1000}]}`
 
 	proof, err := p.Command(cmd)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(proof) // {"engine_version":"…","inputs_hash":"…","report":…,"report_hash":"…"}
+	fmt.Println(proof) // {"receipt":…,"journal":{"report_hash":"…","dataset_commitment":"…","guest_id":"…",…},"version":"…"}
 	fmt.Println(wickra.Version())
 }
 ```
 
 ## Commands
 
-| Command        | Payload                 | Response                                                |
-| -------------- | ----------------------- | ------------------------------------------------------ |
-| `prove`        | `{spec, data}`          | `{report, inputs_hash, report_hash, engine_version}`   |
-| `verify`       | `{proof, spec, data}`   | `{ok: true, valid: bool}`                              |
-| `version`      | —                       | `{engine_version}`                                     |
+| Command | Payload | Response |
+|---------|---------|----------|
+| `prove` | `{spec: {strategy, dataset_commitment?}, candles}` | `{receipt, journal, version}` |
+| `commit` | `{candles}` | `{dataset_commitment}` |
+| `verify` | `{proof}` | `{report_hash, dataset_commitment, guest_id, sharpe, pnl, n_trades}` |
+| `version` | — | `{version, guest_id}` |
 
-Errors are reported in-band as `{"ok":false,"error":"…"}`.
+The envelope is documented once, in
+[docs/ZK.md](https://github.com/wickra-lib/wickra-zk/blob/main/docs/ZK.md#the-command-envelope).
+`dataset_commitment` may be omitted from a `prove` spec; the host computes it
+from the candles. Proving runs a zkVM: seconds to minutes.
+
+Domain errors are reported in-band as `{"ok":false,"error":"…"}`; the Go
+`error` is reserved for ABI-level failures (a null argument, a caught panic).
 
 `wickra-zk-go` is generated from this directory by the release pipeline: it
 mirrors the Go sources, the vendored C ABI header (`include/wickra_zk.h`) and
-the prebuilt libraries under `lib/<goos>_<goarch>/`. On Windows the DLL must be
-discoverable at run time (next to the executable or on `PATH`).
+the prebuilt libraries under `lib/<goos>_<goarch>/` for Linux and macOS (risc0
+has no Windows host, so there is no Windows library to mirror).
 
 ## Building from this repository (contributors)
 
