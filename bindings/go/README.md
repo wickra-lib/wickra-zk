@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://wickra.org"><img src="https://raw.githubusercontent.com/wickra-lib/.github/main/profile/wickra-banner.webp?v=514" alt="Wickra ZK — deterministic zero-knowledge proof for Go" width="100%"></a>
+  <a href="https://wickra.org"><img src="https://raw.githubusercontent.com/wickra-lib/.github/main/profile/wickra-banner.webp?v=514" alt="Wickra" width="100%"></a>
 </p>
 
 [![Built on Wickra](https://img.shields.io/badge/built%20on-wickra-3b82f6)](https://github.com/wickra-lib/wickra)
@@ -9,9 +9,9 @@
 
 ---
 
-**The deterministic zero-knowledge proof core for Go, over the Wickra C ABI hub via cgo.**
+**Zero-knowledge proofs of backtest performance for Go, over the Wickra C ABI hub via cgo.**
 
-[Wickra ZK](https://github.com/wickra-lib/wickra-zk) folds a `(spec, data)` pair into a deterministic `wickra-backtest` report and a canonical blake3 hash that anyone recomputes byte-for-byte in ten languages. This package is the Go binding: it consumes the C ABI hub through cgo and exposes the stateless `Prover` handle with the same JSON protocol as every other binding.
+[Wickra ZK](https://github.com/wickra-lib/wickra-zk) runs the deterministic `wickra-backtest` engine inside a RISC Zero zkVM guest and turns the receipt into a proof of the report's hash and headline metrics that reveals neither the candles nor the strategy. This package is the Go binding: it consumes the C ABI hub through cgo and exposes the `Prover` handle with the same JSON command envelope as every other binding.
 
 ## Install
 
