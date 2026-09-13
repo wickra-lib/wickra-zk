@@ -1,1 +1,7 @@
+# Normalise line endings to LF in the repo (Windows checkouts may use CRLF).
+# The golden fixtures are read byte-for-byte by every binding; a CRLF checkout
+# would silently change what the Node reader hashes.
+* text=auto eol=lf
+*.webp binary
+*.png binary
 guest/methods/elf/*.bin binary
