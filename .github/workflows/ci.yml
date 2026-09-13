@@ -929,15 +929,32 @@ jobs:
   python-wheel-container-smoke:
     name: Python wheel (${{ matrix.target }} ${{ matrix.manylinux }} smoke)
     runs-on: ubuntu-latest
-    # The prover's C++ circuits and a fat-LTO link inside a container with no
-    # cache: the manylinux x86_64 wheel takes ~15 minutes, the musllinux one
-    # crossed 45 without finishing. The budget is what the release job gets.
+    # A cold prover build inside a container with no cache: ~15 minutes where
+    # the C++ compiler is quick, over 45 where it is not (musl-cross gcc).
+    # The budget is what the release job gets.
     timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
-        target: [x86_64, aarch64]
-        manylinux: [auto, musllinux_1_2]
+        # The same four Linux wheels release.yml builds. Keep the two lists
+        # together.
+        #
+        # manylinux_2_28, not 2014: ring 0.17's aarch64 assembly refuses the
+        # 2014 cross image's gcc ("ARM assembler must define __ARM_ARCH").
+        #
+        # The compiler is per entry. The workflow's CC=clang reaches into the
+        # container, and only the x86_64 glibc image can install clang (dnf);
+        # the cross images name their own target compiler through
+        # CC_<target> and use `cc` only for host build scripts, which must
+        # be something they have.
+        include:
+          - { target: x86_64, manylinux: 2_28, cc: clang, cxx: clang++ }
+          - { target: aarch64, manylinux: 2_28, cc: gcc, cxx: g++ }
+          - { target: x86_64, manylinux: musllinux_1_2, cc: gcc, cxx: g++ }
+          - { target: aarch64, manylinux: musllinux_1_2, cc: gcc, cxx: g++ }
+    env:
+      CC: ${{ matrix.cc }}
+      CXX: ${{ matrix.cxx }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -950,11 +967,8 @@ jobs:
           target: ${{ matrix.target }}
           args: --release --out dist
           manylinux: ${{ matrix.manylinux }}
-          # Building OpenSSL from source needs Perl modules the minimal
-          # manylinux image lacks. The musllinux cross image ships a complete
-          # Perl and has no yum, so this is a no-op there.
           before-script-linux: |
-            if command -v yum >/dev/null 2>&1; then yum install -y perl-core perl-IPC-Cmd perl-Data-Dumper perl-Time-Piece; fi
+            if [ "$CC" = clang ]; then dnf install -y clang; fi
 
   # Surface parity is its own concern, not a line inside the repository checks:
   # it is the claim the whole product rests on. A request built in any language
