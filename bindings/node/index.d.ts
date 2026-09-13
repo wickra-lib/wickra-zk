@@ -4,8 +4,9 @@
 /**
  * A prover driven by JSON commands.
  *
- * Holds no state -- the host's command surface is a free function -- but is
- * handle-shaped so every binding in the family reads the same way.
+ * The host's command surface is a free function; the handle exists so every
+ * binding in the family reads the same way. It carries the host version it
+ * was created against, which is what `version()` reports.
  */
 export declare class Prover {
   /** Create a prover. */
