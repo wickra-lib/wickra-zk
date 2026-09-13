@@ -9,6 +9,10 @@ members = ["bindings/c", "bindings/python", "bindings/node",
 # NOT members: guest/methods/guest (detached, riscv target, own toolchain) and
 # guest/builder (the one crate that needs risc0-build; it writes the committed
 # ELF + image id into guest/methods).
+# cargo-fuzz builds fuzz/ on its own, with sanitizer flags the workspace must
+# not inherit, so it is excluded rather than a member; the same goes for the
+# guest and the builder, which carry their own [workspace] tables.
+exclude = ["fuzz", "guest/methods/guest", "guest/builder"]
 
 [workspace.package]
 version = "0.1.0"
