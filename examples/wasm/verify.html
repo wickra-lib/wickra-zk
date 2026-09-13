@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>wickra-zk WASM — verify</title>
+  <style>
+    body { font-family: ui-sans-serif, system-ui, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; color: #1d1d1d; }
+    h1 { margin-bottom: .25rem; }
+    .meta { color: #666; margin-top: 0; }
+    code { background: #f4f4f4; padding: .1rem .25rem; border-radius: .2rem; font-size: .9em; }
+    pre { background: #f6f8fa; padding: .75rem; border-radius: .3rem; overflow-x: auto; }
+    button { padding: .5rem 1rem; }
+    #status { margin-top: 1rem; color: #666; }
+    table { border-collapse: collapse; width: 100%; margin-top: 1rem; font-variant-numeric: tabular-nums; }
+    th, td { border: 1px solid #ddd; padding: .5rem .75rem; text-align: left; font-family: ui-monospace, monospace; word-break: break-all; }
+    th { background: #fafafa; width: 12rem; }
+  </style>
+</head>
+<body>
+  <h1>wickra-zk WASM — verify</h1>
+  <p class="meta">
+    The verifying side, in a browser: a proof — a RISC Zero receipt and its
+    public journal — is checked against the guest this build pins, without a
+    prover, without the candles and without the strategy. The proof loaded here
+    is <code>golden/proofs/momentum.json</code>, a receipt the real prover made
+    for the momentum golden case; the journal below is decoded from the
+    receipt, never read from the file's own copy.
+  </p>
+
+  <p><button id="go" disabled>Verify the proof</button></p>
+  <p id="status">Loading WASM module…</p>
+
+  <table id="journal" hidden><tbody></tbody></table>
+  <pre id="raw" hidden></pre>
+
+  <script type="module">
+    import init, { Verifier, version, guestId }
+      from "../../bindings/wasm/pkg/wickra_zk_wasm.js";
+
+    const PROOF_URL = "../../golden/proofs/momentum.json";
+
+    const status = document.getElementById("status");
+    const go = document.getElementById("go");
+
+    async function run() {
+      const response = await fetch(PROOF_URL);
+      if (!response.ok) throw new Error(`${PROOF_URL}: HTTP ${response.status}`);
+      const proof = await response.json();
+
+      const verifier = new Verifier();
+      const outputs = JSON.parse(verifier.command(JSON.stringify({ cmd: "verify", proof })));
+      if (outputs.ok === false) throw new Error(outputs.error);
+
+      const body = document.querySelector("#journal tbody");
+      body.replaceChildren();
+      for (const [key, value] of Object.entries(outputs)) {
+        const tr = document.createElement("tr");
+        const th = document.createElement("th");
+        th.textContent = key;
+        const td = document.createElement("td");
+        td.textContent = String(value);
+        tr.append(th, td);
+        body.append(tr);
+      }
+      document.getElementById("journal").hidden = false;
+
+      const raw = document.getElementById("raw");
+      raw.textContent = JSON.stringify(outputs, null, 2);
+      raw.hidden = false;
+
+      const bound = outputs.guest_id === guestId();
+      status.textContent = bound
+        ? `verify: valid — the receipt is bound to guest ${guestId().slice(0, 16)}…, wickra-zk ${version()}.`
+        : `verify: the receipt names guest ${outputs.guest_id}, this build pins ${guestId()}`;
+    }
+
+    await init();
+    status.textContent = `Module ready — wickra-zk ${version()}, guest ${guestId().slice(0, 16)}….`;
+    go.disabled = false;
+    go.addEventListener("click", () => {
+      run().catch((err) => {
+        status.textContent = `Error: ${err}`;
+      });
+    });
+  </script>
+</body>
+</html>

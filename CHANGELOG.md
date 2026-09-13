@@ -39,6 +39,17 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Every binding tests both operating modes of `prove`.** The caller can
+  leave the dataset commitment to the host or state it up front -- the value
+  `commit` returns. The journal must not depend on which, and both proofs must
+  verify to it. Python, Node, C#, Go, Java, R and the C ABI test now re-prove
+  every golden case with the stated commitment and compare; the WASM verifier
+  checks the other pair of modes it has -- the committed proof bytes and the
+  proof as the host's JSON library re-emits it decode to one journal.
+- **A browser demo joins the examples.** `examples/wasm/verify.html` fetches a
+  real golden receipt and decodes its journal through the WebAssembly
+  verifier; the Examples job parse-checks its module.
+
 - Golden tests in every binding: each of Python, Node, Go, C#, Java, R and C
   proves the three golden cases through the envelope in dev-mode and holds the
   journal to the blessed `report_hash` and metrics, verifies the proof, refuses

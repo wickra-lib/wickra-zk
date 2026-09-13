@@ -142,4 +142,32 @@ refused <- in_band_error(wkzk_command(prover, paste0(
 )))
 stopifnot(!is.null(refused), grepl("commitment mismatch", refused, fixed = TRUE))
 
+
+## operating-mode equivalence: a proof does not depend on who commits the data.
+## `prove` runs in two operating modes. The caller can leave the dataset
+## commitment to the host, which hashes the candles it is handed, or state it
+## up front -- the value `commit` returns. The journal must not depend on which,
+## and both proofs verify to that journal. Only the receipt bytes may differ.
+for (name in names(cases)) {
+  strategy <- read_text(file.path(g, "specs", paste0(name, ".json")))
+  candles <- load_candles(g, cases[[name]])
+
+  host <- wkzk_command(prover, paste0(
+    '{"cmd":"prove","spec":{"strategy":', strategy, '},"candles":', candles, "}"
+  ))
+  stopifnot(is.null(in_band_error(host)))
+  commitment <- string_field(wkzk_command(prover, paste0('{"cmd":"commit","candles":', candles, "}")), "dataset_commitment")
+  stated <- wkzk_command(prover, paste0(
+    '{"cmd":"prove","spec":{"strategy":', strategy, ',"dataset_commitment":"', commitment,
+    '"},"candles":', candles, "}"
+  ))
+  stopifnot(is.null(in_band_error(stated)))
+
+  journal <- journal_of(host)$text
+  stopifnot(identical(journal_of(stated)$text, journal))
+  stopifnot(identical(string_field(journal, "dataset_commitment"), commitment))
+  stopifnot(identical(wkzk_command(prover, paste0('{"cmd":"verify","proof":', host, "}")), journal))
+  stopifnot(identical(wkzk_command(prover, paste0('{"cmd":"verify","proof":', stated, "}")), journal))
+}
+
 cat("wickra-zk R tests passed:", length(cases), "golden cases\n")
