@@ -942,19 +942,20 @@ jobs:
         # manylinux_2_28, not 2014: ring 0.17's aarch64 assembly refuses the
         # 2014 cross image's gcc ("ARM assembler must define __ARM_ARCH").
         #
-        # The compiler is per entry. The workflow's CC=clang reaches into the
-        # container, and only the x86_64 glibc image can install clang (dnf);
-        # the cross images name their own target compiler through
-        # CC_<target> and use `cc` only for host build scripts, which must
-        # be something they have.
+        # The workflow's CC=clang reaches into the containers, and none of
+        # them can use it: the cross images have no clang, and the clang dnf
+        # installs on manylinux_2_28 pairs with the base gcc 8 libstdc++, not
+        # the gcc-toolset's, and cannot see C++17's std::exclusive_scan. Each
+        # container builds with the gcc it ships, which is what its cross
+        # toolchain names through CC_<target> anyway.
         include:
-          - { target: x86_64, manylinux: 2_28, cc: clang, cxx: clang++ }
-          - { target: aarch64, manylinux: 2_28, cc: gcc, cxx: g++ }
-          - { target: x86_64, manylinux: musllinux_1_2, cc: gcc, cxx: g++ }
-          - { target: aarch64, manylinux: musllinux_1_2, cc: gcc, cxx: g++ }
+          - { target: x86_64, manylinux: 2_28 }
+          - { target: aarch64, manylinux: 2_28 }
+          - { target: x86_64, manylinux: musllinux_1_2 }
+          - { target: aarch64, manylinux: musllinux_1_2 }
     env:
-      CC: ${{ matrix.cc }}
-      CXX: ${{ matrix.cxx }}
+      CC: gcc
+      CXX: g++
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -967,8 +968,6 @@ jobs:
           target: ${{ matrix.target }}
           args: --release --out dist
           manylinux: ${{ matrix.manylinux }}
-          before-script-linux: |
-            if [ "$CC" = clang ]; then dnf install -y clang; fi
 
   # Surface parity is its own concern, not a line inside the repository checks:
   # it is the claim the whole product rests on. A request built in any language
