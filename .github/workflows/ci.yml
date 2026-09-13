@@ -258,43 +258,136 @@ jobs:
   # against an API change and stay green -- the worst kind of documentation,
   # because it looks executable. This compiles each of them; it does not run
   # them, since several want a network or a built native library.
-  examples-smoke:
-    name: Examples (build smoke)
+  # Every example proves the same inputs and prints the same report_hash --
+  # examples/README.md promises one value for every language, and each run is
+  # held to it here, so the document and the code cannot drift apart. An
+  # example that starts and prints nothing fails.
+  examples:
+    name: Examples
     runs-on: ubuntu-latest
-    timeout-minutes: 30 # backstop against a wedged job, not a budget
+    timeout-minutes: 45 # backstop against a wedged job, not a budget
+    env:
+      RISC0_DEV_MODE: "1"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-      - name: Rust example
-        run: cargo check -p wickra-zk-example
-      - name: Node example parses
+
+      - name: Build the C ABI library the non-native bindings link against
+        run: cargo build -p wickra-zk-c --release
+
+      - name: Stage the native library for Go and put it on the loader path
+        shell: bash
         run: |
-          set -euo pipefail
-          for f in examples/node/*.mjs examples/node/*.js; do
-            [ -e "$f" ] || continue
-            node --check "$f"
-          done
-      - name: Python example parses
+          mkdir -p bindings/go/lib/linux_amd64
+          cp target/release/libwickra_zk.so bindings/go/lib/linux_amd64/
+          echo "LD_LIBRARY_PATH=$PWD/target/release:$LD_LIBRARY_PATH" >> "$GITHUB_ENV"
+
+      - name: The hash the README promises
+        shell: bash
         run: |
-          set -euo pipefail
-          for f in examples/python/*.py; do
-            [ -e "$f" ] || continue
-            python -m py_compile "$f"
-          done
-      - name: Go example vets
+          hash=$(grep -oE 'report_hash: [0-9a-f]{64}' examples/README.md | head -1 | cut -d' ' -f2)
+          test -n "$hash"
+          echo "EXAMPLE_HASH=$hash" >> "$GITHUB_ENV"
+          echo "README promises report_hash $hash"
+
+      - name: Rust
+        shell: bash
         run: |
-          set -euo pipefail
-          if [ -f examples/go/go.mod ]; then ( cd examples/go && gofmt -l . && go vet ./... ); fi
-      - name: R example parses
+          out=$(cargo run -q --manifest-path examples/rust/Cargo.toml)
+          echo "$out"
+          echo "$out" | grep -q 'verify: valid'
+          echo "$out" | grep -q "report_hash: $EXAMPLE_HASH"
+
+      - name: Python
+        shell: bash
         run: |
-          set -euo pipefail
-          for f in examples/r/*.R; do
-            [ -e "$f" ] || continue
-            Rscript -e "invisible(parse('$f'))" 2>/dev/null || echo "R not installed; skipped $f"
-          done
+          python -m pip install --require-hashes -r .github/requirements/ci-dev.txt
+          ( cd bindings/python && maturin build --release --out dist )
+          python -m pip install --no-index --find-links bindings/python/dist wickra-zk
+          out=$(python examples/python/prove.py)
+          echo "$out"
+          echo "$out" | grep -q 'verify: valid'
+          echo "$out" | grep -q "report_hash: $EXAMPLE_HASH"
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        id: setup_node_examples
+        continue-on-error: true
+        with:
+          node-version: "22"
+      - name: Pause before retrying the toolchain download
+        if: steps.setup_node_examples.outcome == 'failure'
+        run: sleep 30
+        shell: bash
+      - name: Retry the toolchain download
+        if: steps.setup_node_examples.outcome == 'failure'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+      - name: Node.js
+        shell: bash
+        run: |
+          ( cd bindings/node && npm install --no-audit --no-fund && npx napi build --platform --release )
+          ( cd examples/node && npm install --no-audit --no-fund )
+          out=$(node examples/node/prove.js)
+          echo "$out"
+          echo "$out" | grep -q 'verify: valid'
+          echo "$out" | grep -q "report_hash: $EXAMPLE_HASH"
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "1.23"
+      - name: Go
+        shell: bash
+        run: |
+          out=$(cd examples/go && go run .)
+          echo "$out"
+          echo "$out" | grep -q 'verify: valid'
+          echo "$out" | grep -q "report_hash: $EXAMPLE_HASH"
+
+      - uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with:
+          distribution: temurin
+          java-version: "22"
+      - name: Java
+        shell: bash
+        run: |
+          mvn -f bindings/java/pom.xml -q package -DskipTests
+          javac -cp bindings/java/target/classes examples/java/Prove.java -d examples/java/out
+          out=$(java --enable-native-access=ALL-UNNAMED \
+            -Dnative.lib.dir="$PWD/target/release" \
+            -cp "bindings/java/target/classes:examples/java/out" Prove examples)
+          echo "$out"
+          echo "$out" | grep -q 'verify: valid'
+          echo "$out" | grep -q "report_hash: $EXAMPLE_HASH"
+
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: "8.0.x"
+      - name: C#
+        shell: bash
+        run: |
+          out=$(dotnet run --project examples/csharp/Prove)
+          echo "$out"
+          echo "$out" | grep -q 'verify: valid'
+          echo "$out" | grep -q "report_hash: $EXAMPLE_HASH"
+
+      - uses: r-lib/actions/setup-r@465b7d8e732ca3921382b1674c59bada9cbf3399 # v2.13.0
+        with:
+          use-public-rspm: true
+      - name: R
+        shell: bash
+        env:
+          WKZK_INC: ${{ github.workspace }}/bindings/c/include
+          WKZK_LIB: ${{ github.workspace }}/target/release
+        run: |
+          R CMD INSTALL bindings/r
+          out=$(Rscript examples/r/prove.R)
+          echo "$out"
+          echo "$out" | grep -q 'verify: valid'
+          echo "$out" | grep -q "report_hash: $EXAMPLE_HASH"
 
   supply-chain:
     name: cargo-deny
@@ -389,7 +482,11 @@ jobs:
         run: |
           set -euo pipefail
           checked=0
-          for crate in wickra-zk-host wickra-zk; do
+          # Library crates only: the CLI is a binary with no public API, and
+          # cargo-semver-checks ends with "no crates with library targets
+          # selected" on it -- an error, not a pass -- once it is on crates.io
+          # and the loop reaches it.
+          for crate in wickra-zk-methods wickra-zk-host; do
             if curl -fsS -A "wickra-ci" "https://crates.io/api/v1/crates/$crate" >/dev/null 2>&1; then
               echo "::group::cargo semver-checks $crate"
               cargo semver-checks check-release -p "$crate"
