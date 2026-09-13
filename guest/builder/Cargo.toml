@@ -1,0 +1,37 @@
+# The guest builder: the one place the risc0 toolchain is needed to build this
+# repository. It compiles the guest program (../methods/guest) through
+# risc0-build and writes the resulting ELF and image id into ../methods, where
+# they are committed. Everything else -- the host, the CLI, the bindings, the
+# published crates -- reads the committed artefact and builds with plain Rust.
+#
+# Its own workspace root, like the guest: the host workspace must not pull
+# risc0-build (and with it rzup and the toolchain requirement) into every job.
+#
+#   cargo run --manifest-path guest/builder/Cargo.toml --release
+#
+# CI runs it with RISC0_USE_DOCKER=1, the reproducible build risc0 designs the
+# image id for, and fails if the committed artefact differs.
+[workspace]
+
+[package]
+name = "wickra-zk-guest-builder"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.90"
+license = "MIT OR Apache-2.0"
+publish = false
+
+# risc0-build's embed_methods() reads this to locate the guest crate(s): each
+# entry is a path (relative to this manifest) to a RISC-V guest package.
+[package.metadata.risc0]
+methods = ["../methods/guest"]
+
+[build-dependencies]
+risc0-build = "3.0"
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }

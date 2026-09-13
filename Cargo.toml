@@ -6,7 +6,9 @@ members = ["bindings/c", "bindings/python", "bindings/node",
     "crates/wickra-zk-bench",
     "guest/methods",
 ]
-# NOT members: guest/methods/guest (detached, riscv target, own toolchain)
+# NOT members: guest/methods/guest (detached, riscv target, own toolchain) and
+# guest/builder (the one crate that needs risc0-build; it writes the committed
+# ELF + image id into guest/methods).
 
 [workspace.package]
 version = "0.1.0"
@@ -22,7 +24,6 @@ serde_json = "1"
 thiserror = "2"
 clap = { version = "4", features = ["derive"] }
 risc0-zkvm = "3.0"
-risc0-build = "3.0"
 # Pinned to an exact rev, not to a floating branch. An unpinned git dependency
 # never goes red -- it only gets older, and then one day the API underneath has
 # moved and the build breaks with errors that look like your own. That is how

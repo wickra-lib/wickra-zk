@@ -12,13 +12,14 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-# The host workspace embeds the guest ELF via `risc0_build::embed_methods()`, so
-# every job that builds host/cli/bench needs the risc0 toolchain. That toolchain
-# has no Windows host: rzup reports `Unsupported architecture` on the runner and
-# the host crate does not link on MSVC. Every binding sits on the host, so no
-# matrix here has a Windows entry, and the release ships Linux and macOS only.
-# Tests run under RISC0_DEV_MODE=1 for a fast, unsound receipt; the real proving
-# path is exercised nightly in prove.yml.
+# The guest ELF and its image id are committed under guest/methods, so the host,
+# the CLI and every binding build with plain Rust; only guest-build (which
+# rebuilds the guest reproducibly and diffs it) and clippy-guest need the risc0
+# toolchain. That toolchain has no Windows host, and the host crate does not
+# link on MSVC either (risc0-zkvm-platform's sys_alloc_aligned), so no matrix
+# here has a Windows entry and the release ships Linux and macOS only. Tests run
+# under RISC0_DEV_MODE=1 for a fast, unsound receipt that needs no r0vm; the
+# real proving path is exercised nightly in prove.yml.
 
 jobs:
   fmt:
@@ -40,16 +41,6 @@ jobs:
     timeout-minutes: 30 # backstop against a wedged job, not a budget
     env:
       RISC0_DEV_MODE: "1"
-      # Lint the host, and let the guest be linted by clippy-guest and built by
-      # guest-build. `cargo clippy` exports RUSTC_WORKSPACE_WRAPPER, the child
-      # cargo that risc0-build spawns for the guest inherits it, and
-      # clippy-driver then compiles the guest against a stable sysroot that has
-      # no std for riscv32im-risc0-zkvm-elf:
-      #   wickra-zk-guest: error[E0463]: can't find crate for `std`
-      # RISC0_SKIP_BUILD makes embed_methods emit stub constants instead, which
-      # is what it exists for. Nothing about the guest goes unchecked: two other
-      # jobs compile it for real.
-      RISC0_SKIP_BUILD: "1"
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -57,7 +48,6 @@ jobs:
       - uses: ./.github/actions/setup-rust
         with:
           components: clippy
-      - uses: ./.github/actions/setup-risc0
       - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
       - run: cargo clippy --workspace --all-targets --all-features -- -D warnings
 
@@ -96,9 +86,32 @@ jobs:
       - uses: ./.github/actions/setup-rust
       - uses: ./.github/actions/setup-risc0
       - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
-      # Building the methods crate compiles the guest to a RISC-V ELF and
-      # generates WICKRA_ZK_GUEST_ELF / WICKRA_ZK_GUEST_ID.
-      - run: cargo build -p wickra-zk-methods
+        with:
+          workspaces: guest/builder
+      # The guest ELF and its image id are committed under guest/methods; every
+      # other job reads them and needs no risc0 toolchain. This job is what
+      # keeps the commitment honest: it rebuilds the guest from source inside
+      # risc0's build container -- RISC0_USE_DOCKER is the reproducible build
+      # the image id is designed around -- and fails if a byte differs. A
+      # change to the guest source without a regenerated artefact, or an
+      # artefact regenerated with a different toolchain, stops here.
+      - name: Rebuild the guest reproducibly and compare with the committed artefact
+        env:
+          RISC0_USE_DOCKER: "1"
+        run: |
+          cargo run --manifest-path guest/builder/Cargo.toml --release
+          if ! git diff --exit-code -- guest/methods/elf guest/methods/src/guest_id.rs; then
+            echo "::error::the committed guest artefact is not what the committed source builds; run \`RISC0_USE_DOCKER=1 cargo run --manifest-path guest/builder/Cargo.toml --release\` and commit guest/methods/elf and guest/methods/src/guest_id.rs"
+            exit 1
+          fi
+      - name: Upload the rebuilt artefact when it differs
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: guest-artefact-rebuilt
+          path: |
+            guest/methods/elf/wickra-zk-guest.bin
+            guest/methods/src/guest_id.rs
 
   test:
     name: Test (${{ matrix.os }})
@@ -115,7 +128,6 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
-      - uses: ./.github/actions/setup-risc0
       - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
       - run: cargo test --workspace
 
@@ -130,7 +142,6 @@ jobs:
       - uses: ./.github/actions/setup-rust
         with:
           toolchain: "1.90"
-      - uses: ./.github/actions/setup-risc0
       - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
       - run: cargo check --workspace
 
@@ -147,7 +158,6 @@ jobs:
       - uses: ./.github/actions/setup-rust
         with:
           components: llvm-tools-preview
-      - uses: ./.github/actions/setup-risc0
       - uses: taiki-e/install-action@c3ec0de9ae7f1019cea21aa96aa0a895b9552063 # v2.87.9 (cargo-llvm-cov)
         with:
           tool: cargo-llvm-cov
@@ -174,7 +184,6 @@ jobs:
       - uses: ./.github/actions/setup-rust
         with:
           toolchain: nightly
-      - uses: ./.github/actions/setup-risc0
       - uses: taiki-e/install-action@c3ec0de9ae7f1019cea21aa96aa0a895b9552063 # v2.87.9 (cargo-fuzz)
         with:
           tool: cargo-fuzz
@@ -199,7 +208,6 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
-      - uses: ./.github/actions/setup-risc0
       - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
       - run: cargo test -p wickra-zk-host --test golden
 
@@ -214,7 +222,6 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
-      - uses: ./.github/actions/setup-risc0
       - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
       - name: Prove then verify a golden case end to end
         run: |
@@ -360,7 +367,6 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
-      - uses: ./.github/actions/setup-risc0
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Install cargo-semver-checks
         uses: taiki-e/install-action@c3ec0de9ae7f1019cea21aa96aa0a895b9552063 # v2.87.9
@@ -423,7 +429,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - uses: ./.github/actions/setup-rust
-      - uses: ./.github/actions/setup-risc0
       - uses: Swatinem/rust-cache@f0d9c3887740aee45f6153b24b3a6b815192ec16 # v2
       - run: pip install maturin pytest
       - run: maturin build --out dist
@@ -451,7 +456,6 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
-      - uses: ./.github/actions/setup-risc0
       - uses: Swatinem/rust-cache@f0d9c3887740aee45f6153b24b3a6b815192ec16 # v2
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -491,7 +495,6 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
-      - uses: ./.github/actions/setup-risc0
       - uses: Swatinem/rust-cache@f0d9c3887740aee45f6153b24b3a6b815192ec16 # v2
       - name: Install cbindgen
         uses: taiki-e/install-action@e67fa11c4b9316fa714ddf0abed07a0c3143b95b # v2.87.4
@@ -536,7 +539,6 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
-      - uses: ./.github/actions/setup-risc0
       - uses: Swatinem/rust-cache@f0d9c3887740aee45f6153b24b3a6b815192ec16 # v2
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
@@ -571,7 +573,6 @@ jobs:
           go-version: "stable"
           cache: false
       - uses: ./.github/actions/setup-rust
-      - uses: ./.github/actions/setup-risc0
       - uses: Swatinem/rust-cache@f0d9c3887740aee45f6153b24b3a6b815192ec16 # v2
       - name: Build the C ABI library
         run: cargo build -p wickra-zk-c --release
@@ -632,7 +633,6 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
-      - uses: ./.github/actions/setup-risc0
       - uses: Swatinem/rust-cache@f0d9c3887740aee45f6153b24b3a6b815192ec16 # v2
       # The pom points native.lib.dir at target/debug, so build the debug profile.
       - name: Build the C ABI library
@@ -662,7 +662,6 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
-      - uses: ./.github/actions/setup-risc0
       - uses: Swatinem/rust-cache@f0d9c3887740aee45f6153b24b3a6b815192ec16 # v2
       - name: Build the C ABI library
         run: cargo build -p wickra-zk-c --release

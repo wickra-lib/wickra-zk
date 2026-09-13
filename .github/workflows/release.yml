@@ -20,7 +20,6 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
-      - uses: ./.github/actions/setup-risc0
       # Host first, then the CLI that depends on it.
       - name: Publish wickra-zk-host
         run: cargo publish -p wickra-zk-host
@@ -40,13 +39,12 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
-      - uses: ./.github/actions/setup-risc0
-      # Build the guest and export the ELF + image id so anyone can reproduce
-      # the exact program a receipt is verified against.
-      - name: Build guest and export image id
-        run: |
-          cargo build -p wickra-zk-methods --release
-          cargo run -p wickra-zk -- version > guest-image-id.json
+      # The guest ELF and its image id are committed under guest/methods and
+      # rebuilt reproducibly by the guest-build job on every push; export the
+      # image id so anyone can pin the exact program a receipt is verified
+      # against.
+      - name: Export the image id
+        run: cargo run -p wickra-zk -- version > guest-image-id.json
       - name: Generate SBOM
         uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0
         with:

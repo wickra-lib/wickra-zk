@@ -125,6 +125,11 @@ mod tests {
     }
 
     #[test]
+    fn guest_id_is_the_committed_hex() {
+        assert_eq!(guest_id(), wickra_zk_methods::WICKRA_ZK_GUEST_ID_HEX);
+    }
+
+    #[test]
     fn command_json_rejects_unknown_command() {
         let err = command_json(r#"{"cmd":"nope"}"#).unwrap_err();
         assert!(matches!(err, Error::Parse(_)));

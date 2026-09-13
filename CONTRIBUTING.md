@@ -12,23 +12,42 @@ running a strategy over some private data.
   runs inside the zkVM. It reads a spec and candles, runs the deterministic
   `wickra-backtest` engine, canonicalizes with `wickra-proof`, and commits the
   public outputs to the journal.
-- **`guest/methods/`** — the host-side methods crate; its `build.rs` compiles
-  the guest to a RISC-V ELF and exports `WICKRA_ZK_GUEST_ELF` / `_ID`.
+- **`guest/methods/`** — the host-side methods crate: the compiled guest,
+  committed. `elf/wickra-zk-guest.bin` is the ELF the prover runs and
+  `src/guest_id.rs` the image id the verifier pins (`WICKRA_ZK_GUEST_ELF` /
+  `WICKRA_ZK_GUEST_ID`). It builds with plain Rust.
+- **`guest/builder/`** — the one crate that needs the risc0 toolchain. It
+  compiles the guest through `risc0-build` and writes the ELF and the id into
+  `guest/methods`. Run it after every change to the guest source:
+
+  ```bash
+  RISC0_USE_DOCKER=1 cargo run --manifest-path guest/builder/Cargo.toml --release
+  ```
+
+  `RISC0_USE_DOCKER=1` is the reproducible build risc0 designs the image id
+  around; the `guest-build` CI job rebuilds the guest the same way and fails
+  when the committed artefact differs from what the source produces.
 - **`crates/wickra-zk-host/`** — the prover/verifier library (`prove`, `verify`,
   `guest_id`, `command_json`).
 - **`crates/wickra-zk-cli/`** — the `wickra-zk` binary (`prove` / `verify`).
 - **`crates/wickra-zk-bench/`** — criterion benchmarks (exec vs. prove).
 
 The host workspace and the guest are **separate builds**: the guest targets
-`riscv32im-risc0-zkvm-elf` with its own toolchain and is not a workspace member.
+`riscv32im-risc0-zkvm-elf` with its own toolchain, and neither it nor the
+builder is a workspace member.
 
 ## Prerequisites
 
-Install the risc0 toolchain (guest compiler + `r0vm` executor):
+Linux or macOS: risc0 has no Windows host, and the host crate does not link on
+MSVC (on Windows, use WSL). Building and testing the host, the CLI and the
+bindings needs only Rust: the guest is committed. Changing the guest, or
+running the real prover, needs the risc0 toolchain (guest compiler, `r0vm`):
 
 ```bash
-cargo install cargo-risczero
-cargo risczero install
+curl -L https://risczero.com/install | bash
+rzup install cargo-risczero 3.0.6   # the risc0-zkvm crate version
+rzup install rust
+rzup install r0vm 3.0.6
 ```
 
 Most host tests run in **dev-mode** (`RISC0_DEV_MODE=1`), which produces a fake
@@ -43,6 +62,9 @@ cargo clippy --workspace --all-targets --all-features -- -D warnings
 ( cd guest/methods/guest && cargo clippy --target riscv32im-risc0-zkvm-elf -- -D warnings )
 RISC0_DEV_MODE=1 cargo test --workspace --all-features
 cargo deny check
+# after a change to guest/methods/guest:
+RISC0_USE_DOCKER=1 cargo run --manifest-path guest/builder/Cargo.toml --release
+git diff --exit-code -- guest/methods/elf guest/methods/src/guest_id.rs
 ```
 
 ## Determinism is the whole point

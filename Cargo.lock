@@ -4148,9 +4148,6 @@ dependencies = [
 [[package]]
 name = "wickra-zk-methods"
 version = "0.1.0"
-dependencies = [
- "risc0-build",
-]
 
 [[package]]
 name = "wickra-zk-node"

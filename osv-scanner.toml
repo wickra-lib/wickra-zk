@@ -15,7 +15,7 @@ reason = "tracing-subscriber 0.2.25 (CVE-2025-58160): ANSI escape sequences can 
 
 [[IgnoredVulns]]
 id = "RUSTSEC-2023-0071"
-reason = "rsa 0.9.10 (GHSA-4grx-2x9w-596c, Marvin attack): a timing side channel in RSA decryption can leak the private key; no patched release exists. It reaches wickra-zk as a build-time dependency only (rsa <- rzup <- risc0-build <- wickra-zk-methods), where rzup verifies the signature on the toolchain it downloads. Nothing shipped links rsa, no private key is ever held, and the only operation is signature verification on public data. Revisit when rsa 0.10 is released and rzup moves."
+reason = "rsa 0.9.10 (GHSA-4grx-2x9w-596c, Marvin attack): a timing side channel in RSA decryption can leak the private key; no patched release exists. It arrives with risc0 (rsa <- rzup <- risc0-build <- risc0-zkvm <- wickra-zk-host), where rzup verifies the signature on a toolchain it downloads. wickra-zk never calls into it (the guest is committed, not built at host build time), no private key is ever held, and the only operation rsa performs anywhere in the graph is signature verification on public data. Revisit when rsa 0.10 is released and rzup moves."
 
 [[IgnoredVulns]]
 id = "RUSTSEC-2024-0388"

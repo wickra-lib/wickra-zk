@@ -2,6 +2,9 @@
 /fuzz/target
 /fuzz/Cargo.lock
 guest/methods/guest/target
+guest/builder/target
+# Build output, except the committed guest artefact (see guest/methods).
 **/*.bin
+!guest/methods/elf/wickra-zk-guest.bin
 *.proof.json
 /tmp

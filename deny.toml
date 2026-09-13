@@ -26,13 +26,14 @@ ignore = [
   "RUSTSEC-2025-0055",
   # rsa 0.9.10, RUSTSEC-2023-0071 / GHSA-4grx-2x9w-596c, the Marvin attack: a
   # timing side channel in RSA decryption can leak the private key. No patched
-  # release exists (the 0.10 line is unreleased). It reaches us as a build-time
-  # dependency only --
-  #   rsa 0.9.10 <- rzup 0.5.2 <- risc0-build 3.0.6 <- (build) wickra-zk-methods
-  # -- where rzup verifies the signature on the toolchain it downloads. Nothing
-  # this repository ships links rsa, no private key is ever held, and the only
-  # operation is signature verification on public data. Revisit when rsa 0.10
-  # is released and rzup moves.
+  # release exists (the 0.10 line is unreleased). It arrives with risc0 --
+  #   rsa 0.9.10 <- rzup 0.5.2 <- risc0-build 3.0.6 <- risc0-zkvm 3.0.6
+  #   <- wickra-zk-host
+  # -- where rzup verifies the signature on a toolchain it downloads. This
+  # repository never calls into it (the guest is committed, not built at host
+  # build time), no private key is ever held, and the only operation rsa
+  # performs anywhere in the graph is signature verification on public data.
+  # Revisit when rsa 0.10 is released and rzup moves.
   "RUSTSEC-2023-0071",
   # derivative 2.2.0, unmaintained (RUSTSEC-2024-0388). A proc-macro crate that
   # runs at compile time and ships no code of its own into the binary --

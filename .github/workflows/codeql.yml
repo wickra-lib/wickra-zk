@@ -71,11 +71,6 @@ jobs:
       - name: Install Rust toolchain
         if: matrix.language == 'go' || matrix.language == 'c-cpp'
         uses: ./.github/actions/setup-rust
-      # The C ABI crate depends on the host, whose build.rs compiles the zkVM
-      # guest, so the risc0 toolchain has to be here too.
-      - name: Install the risc0 toolchain
-        if: matrix.language == 'go' || matrix.language == 'c-cpp'
-        uses: ./.github/actions/setup-risc0
       - name: Build the C ABI library
         if: matrix.language == 'go' || matrix.language == 'c-cpp'
         run: cargo build -p wickra-zk-c --release

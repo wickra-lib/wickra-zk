@@ -36,7 +36,6 @@ jobs:
       # The bench crate builds the guest through risc0-build, so the toolchain
       # has to be here as well; without it the build fails before a single
       # measurement is taken.
-      - uses: ./.github/actions/setup-risc0
       - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
       - name: Install cargo-codspeed
         uses: taiki-e/install-action@c3ec0de9ae7f1019cea21aa96aa0a895b9552063 # v2.87.9
