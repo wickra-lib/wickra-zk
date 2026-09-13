@@ -24,3 +24,7 @@ reason = "derivative 2.2.0 is unmaintained, not vulnerable: a compile-time proc-
 [[IgnoredVulns]]
 id = "RUSTSEC-2024-0436"
 reason = "paste 1.0.15 is unmaintained, not vulnerable: a compile-time proc-macro that ships no code into the binary. It arrives on risc0's groth16 path (paste <- ark-ff <- ark-bn254 <- risc0-groth16 <- risc0-zkvm), which wickra-zk does not drive, and is not ours to replace. Revisit when arkworks moves."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2023-0089"
+reason = "atomic-polyfill 1.0.3 is unmaintained, not vulnerable: a compile-time polyfill for atomics on targets without them, a no-op on every target wickra-zk builds. It arrives with risc0's in-process prover (atomic-polyfill <- heapless 0.7 <- postcard <- risc0-binfmt <- risc0-zkvm); heapless 0.8 dropped it and is unreachable while postcard declares the 0.7 line. Revisit when postcard moves."

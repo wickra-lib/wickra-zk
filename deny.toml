@@ -48,6 +48,13 @@ ignore = [
   # -- that ships nothing into the binary and arrives with risc0's groth16
   # path. Revisit when arkworks moves.
   "RUSTSEC-2024-0436",
+  # atomic-polyfill 1.0.3, unmaintained (RUSTSEC-2023-0089): a compile-time
+  # polyfill for atomics on targets without them, a no-op on every target this
+  # repository builds. It arrives with the in-process prover --
+  #   atomic-polyfill <- heapless 0.7 <- postcard <- risc0-binfmt <- risc0-zkvm
+  # -- and heapless 0.8, which dropped it, is unreachable while postcard
+  # declares the 0.7 line. Not ours to replace; revisit when postcard moves.
+  "RUSTSEC-2023-0089",
 ]
 
 [licenses]
