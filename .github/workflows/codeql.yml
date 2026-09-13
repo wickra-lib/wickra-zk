@@ -23,7 +23,7 @@ jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
     runs-on: ubuntu-latest
-    timeout-minutes: 30 # backstop against a wedged job, not a budget
+    timeout-minutes: 90 # the go and c-cpp rows build the prover's C ABI in release: ~30 min cold
     permissions:
       security-events: write # upload CodeQL results to code-scanning
       packages: read
@@ -71,6 +71,11 @@ jobs:
       - name: Install Rust toolchain
         if: matrix.language == 'go' || matrix.language == 'c-cpp'
         uses: ./.github/actions/setup-rust
+      - name: Restore the release build cache the CI jobs share
+        if: matrix.language == 'go' || matrix.language == 'c-cpp'
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          shared-key: release
       - name: Build the C ABI library
         if: matrix.language == 'go' || matrix.language == 'c-cpp'
         run: cargo build -p wickra-zk-c --release

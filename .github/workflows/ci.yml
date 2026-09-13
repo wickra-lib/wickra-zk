@@ -13,6 +13,11 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# The in-process prover is heavy to build: risc0's circuits are C++ and the
+# release profile links with fat LTO, ~30 minutes on a cold 4-core runner. The
+# jobs that build it share one rust-cache key per profile (`release`, `debug`)
+# so only the first cold job pays, and carry timeouts that cover that build.
+#
 # The guest ELF and its image id are committed under guest/methods, so the host,
 # the CLI and every binding build with plain Rust; only guest-build (which
 # rebuilds the guest reproducibly and diffs it) and clippy-guest need the risc0
@@ -131,7 +136,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest] # risc0 has no Windows target
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30 # backstop against a wedged job, not a budget
+    timeout-minutes: 60 # a cold release build of the prover takes ~30 min on a 4-core runner
     env:
       RISC0_DEV_MODE: "1"
     steps:
@@ -142,12 +147,14 @@ jobs:
       - uses: ./.github/actions/setup-metal
 
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          shared-key: debug
       - run: cargo test --workspace
 
   msrv:
     name: MSRV (1.90)
     runs-on: ubuntu-latest
-    timeout-minutes: 30 # backstop against a wedged job, not a budget
+    timeout-minutes: 60 # a cold release build of the prover takes ~30 min on a 4-core runner
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -156,6 +163,8 @@ jobs:
         with:
           toolchain: "1.90"
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          shared-key: debug
       - run: cargo check --workspace
 
   coverage:
@@ -189,7 +198,7 @@ jobs:
   fuzz-smoke:
     name: Fuzz (smoke)
     runs-on: ubuntu-latest
-    timeout-minutes: 45 # backstop against a wedged job, not a budget
+    timeout-minutes: 90 # a cold release build of the prover takes ~30 min on a 4-core runner
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -213,7 +222,7 @@ jobs:
   golden:
     name: Golden hash chain (dev-mode)
     runs-on: ubuntu-latest
-    timeout-minutes: 30 # backstop against a wedged job, not a budget
+    timeout-minutes: 60 # a cold release build of the prover takes ~30 min on a 4-core runner
     env:
       RISC0_DEV_MODE: "1"
     steps:
@@ -222,12 +231,14 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          shared-key: debug
       - run: cargo test -p wickra-zk-host --test golden
 
   cli-roundtrip:
     name: CLI roundtrip (dev-mode)
     runs-on: ubuntu-latest
-    timeout-minutes: 30 # backstop against a wedged job, not a budget
+    timeout-minutes: 60 # a cold release build of the prover takes ~30 min on a 4-core runner
     env:
       RISC0_DEV_MODE: "1"
     steps:
@@ -236,6 +247,8 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          shared-key: debug
       - name: Prove then verify a golden case end to end
         run: |
           cargo run -p wickra-zk -- prove \
@@ -277,7 +290,7 @@ jobs:
   examples:
     name: Examples
     runs-on: ubuntu-latest
-    timeout-minutes: 45 # backstop against a wedged job, not a budget
+    timeout-minutes: 90 # a cold release build of the prover takes ~30 min on a 4-core runner
     env:
       RISC0_DEV_MODE: "1"
     steps:
@@ -286,6 +299,8 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          shared-key: release
 
       - name: Build the C ABI library the non-native bindings link against
         run: cargo build -p wickra-zk-c --release
@@ -524,7 +539,7 @@ jobs:
         os: [ubuntu-latest, macos-latest] # risc0 has no Windows host
         python-version: ["3.9", "3.11", "3.12", "3.13"]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30 # backstop against a wedged job, not a budget
+    timeout-minutes: 90 # a cold release build of the prover takes ~30 min on a 4-core runner
     # The binding tests drive the command envelope, not the proof system: a
     # dev-mode receipt takes milliseconds, a real one takes minutes. Every
     # binding sets this for itself where its runtime can reach getenv; .NET's
@@ -542,6 +557,8 @@ jobs:
       - uses: ./.github/actions/setup-metal
 
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          shared-key: release
       # The build and test tools come from the hash-locked requirements file
       # Dependabot maintains, not from whatever PyPI resolves today. No
       # `pip install --upgrade pip` first: that fetch is itself unpinned.
@@ -561,7 +578,7 @@ jobs:
         os: [ubuntu-latest, macos-latest] # risc0 has no Windows host
         node-version: ["22", "24"]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30 # backstop against a wedged job, not a budget
+    timeout-minutes: 90 # a cold release build of the prover takes ~30 min on a 4-core runner
     # The binding tests drive the command envelope, not the proof system: a
     # dev-mode receipt takes milliseconds, a real one takes minutes. Every
     # binding sets this for itself where its runtime can reach getenv; .NET's
@@ -576,6 +593,8 @@ jobs:
       - uses: ./.github/actions/setup-metal
 
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          shared-key: release
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ matrix.node-version }}
@@ -656,7 +675,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest] # risc0 has no Windows host
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30 # backstop against a wedged job, not a budget
+    timeout-minutes: 90 # a cold release build of the prover takes ~30 min on a 4-core runner
     # The binding tests drive the command envelope, not the proof system: a
     # dev-mode receipt takes milliseconds, a real one takes minutes. Every
     # binding sets this for itself where its runtime can reach getenv; .NET's
@@ -671,6 +690,8 @@ jobs:
       - uses: ./.github/actions/setup-metal
 
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          shared-key: release
       - name: Install cbindgen
         uses: taiki-e/install-action@c3ec0de9ae7f1019cea21aa96aa0a895b9552063 # v2.87.9
         with:
@@ -702,7 +723,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest] # risc0 has no Windows host
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 45 # backstop against a wedged job, not a budget
+    timeout-minutes: 90 # a cold release build of the prover takes ~30 min on a 4-core runner
     # The binding tests drive the command envelope, not the proof system: a
     # dev-mode receipt takes milliseconds, a real one takes minutes. Every
     # binding sets this for itself where its runtime can reach getenv; .NET's
@@ -717,6 +738,8 @@ jobs:
       - uses: ./.github/actions/setup-metal
 
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          shared-key: release
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           dotnet-version: "8.0"
@@ -734,7 +757,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest] # risc0 has no Windows host
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30 # backstop against a wedged job, not a budget
+    timeout-minutes: 90 # a cold release build of the prover takes ~30 min on a 4-core runner
     # The binding tests drive the command envelope, not the proof system: a
     # dev-mode receipt takes milliseconds, a real one takes minutes. Every
     # binding sets this for itself where its runtime can reach getenv; .NET's
@@ -753,6 +776,8 @@ jobs:
       - uses: ./.github/actions/setup-metal
 
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          shared-key: release
       - name: Build the C ABI library
         run: cargo build -p wickra-zk-c --release
       - name: Vendored header in sync with the C ABI
@@ -800,7 +825,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest] # risc0 has no Windows host
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 45 # backstop against a wedged job, not a budget
+    timeout-minutes: 60 # a cold release build of the prover takes ~30 min on a 4-core runner
     # The binding tests drive the command envelope, not the proof system: a
     # dev-mode receipt takes milliseconds, a real one takes minutes. Every
     # binding sets this for itself where its runtime can reach getenv; .NET's
@@ -815,6 +840,8 @@ jobs:
       - uses: ./.github/actions/setup-metal
 
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          shared-key: debug
       # The pom points native.lib.dir at target/debug, so build the debug profile.
       - name: Build the C ABI library
         run: cargo build -p wickra-zk-c
@@ -833,7 +860,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest] # risc0 has no Windows host
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30 # backstop against a wedged job, not a budget
+    timeout-minutes: 90 # a cold release build of the prover takes ~30 min on a 4-core runner
     env:
       WKZK_INC: ${{ github.workspace }}/bindings/c/include
       WKZK_LIB: ${{ github.workspace }}/target/release
@@ -846,6 +873,8 @@ jobs:
       - uses: ./.github/actions/setup-metal
 
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          shared-key: release
       - name: Build the C ABI library
         run: cargo build -p wickra-zk-c --release
       - uses: r-lib/actions/setup-r@465b7d8e732ca3921382b1674c59bada9cbf3399 # v2.13.0
