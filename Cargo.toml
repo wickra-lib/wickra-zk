@@ -5,6 +5,7 @@ members = ["bindings/c", "bindings/python", "bindings/node",
     "crates/wickra-zk-cli",
     "crates/wickra-zk-bench",
     "guest/methods",
+    "examples/rust",
 ]
 # NOT members: guest/methods/guest (detached, riscv target, own toolchain) and
 # guest/builder (the one crate that needs risc0-build; it writes the committed
@@ -35,13 +36,18 @@ clap = { version = "4", features = ["derive"] }
 # toolchain installed beside it; with it, a `pip install` or a
 # `cargo install` is the whole prover.
 risc0-zkvm = { version = "3.0", default-features = false, features = ["std"] }
-# Pinned to an exact rev, not to a floating branch. An unpinned git dependency
-# never goes red -- it only gets older, and then one day the API underneath has
-# moved and the build breaks with errors that look like your own. That is how
-# the guest came to call `wickra_proof_core::hash_candles`: it was written against a
-# shape of the crate that the branch later left behind. Bump these deliberately.
-wickra-backtest = { git = "https://github.com/wickra-lib/wickra-backtest", rev = "d58e357506dbb95211d2313eae7bae93d1f73777", version = "0.1" }
-wickra-proof-core = { git = "https://github.com/wickra-lib/wickra-proof", rev = "971a41b26512807fdbd37b3f1da4a9b0689a77d0", version = "0.1" }
+# Pinned to exact published releases. They were git revs while the siblings
+# were unreleased; a git rev never goes red, it only gets older, and cargo
+# treats "this git URL at rev X" and the registry as different sources, so a
+# consumer resolving the same crate from the registry ends up with two copies
+# of wickra-backtest-core in one graph, and two copies do not share a
+# BacktestReport or a Candle. The two pins must agree with each other:
+# wickra-proof-core 0.1.2 requires wickra-backtest-core =0.1.4, so the engine
+# facade is 0.1.4 here. Move them together, and the guest manifest with them
+# (guest/methods/guest/Cargo.toml) -- a different guest source is a different
+# image id, and the committed ELF, id and real receipt then move too.
+wickra-backtest = "=0.1.4"
+wickra-proof-core = "=0.1.2"
 # codspeed-criterion-compat is a drop-in for criterion: the benches keep their
 # criterion API and run as criterion locally, but under `cargo codspeed` they
 # report measurements instead of merely executing. Without the alias the

@@ -107,10 +107,7 @@ wildcards = "deny"
 
 [sources]
 unknown-registry = "deny"
+# Every dependency comes from crates.io. The engine and the proof core were
+# git dependencies until their first releases; now that they are pinned to
+# published versions, a git source anywhere in the graph is a mistake.
 unknown-git = "deny"
-
-# The deterministic engine, canonicalization/hash and CSV facade are consumed as
-# git dependencies until their first crates.io release; they live under the
-# project's own GitHub org.
-[sources.allow-org]
-github = ["wickra-lib"]

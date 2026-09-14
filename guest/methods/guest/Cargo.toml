@@ -32,9 +32,11 @@ risc0-zkvm = { version = "3.0", default-features = false, features = ["std"] }
 # it currently has no effect: wickra-backtest-core declares no [features] and so
 # forwards nothing to wickra-core. Fixing that lives upstream.
 #
-# Pinned to an exact rev for the reason given in the workspace manifest.
-wickra-backtest = { git = "https://github.com/wickra-lib/wickra-backtest", rev = "d58e357506dbb95211d2313eae7bae93d1f73777", version = "0.1", default-features = false }
-wickra-proof-core = { git = "https://github.com/wickra-lib/wickra-proof", rev = "971a41b26512807fdbd37b3f1da4a9b0689a77d0", version = "0.1", default-features = false }
+# Pinned to the exact published releases the workspace manifest names, for
+# the reason given there. Same versions, or the host and the guest disagree
+# about what a report is.
+wickra-backtest = { version = "=0.1.4", default-features = false }
+wickra-proof-core = { version = "=0.1.2", default-features = false }
 
 serde = { version = "1", default-features = false, features = ["derive", "alloc"] }
 # The strategy crosses the host/guest boundary as JSON text (see main.rs).
