@@ -25,7 +25,12 @@ authors = ["wickra-lib"]
 
 [workspace.dependencies]
 serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+# float_roundtrip: the correctly rounded float parser, so a candle or a strategy
+# parameter re-parses to the value that was printed and the canonical hashes
+# are hashes of the text. wickra-proof-core already requires the feature and
+# cargo unifies it across the graph; stating it here keeps that a decision of
+# this workspace rather than a side effect of the engine's manifest.
+serde_json = { version = "1", features = ["float_roundtrip"] }
 thiserror = "2"
 clap = { version = "4", features = ["derive"] }
 # Verify-only by default: receipts, journals and `Receipt::verify`, which

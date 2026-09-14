@@ -6,6 +6,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- **`float_roundtrip` is stated, not inherited.** The workspace and the guest
+  now declare serde_json's correctly rounded float parser themselves.
+  `wickra-proof-core` already requires it and cargo unifies the feature across
+  the graph, so nothing in the built binaries or the guest ELF changes; the
+  decision just no longer lives in the engine's manifest.
+
 ## [0.1.0] - 2026-09-14
 
 ### Changed

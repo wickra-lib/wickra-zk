@@ -40,7 +40,11 @@ wickra-proof-core = { version = "=0.1.2", default-features = false }
 
 serde = { version = "1", default-features = false, features = ["derive", "alloc"] }
 # The strategy crosses the host/guest boundary as JSON text (see main.rs).
-serde_json = "1"
+# float_roundtrip: the same correctly rounded parser the host and wickra-proof
+# use, so a parameter parses to the same f64 on both sides of the boundary.
+# wickra-proof-core already requires it (cargo unifies features), so the guest
+# ELF is unchanged; stated here so the guest build does not depend on that.
+serde_json = { version = "1", features = ["float_roundtrip"] }
 
 [profile.release]
 opt-level = 3
