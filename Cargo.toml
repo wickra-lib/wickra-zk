@@ -5,6 +5,7 @@ members = ["bindings/c", "bindings/python", "bindings/node",
     "crates/wickra-zk-cli",
     "crates/wickra-zk-bench",
     "guest/methods",
+    "examples/rust",
 ]
 # NOT members: guest/methods/guest (detached, riscv target, own toolchain) and
 # guest/builder (the one crate that needs risc0-build; it writes the committed

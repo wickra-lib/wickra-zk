@@ -60,6 +60,13 @@ fn main() {
     println!("wickra-zk {}", wickra_zk_host::version());
     println!("guest_id: {}", journal.guest_id);
     println!("report_hash: {}", journal.report_hash);
-    println!("verify: {}", if journal == proof.journal { "valid" } else { "INVALID" });
+    println!(
+        "verify: {}",
+        if journal == proof.journal {
+            "valid"
+        } else {
+            "INVALID"
+        }
+    );
     println!("{}", serde_json::to_string_pretty(&journal).unwrap());
 }

@@ -4955,6 +4955,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "wickra-zk-example"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "wickra-zk-host",
+]
+
+[[package]]
 name = "wickra-zk-host"
 version = "0.1.0"
 dependencies = [
