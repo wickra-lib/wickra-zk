@@ -283,6 +283,15 @@ jobs:
         run: cp README.md bindings/python/README.md
       # risc0-sys compiles Metal kernels on macOS; a no-op on Linux.
       - uses: ./.github/actions/setup-metal
+      # maturin pins MACOSX_DEPLOYMENT_TARGET to 10.12 for x86_64 and 11.0 for
+      # aarch64, and the Metal compiler derives its language version from that
+      # value. risc0-sys's kernels need Metal 2.3 (constexpr member functions
+      # that assign), which is macOS 11: the x86_64 wheel failed on every
+      # kernel while the aarch64 wheel built. Both wheels target macOS 11.
+      - name: Target macOS 11 so the Metal kernels compile
+        if: runner.os == 'macOS'
+        shell: bash
+        run: echo "MACOSX_DEPLOYMENT_TARGET=11.0" >> "$GITHUB_ENV"
       # The guest is committed, so the wheel builds with plain Rust inside the
       # manylinux and musllinux containers: no risc0 toolchain, no docker.
       - uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1.51.0
