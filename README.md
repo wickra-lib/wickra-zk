@@ -68,7 +68,8 @@ guest inputs, never revealed by the receipt.
 
 ## Status
 
-Early development (0.1.0, unreleased). See [ROADMAP.md](ROADMAP.md).
+Early development (0.1.0); 0.1.0 is the first published release. See
+[ROADMAP.md](ROADMAP.md).
 
 ## Documentation
 
