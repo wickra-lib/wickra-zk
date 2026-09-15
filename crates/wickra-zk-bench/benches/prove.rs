@@ -4,13 +4,18 @@
 //!   real proof (dominated by the backtest inside the zkVM).
 //! - `prove/<case>` — real proving, gated behind `WICKRA_ZK_BENCH_PROD=1`
 //!   because it is slow and memory-hungry; run in the nightly `bench.yml`.
+//!   Ten samples of a proof that takes minutes each, so the nightly job has
+//!   the six-hour budget rather than the two the rest of the family uses.
+//! - `verify/<case>` — checking one real receipt against the pinned guest id,
+//!   behind the same gate because a dev-mode receipt cannot be verified. The
+//!   receipt is produced once, outside the timed loop.
 
 use std::fs;
 use std::path::PathBuf;
 
 use criterion::{criterion_group, criterion_main, Criterion};
 use serde_json::json;
-use wickra_zk_host::{commit_dataset, prove, Candle, ProveOptions, StrategySpec, ZkSpec};
+use wickra_zk_host::{commit_dataset, prove, verify, Candle, ProveOptions, StrategySpec, ZkSpec};
 
 fn golden_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../golden")
@@ -62,6 +67,13 @@ fn bench_prove(c: &mut Criterion) {
             b.iter(|| prove(&spec, &candles, ProveOptions { dev_mode: false }).unwrap());
         });
         group.finish();
+
+        // One real receipt, produced outside the timed loop; verification is
+        // cheap enough for Criterion's default sample count.
+        let proof = prove(&spec, &candles, ProveOptions { dev_mode: false }).unwrap();
+        c.bench_function("verify/momentum", |b| {
+            b.iter(|| verify(&proof).unwrap());
+        });
     }
 }
 

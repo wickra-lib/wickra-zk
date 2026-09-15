@@ -28,7 +28,11 @@ jobs:
   criterion:
     name: Criterion (exec vs prod)
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    # Real proving: Criterion's minimum of ten samples at roughly fourteen
+    # minutes a proof, plus one warm-up proof and one for the verify bench,
+    # is close to three hours. The two-hour budget the rest of the family
+    # uses cancelled every nightly run; six hours is the runner's maximum.
+    timeout-minutes: 360
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
