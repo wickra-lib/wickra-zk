@@ -6,6 +6,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- **`BENCHMARKS.md` carries measurements.** The first nightly bench that
+  finished (2026-09-15) replaces the placeholder: execution 237 ms, a real
+  proof 17 min 37 s, verification 19 ms on the `momentum` case, on a
+  GitHub-hosted runner, with what each number depends on and how to
+  reproduce it.
+
 ### Fixed
 
 - **The nightly benchmark finishes.** `bench.yml` measured real proving with
