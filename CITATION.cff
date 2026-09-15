@@ -8,8 +8,8 @@ abstract: >-
   library exposed as a JSON-over-C-ABI API in ten languages, with a reference CLI
   and a reusable composite GitHub Action.
 type: software
-version: "0.1.0"
-date-released: "2026-09-14"
+version: "0.1.1"
+date-released: "2026-09-15"
 authors:
   - alias: kingchenc
     website: "https://wickra.org"

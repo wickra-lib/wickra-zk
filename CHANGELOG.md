@@ -6,6 +6,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-09-15
+
 ### Fixed
 
 - **The NuGet package publishes.** NuGet.org caps a package at 250 MB and the
@@ -255,5 +257,6 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   links, sync-metadata, nightly prove/bench, tag-gated release).
 - Documentation set: `docs/{ARCHITECTURE,ZK,DETERMINISM,PROVING,Cookbook}.md`.
 
-[Unreleased]: https://github.com/wickra-lib/wickra-zk/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/wickra-lib/wickra-zk/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/wickra-lib/wickra-zk/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/wickra-lib/wickra-zk/releases/tag/v0.1.0

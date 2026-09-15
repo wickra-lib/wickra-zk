@@ -27,7 +27,7 @@ prove = ["risc0-zkvm/client", "risc0-zkvm/prove", "risc0-zkvm/bonsai", "wickra-z
 [dependencies]
 risc0-zkvm = { workspace = true }
 # The image id always; the guest program itself only with the prover.
-wickra-zk-methods = { path = "../../guest/methods", version = "0.1.0", default-features = false }
+wickra-zk-methods = { path = "../../guest/methods", version = "0.1.1", default-features = false }
 wickra-backtest = { workspace = true }
 wickra-proof-core = { workspace = true }
 serde = { workspace = true }
