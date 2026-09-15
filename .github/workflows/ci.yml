@@ -201,7 +201,7 @@ jobs:
       - uses: ./.github/actions/setup-rust
         with:
           components: llvm-tools-preview
-      - uses: taiki-e/install-action@c3ec0de9ae7f1019cea21aa96aa0a895b9552063 # v2.87.9 (cargo-llvm-cov)
+      - uses: taiki-e/install-action@3f74d7c16a4242f1c95561e98edc25d36adb4375 # v2.87.12 (cargo-llvm-cov)
         with:
           tool: cargo-llvm-cov
       - run: cargo llvm-cov -p wickra-zk-host --lcov --output-path lcov.info
@@ -227,7 +227,7 @@ jobs:
       - uses: ./.github/actions/setup-rust
         with:
           toolchain: nightly
-      - uses: taiki-e/install-action@c3ec0de9ae7f1019cea21aa96aa0a895b9552063 # v2.87.9 (cargo-fuzz)
+      - uses: taiki-e/install-action@3f74d7c16a4242f1c95561e98edc25d36adb4375 # v2.87.12 (cargo-fuzz)
         with:
           tool: cargo-fuzz
       # An explicit target: cargo-fuzz's default detection has picked the musl
@@ -475,7 +475,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: taiki-e/install-action@c3ec0de9ae7f1019cea21aa96aa0a895b9552063 # v2.87.9
+      - uses: taiki-e/install-action@3f74d7c16a4242f1c95561e98edc25d36adb4375 # v2.87.12
         with:
           tool: cargo-deny
       - run: cargo deny check
@@ -541,7 +541,7 @@ jobs:
       - uses: ./.github/actions/setup-rust
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Install cargo-semver-checks
-        uses: taiki-e/install-action@c3ec0de9ae7f1019cea21aa96aa0a895b9552063 # v2.87.9
+        uses: taiki-e/install-action@3f74d7c16a4242f1c95561e98edc25d36adb4375 # v2.87.12
         timeout-minutes: 10 # fail fast on a stuck download instead of hanging the job
         with:
           tool: cargo-semver-checks
@@ -694,7 +694,7 @@ jobs:
         with:
           workspaces: bindings/wasm
       - name: Install wasm-pack
-        uses: taiki-e/install-action@c3ec0de9ae7f1019cea21aa96aa0a895b9552063 # v2.87.9
+        uses: taiki-e/install-action@3f74d7c16a4242f1c95561e98edc25d36adb4375 # v2.87.12
         with:
           tool: wasm-pack
       # The crate's own unit tests, natively: the envelope answers verify,
@@ -758,7 +758,7 @@ jobs:
         with:
           shared-key: release
       - name: Install cbindgen
-        uses: taiki-e/install-action@c3ec0de9ae7f1019cea21aa96aa0a895b9552063 # v2.87.9
+        uses: taiki-e/install-action@3f74d7c16a4242f1c95561e98edc25d36adb4375 # v2.87.12
         with:
           tool: cbindgen
       - name: Build the C ABI library (cdylib + staticlib)
@@ -1009,7 +1009,24 @@ jobs:
           persist-credentials: false
       - name: Sync root README into bindings/python so the build matches release
         run: cp README.md bindings/python/README.md
+      # The container image comes from quay.io, which has failed whole
+      # afternoons (502/504 on the manifest). The first attempt may fail
+      # without failing the row; a pause and one identical retry follow, the
+      # family's retry pair. A second failure is the row's verdict.
       - uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1.51.0
+        id: wheel
+        continue-on-error: true
+        with:
+          working-directory: bindings/python
+          target: ${{ matrix.target }}
+          args: --release --out dist
+          manylinux: ${{ matrix.manylinux }}
+      - name: Pause before retrying the wheel build
+        if: steps.wheel.outcome == 'failure'
+        shell: bash
+        run: sleep 90
+      - if: steps.wheel.outcome == 'failure'
+        uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1.51.0
         with:
           working-directory: bindings/python
           target: ${{ matrix.target }}
