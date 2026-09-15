@@ -6,6 +6,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- **The nightly benchmark finishes.** `bench.yml` measured real proving with
+  Criterion's minimum of ten samples at roughly fourteen minutes a proof under
+  a two-hour budget, so every nightly run was cancelled and `BENCHMARKS.md`
+  never received a number. The job has the runner's six-hour budget, and the
+  suite gains `verify/<case>`, the third measurement the document promised:
+  one real receipt produced outside the timed loop, checked against the
+  pinned guest id.
+
 ## [0.1.1] - 2026-09-15
 
 ### Fixed
