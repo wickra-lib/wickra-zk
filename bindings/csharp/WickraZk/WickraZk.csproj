@@ -22,15 +22,30 @@
     <NoWarn>$(NoWarn);NU5128;CS1591</NoWarn>
   </PropertyGroup>
 
-  <!--
-    Supported native runtime identifiers. The release pipeline builds the C ABI
-    per target triple and stages the libraries under
-    WickraZk/runtimes/<rid>/native/ before `dotnet pack`:
-      linux-x64   linux-arm64   osx-x64   osx-arm64   (no Windows: risc0 has no Windows host)
-  -->
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
-    <None Include="runtimes/**/native/*" Pack="true" PackagePath="runtimes/" Condition="Exists('runtimes')" />
+  </ItemGroup>
+
+  <!--
+    The native library does not travel in this package. The prover library is
+    ~90 MB per platform (the RISC Zero prover and its circuits live inside it)
+    and NuGet.org caps a package at 250 MB, so the four supported RIDs,
+    linux-x64, linux-arm64, osx-x64, osx-arm64 (no Windows, risc0 has no
+    Windows host), ship as Wickra.Zk.runtime.<rid> (WickraZk.Runtime.csproj),
+    and this package depends on all four. A consumer still gets every platform
+    with one `dotnet add package Wickra.Zk`, and `dotnet run` without a
+    RuntimeIdentifier still finds the library through deps.json.
+
+    The references exist only when the release pipeline packs
+    (PackNativeRuntimes=true): the runtime packages are produced in the same
+    run and restored from a local feed, and a plain build or the test project
+    would otherwise ask NuGet.org for packages that ship together with this one.
+  -->
+  <ItemGroup Condition="'$(PackNativeRuntimes)' == 'true'">
+    <PackageReference Include="Wickra.Zk.runtime.linux-x64" Version="$(Version)" />
+    <PackageReference Include="Wickra.Zk.runtime.linux-arm64" Version="$(Version)" />
+    <PackageReference Include="Wickra.Zk.runtime.osx-x64" Version="$(Version)" />
+    <PackageReference Include="Wickra.Zk.runtime.osx-arm64" Version="$(Version)" />
   </ItemGroup>
 
 </Project>

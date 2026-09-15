@@ -6,6 +6,17 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- **The NuGet package publishes.** NuGet.org caps a package at 250 MB and the
+  prover library is about 90 MB per platform, so `Wickra.Zk` with all four
+  runtimes inside was refused at upload (413). The native libraries now ship as
+  `Wickra.Zk.runtime.<rid>`, one package per runtime identifier, and
+  `Wickra.Zk` depends on all four: one `dotnet add package` still brings every
+  platform, and `dotnet run` without a `RuntimeIdentifier` still finds the
+  library through `deps.json`. The release pipeline packs the runtime packages
+  first and pushes them ahead of the main package.
+
 ### Changed
 
 - **`float_roundtrip` is stated, not inherited.** The workspace and the guest
