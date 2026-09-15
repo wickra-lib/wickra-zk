@@ -34,4 +34,4 @@ cast_possible_wrap = "allow"
 similar_names = "allow"
 
 [dependencies]
-wickra-zk-host = { path = "../../crates/wickra-zk-host", version = "0.1.0" }
+wickra-zk-host = { path = "../../crates/wickra-zk-host", version = "0.1.1" }

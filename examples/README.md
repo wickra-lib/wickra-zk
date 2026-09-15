@@ -5,7 +5,7 @@ in `specs/momentum.json` over the candles in `data/BTCUSDT.csv`. Every one
 prints the same four lines before the journal:
 
 ```text
-wickra-zk 0.1.0
+wickra-zk 0.1.1
 guest_id: <the image id the host pins -- see the release notes>
 report_hash: 1ec948078c8a02f92a0e7d28f9845a84f89aa1e1d0f87449c01389dd16dd6a53
 verify: valid
