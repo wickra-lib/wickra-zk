@@ -15,9 +15,14 @@ binding.
 dotnet add package Wickra.Zk
 ```
 
-The package bundles the prebuilt native C ABI library for every supported runtime
-(`linux-x64`, `linux-arm64`, `osx-x64`, `osx-arm64`; risc0 has no Windows host) under
-`runtimes/<rid>/native/`, resolved automatically at run time.
+`Wickra.Zk` is the managed assembly; the prebuilt native C ABI library for each
+supported runtime (`linux-x64`, `linux-arm64`, `osx-x64`, `osx-arm64`; risc0 has
+no Windows host) comes from `Wickra.Zk.runtime.<rid>`, four packages the main one
+depends on. One `dotnet add package` brings all four, and the host picks the
+library for the running RID from `deps.json` -- with or without a
+`RuntimeIdentifier` on your project. The split exists because the prover
+library is about 90 MB per platform (the RISC Zero prover and its circuits live
+inside it) and NuGet.org caps a package at 250 MB.
 
 ## Quick start
 

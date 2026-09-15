@@ -1,0 +1,54 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    One native runtime package per RID: Wickra.Zk.runtime.<rid>.
+
+    The prover library is ~90 MB per platform (the RISC Zero prover and its
+    circuits live inside it), and NuGet.org caps a package at 250 MB, so the
+    four platforms cannot travel in one package the way the family's other
+    bindings ship theirs. Wickra.Zk depends on all four runtime packages, so a
+    consumer still gets every platform with one `dotnet add package` and
+    `dotnet run` without a RuntimeIdentifier still finds the library: NuGet
+    records each package's runtimes/<rid>/native entry in deps.json and the host
+    picks the one for the running RID.
+
+    Built by the release pipeline only, once per RID, after the C ABI library
+    for that RID is staged under runtimes/<rid>/native:
+      dotnet pack WickraZk.Runtime.csproj -p:NativeRid=linux-x64 -p:Version=x.y.z
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <NativeRid Condition="'$(NativeRid)' == ''">linux-x64</NativeRid>
+
+    <PackageId>Wickra.Zk.runtime.$(NativeRid)</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>kingchenc</Authors>
+    <Description>The native wickra-zk prover library for $(NativeRid). A dependency of Wickra.Zk; not meant to be referenced directly.</Description>
+    <PackageLicenseExpression>MIT OR Apache-2.0</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/wickra-lib/wickra-zk</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/wickra-lib/wickra-zk</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>trading;backtest;proof;native;runtime</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+
+    <!-- A carrier for one file: no assembly, no build output, no dependencies. -->
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <EnableDefaultItems>false</EnableDefaultItems>
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="runtimes/$(NativeRid)/native/*" Pack="true" PackagePath="runtimes/$(NativeRid)/native/" />
+  </ItemGroup>
+
+  <!-- Packing an empty runtime package would publish a name with nothing in it. -->
+  <Target Name="RequireNativeLibrary" BeforeTargets="GenerateNuspec">
+    <ItemGroup>
+      <_NativeFile Include="runtimes/$(NativeRid)/native/*" />
+    </ItemGroup>
+    <Error Condition="'@(_NativeFile)' == ''" Text="no native library staged under runtimes/$(NativeRid)/native/" />
+  </Target>
+
+</Project>

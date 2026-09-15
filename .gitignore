@@ -26,6 +26,7 @@ __pycache__/
 .pytest_cache/
 *.py[cod]
 *.so
+*.dylib
 *.pyd
 *.egg-info/
 dist/
