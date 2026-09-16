@@ -1653,7 +1653,8 @@ dependencies = [
 [[package]]
 name = "wickra-backtest"
 version = "0.1.4"
-source = "git+https://github.com/wickra-lib/wickra-backtest?rev=d58e357506dbb95211d2313eae7bae93d1f73777#d58e357506dbb95211d2313eae7bae93d1f73777"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7fa9f0c071d1466cac34f23ea0ac20ecbe5df3fc744a094ea49924735623e1c8"
 dependencies = [
  "wickra-backtest-core",
  "wickra-backtest-data",
@@ -1662,7 +1663,8 @@ dependencies = [
 [[package]]
 name = "wickra-backtest-core"
 version = "0.1.4"
-source = "git+https://github.com/wickra-lib/wickra-backtest?rev=d58e357506dbb95211d2313eae7bae93d1f73777#d58e357506dbb95211d2313eae7bae93d1f73777"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a92723219f4eb739fc69871fd1c5d2958b33cdf3aeb6b4193826ef981d44ac65"
 dependencies = [
  "schemars",
  "serde",
@@ -1674,7 +1676,8 @@ dependencies = [
 [[package]]
 name = "wickra-backtest-data"
 version = "0.1.4"
-source = "git+https://github.com/wickra-lib/wickra-backtest?rev=d58e357506dbb95211d2313eae7bae93d1f73777#d58e357506dbb95211d2313eae7bae93d1f73777"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a2ddd1a0cc11393db45a7536c3871abb76b6c91f0ff28665cecc972b0c5a811a"
 dependencies = [
  "serde_json",
  "wickra-backtest-core",
@@ -1693,8 +1696,9 @@ dependencies = [
 
 [[package]]
 name = "wickra-proof-core"
-version = "0.1.0"
-source = "git+https://github.com/wickra-lib/wickra-proof?rev=971a41b26512807fdbd37b3f1da4a9b0689a77d0#971a41b26512807fdbd37b3f1da4a9b0689a77d0"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "656dec042319354a0c95482c4798b754bf237b73616dc64c5e38ebf95df5285f"
 dependencies = [
  "blake3",
  "serde",
@@ -1706,7 +1710,7 @@ dependencies = [
 
 [[package]]
 name = "wickra-zk-host"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "risc0-zkvm",
  "serde",
@@ -1719,11 +1723,11 @@ dependencies = [
 
 [[package]]
 name = "wickra-zk-methods"
-version = "0.1.0"
+version = "0.1.1"
 
 [[package]]
 name = "wickra-zk-wasm"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "wasm-bindgen",
  "wickra-zk-host",

@@ -226,7 +226,10 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
         with:
-          toolchain: nightly
+          # The family's fuzz nightly, pinned by date: a rolling `nightly` regressed
+          # with a codegen ICE unrelated to this code. Move the date deliberately,
+          # in every repo at once.
+          toolchain: nightly-2026-07-01
       - uses: taiki-e/install-action@3f74d7c16a4242f1c95561e98edc25d36adb4375 # v2.87.12 (cargo-fuzz)
         with:
           tool: cargo-fuzz
@@ -234,10 +237,10 @@ jobs:
       # triple on the runner, where a sanitizer cannot link against a static
       # libc and the standard library for that target is not installed.
       - name: Fuzz zkspec_parse (30 s)
-        run: cargo +nightly fuzz run --target x86_64-unknown-linux-gnu zkspec_parse -- -max_total_time=30
+        run: cargo +nightly-2026-07-01 fuzz run --target x86_64-unknown-linux-gnu zkspec_parse -- -max_total_time=30
         working-directory: fuzz
       - name: Fuzz journal_parse (30 s)
-        run: cargo +nightly fuzz run --target x86_64-unknown-linux-gnu journal_parse -- -max_total_time=30
+        run: cargo +nightly-2026-07-01 fuzz run --target x86_64-unknown-linux-gnu journal_parse -- -max_total_time=30
         working-directory: fuzz
 
   golden:
@@ -807,7 +810,7 @@ jobs:
           shared-key: release
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
-          dotnet-version: "8.0"
+          dotnet-version: "8.0.x"
       # The test project copies the native library from target/release (see the
       # <Content> items), so build it in the release profile here.
       - name: Build the C ABI library
