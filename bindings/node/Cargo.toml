@@ -27,8 +27,8 @@ module_name_repetitions = "allow"
 
 [dependencies]
 wickra-zk-host = { path = "../../crates/wickra-zk-host", version = "0.1.1" }
-napi = { version = "3", default-features = false, features = ["napi4"] }
-napi-derive = "3"
+napi = { version = "3.9", default-features = false, features = ["napi4"] }
+napi-derive = "3.5"
 
 [build-dependencies]
 napi-build = "2"

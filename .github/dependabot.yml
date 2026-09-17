@@ -73,6 +73,22 @@ updates:
       fuzz-deps:
         patterns: ["*"]
 
+  # The wasm binding is its own workspace root (so the host's `prove` feature
+  # never unifies into it) with its own lockfile; the root entry does not
+  # reach it either.
+  - package-ecosystem: cargo
+    directory: "/bindings/wasm"
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "deps(cargo)"
+    groups:
+      wasm-deps:
+        patterns: ["*"]
+
   # The Python binding's own build and test dependencies.
   - package-ecosystem: pip
     directory: "/bindings/python"
@@ -141,6 +157,20 @@ updates:
       prefix: "deps(npm)"
     groups:
       node-binding:
+        patterns: ["*"]
+
+  # The Node example, like the siblings' second npm module.
+  - package-ecosystem: npm
+    directory: "/examples/node"
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "deps(npm)"
+    groups:
+      node-example:
         patterns: ["*"]
 
   # The hash-pinned CI requirements; they only move when something regenerates them.

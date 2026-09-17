@@ -8,6 +8,29 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **The wasm binding's lock says what its manifests say.** `bindings/wasm/Cargo.lock`
+  was committed with the crates at 0.1.0 and `wickra-proof-core` from a git rev
+  the workspace had long replaced with crates.io -- a detached workspace that
+  nothing in the bump refreshes. It is re-resolved (0.1.1, registry sources);
+  Dependabot now covers that directory so its own dependencies move too.
+  `examples/rust` named `wickra-zk-host` at 0.1.0 for the same reason and says
+  0.1.1.
+- **The repository spells shared things the way the family does.** A cross-repo
+  scan lined the 24 wickra-lib repositories up and this one also differed in:
+  `napi = "3"` / `napi-derive = "3"` where the family writes `3.9` / `3.5`,
+  `engines.node >= 20` in the Node packages where every sibling requires 22,
+  the C example's `CMAKE_CXX_STANDARD` 14 where the family builds with 17,
+  `dotnet-version: "8.0.x"` in the example job, the fuzz job on a rolling
+  nightly rather than the family's pinned `nightly-2026-07-01`, and
+  `examples/node` absent from Dependabot. The Node lock gains the four platform
+  packages, published since v0.1.1.
+
+  `wickra-backtest` stays at `=0.1.4` for now: `wickra-proof-core` 0.1.2 pins
+  `wickra-backtest-core` to that exact version, so the move to 0.1.6 comes with
+  wickra-proof 0.1.3, together with the guest rebuild it implies.
+
+### Changed
+
 - **The link check covers NuGet and pkg.go.dev.** Both time-boxed `lychee`
   excludes written before the first release are gone: `Wickra.Zk` and its
   four runtime packages answer on nuget.org, and pkg.go.dev indexes
