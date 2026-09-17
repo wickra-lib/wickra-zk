@@ -42,7 +42,7 @@ This crate is its own workspace: the host it wraps is built without its
 ## Quick start
 
 ```js
-import init, { Verifier, version, guestId } from "./pkg/wickra_zk_wasm.js";
+import init, { Verifier, version, guestId } from "wickra-zk-wasm";
 
 await init();
 

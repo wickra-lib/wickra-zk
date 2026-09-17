@@ -25,12 +25,20 @@ A static library (`libwickra_zk.a` / `wickra_zk.lib`) is emitted alongside.
 
 ## Build and run the examples
 
-With CMake, as the CI C ABI job does:
+### With CMake (portable, used by CI)
 
 ```sh
 cmake -S examples/c -B examples/c/build
 cmake --build examples/c/build --config Release
 ctest --test-dir examples/c/build -C Release --output-on-failure
+```
+
+### Directly with a compiler
+
+```sh
+# Linux / macOS
+cc examples/c/prove.c -I bindings/c/include -L target/release -lwickra_zk -lm -o prove
+LD_LIBRARY_PATH=target/release ./prove        # macOS: DYLD_LIBRARY_PATH
 ```
 
 ## The examples
