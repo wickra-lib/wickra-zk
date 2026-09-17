@@ -1,4 +1,4 @@
-# Golden harness
+# Golden fixtures
 
 The golden set pins the **determinism chain** wickra-zk exists to protect: a
 proof's `report_hash` must equal the hash the native `wickra-proof` computes for
@@ -30,7 +30,7 @@ Each series is a deterministic path — a smooth trend with a bounded oscillatio
 so trades actually open and close — generated once and committed verbatim. The
 data is never regenerated at test time; the CSV bytes are the fixture.
 
-## Bless
+## Blessing
 
 `expected/*.json` are produced by running the **native** path (`wickra-backtest`
 + `wickra-proof`), not by hand:
