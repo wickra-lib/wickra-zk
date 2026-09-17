@@ -1,42 +1,43 @@
-# wickra-zk WASM examples
+# Wickra ZK WASM examples
 
-Browser demos for the `wickra-zk-wasm` binding -- the verifying side. Proving
-runs a zkVM and belongs to a native process; a browser verifies what it is
-handed: a RISC Zero receipt and its public journal, checked against the guest
-this build pins, without a prover, without the candles and without the
-strategy.
+Browser demos for the [Wickra ZK WASM binding](../../bindings/wasm): an HTML page whose module script
+loads the package the same way (`init()`, then construct), builds the same
+object every other binding builds and prints the same output into the page, so
+the pattern transfers one-to-one to your own page.
 
 ## Build
 
-The module ships as a `wasm-pack` `--target web` bundle. Build it once from the
-repository root:
+The WASM module ships as a `wasm-pack` `--target web` bundle. Build it once from
+the repository root:
 
 ```bash
-wasm-pack build bindings/wasm --target web --release
+wasm-pack build bindings/wasm --target web
 ```
-
-That writes `bindings/wasm/pkg/` with the `.wasm` binary, the JS loader and the
-TypeScript types. The demo imports the loader via
-`../../bindings/wasm/pkg/wickra_zk_wasm.js`.
 
 ## Serve
 
-ES-module imports and `fetch` need a real HTTP origin, not `file://`. Any
-static server from the repository root works:
+ES modules and `fetch()` both need a real HTTP origin, not `file://`. Any static
+server from the repository root works:
 
 ```bash
+# Python:
 python -m http.server 8000
+
+# Or Node:
+npx http-server -p 8000
 ```
 
-Then open `http://localhost:8000/examples/wasm/verify.html`.
+Then open the demo at `http://localhost:8000/examples/wasm/<file>`. CI cannot open
+a browser; it extracts the `<script type="module">` and parses it with
+`node --check`, so a broken edit fails there rather than in a reader's tab.
 
 ## Demos
 
-| File | What it does |
-| --- | --- |
-| `verify.html` | Fetches `golden/proofs/momentum.json`, a receipt the real prover made for the momentum golden case, verifies it and shows the journal decoded from the receipt -- `report_hash`, `dataset_commitment`, `guest_id`, `sharpe`, `pnl`, `n_trades`. The page counterpart of the `verify` half of `examples/node/prove.js`. |
+| Demo | What it shows |
+|------|---------------|
+| `verify.html` | A runnable example against this binding. |
 
 ## See also
 
-- [examples/README.md](../README.md) -- the same proof produced and verified in every other language.
-- [bindings/wasm/README.md](../../bindings/wasm/README.md) -- the module's API and what it does not carry.
+- [`bindings/wasm/README.md`](../../bindings/wasm/README.md) — install, quick start and the API of the package.
+- [`examples/README.md`](../README.md) — the same example in every other language.

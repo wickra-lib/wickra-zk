@@ -1,4 +1,10 @@
-# Examples
+# Wickra ZK examples
+
+One runnable example per language, all proving the same inputs: the strategy
+in `specs/momentum.json` over the candles in `data/BTCUSDT.csv`. Every one
+prints the same four lines before the journal:
+
+## What every example prints
 
 One runnable example per language, all proving the same inputs: the strategy
 in `specs/momentum.json` over the candles in `data/BTCUSDT.csv`. Every one
@@ -11,11 +17,133 @@ report_hash: 1ec948078c8a02f92a0e7d28f9845a84f89aa1e1d0f87449c01389dd16dd6a53
 verify: valid
 ```
 
-The `report_hash` is the canonical `wickra-proof` hash of the backtest report
-the guest computed. It is the same in every language because the same guest
-ran; the Examples CI job holds each example to the value above, so the
-document and the code cannot drift apart. The `guest_id` changes whenever the
-guest program changes and is published with each release.
+## Rust — `examples/rust/`
+
+As the CI examples job runs it, from the repository root:
+
+```bash
+cargo run -q --manifest-path examples/rust/Cargo.toml
+```
+
+| Example | What it does |
+| --- | --- |
+| `src/main.rs` | Prove a backtest in zero knowledge from Rust, then verify the proof. |
+
+## C / C++ — `examples/c/`
+
+Build the library first (`cargo build -p wickra-zk-c --release`), then build and run
+the examples via CMake, as the CI C ABI job does:
+
+```bash
+cmake -S examples/c -B examples/c/build
+cmake --build examples/c/build --config Release
+ctest --test-dir examples/c/build -C Release --output-on-failure
+```
+
+| Example | What it does |
+| --- | --- |
+| `prove.c` | A minimal C example: prove a (strategy, candles) pair through the wickra-zk |
+| `prove.cpp` | A minimal C++ example: prove a (strategy, candles) pair through the wickra-zk C ABI, print the public journal, then verify the proof and assert it holds. |
+
+## C# — `examples/csharp/`
+
+As the CI examples job runs it, from the repository root:
+
+```bash
+dotnet run --project examples/csharp/Prove
+```
+
+| Example | What it does |
+| --- | --- |
+| `Prove/Program.cs` | Prove a backtest in zero knowledge from .NET, then verify the proof. |
+
+## Go — `examples/go/`
+
+As the CI examples job runs it, from the repository root:
+
+```bash
+cd examples/go && go run .
+```
+
+| Example | What it does |
+| --- | --- |
+| `prove.go` | Prove a backtest in zero knowledge from Go, then verify the proof. |
+
+## R — `examples/r/`
+
+As the CI examples job runs it, from the repository root:
+
+```bash
+R CMD INSTALL bindings/r
+Rscript examples/r/prove.R
+```
+
+| Example | What it does |
+| --- | --- |
+| `prove.R` | Prove a backtest in zero knowledge from R, then verify the proof. |
+
+## Java — `examples/java/`
+
+As the CI examples job runs it, from the repository root:
+
+```bash
+mvn -f bindings/java/pom.xml -q package -DskipTests
+javac -cp bindings/java/target/classes examples/java/Prove.java -d examples/java/out
+java --enable-native-access=ALL-UNNAMED  -Dnative.lib.dir="$PWD/target/release"  -cp "bindings/java/target/classes:examples/java/out" Prove examples
+```
+
+| Example | What it does |
+| --- | --- |
+| `Prove.java` | Prove a backtest in zero knowledge from Java, then verify the proof. |
+
+## Python — `examples/python/`
+
+As the CI examples job runs it, from the repository root:
+
+```bash
+python -m pip install --require-hashes -r .github/requirements/ci-dev-py3.txt
+( cd bindings/python && maturin build --release --out dist )
+python -m pip install --no-index --find-links bindings/python/dist wickra-zk
+python examples/python/prove.py
+```
+
+| Example | What it does |
+| --- | --- |
+| `prove.py` | Prove a backtest in zero knowledge from Python, then verify the proof. |
+
+## Node.js — `examples/node/`
+
+As the CI examples job runs it, from the repository root:
+
+```bash
+( cd bindings/node && npm install --no-audit --no-fund && npx napi build --platform --release )
+( cd examples/node && npm install --no-audit --no-fund )
+node examples/node/prove.js
+```
+
+| Example | What it does |
+| --- | --- |
+| `prove.js` | Prove a backtest in zero knowledge from Node.js, then verify the proof. |
+
+## WASM — `examples/wasm/`
+
+Build the WASM package, serve the repository root, and open the page in a browser;
+the module script inside it is what runs (CI parses it with `node --check`):
+
+```bash
+wasm-pack build bindings/wasm --target web
+python -m http.server 8000     # then open http://localhost:8000/examples/wasm/
+```
+
+| Example | What it does |
+| --- | --- |
+| `verify.html` | A runnable example against this binding. |
+
+## Example datasets
+
+The examples read from [`examples/data/`](data/): `BTCUSDT.csv`, `ETHUSDT.csv`. The
+cross-language golden fixtures, which every binding is checked against byte for
+byte, live in [`../golden/`](../golden).
 
 ## Layout
 

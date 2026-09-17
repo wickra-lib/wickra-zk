@@ -1,8 +1,6 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/wickra-lib/.github/main/profile/wickra-banner.webp" alt="Wickra" width="100%">
+  <a href="https://wickra.org"><img src="https://raw.githubusercontent.com/wickra-lib/.github/main/profile/wickra-banner.webp?v=514-7" alt="Wickra ZK — prove a backtest zero-knowledge: on-chain-verifiable performance without revealing the data or the strategy" width="100%"></a>
 </p>
-
-# wickra-zk
 
 [![Built on Wickra](https://img.shields.io/badge/built%20on-wickra-3b82f6)](https://github.com/wickra-lib/wickra)
 [![Status](https://img.shields.io/badge/status-pre--release-orange)](https://github.com/wickra-lib/wickra-zk)
@@ -27,12 +25,16 @@
 
 **Prove a backtest in zero knowledge. The deterministic Wickra engine runs inside a RISC Zero zkVM guest, and the receipt proves the report's hash and headline metrics without revealing the candles or the strategy.**
 
-> **Part of the [Wickra ecosystem](https://github.com/wickra-lib):** the same
-> data-driven core also powers
-> [wickra-backtest](https://github.com/wickra-lib/wickra-backtest),
-> [wickra-proof](https://github.com/wickra-lib/wickra-proof),
-> [wickra-verify](https://github.com/wickra-lib/wickra-verify) and 20 more — see
-> [the full list](https://github.com/wickra-lib).
+> **▶ Live demos:** the backtester compiled to WebAssembly, an equity curve building bar by bar — **[backtest-live.wickra.org](https://backtest-live.wickra.org)**;
+> one StrategySpec side by side in Python, Rust, JS and Go — **[playground.wickra.org](https://playground.wickra.org)**;
+> all 514 indicators of the core over a real Binance feed — **[live.wickra.org](https://live.wickra.org)**. Zero backend, all of them.
+
+**Part of the [Wickra ecosystem](#ecosystem):** the same
+data-driven core also powers
+[wickra-backtest](https://github.com/wickra-lib/wickra-backtest),
+[wickra-proof](https://github.com/wickra-lib/wickra-proof),
+[wickra-verify](https://github.com/wickra-lib/wickra-verify) and 20 more — see
+[the full list](https://github.com/wickra-lib).
 
 **wickra-zk** runs a deterministic [Wickra](https://github.com/wickra-lib/wickra)
 backtest as a guest program inside the [risc0](https://risczero.com) zkVM and
@@ -64,19 +66,9 @@ The same envelope -- `prove`, `commit`, `verify`, `version` as JSON -- is
 what the CLI and every binding speak: Python, Node.js, C, C++, C#, Go, Java and
 R prove and verify natively, and a WebAssembly build verifies in the browser.
 
-## What is proved
-
-- A public **`report_hash`** — the canonical hash of the full `BacktestReport`.
-- A small set of **public metrics** (e.g. `sharpe`, `pnl`, `n_trades`).
-- Bound to a specific **`GUEST_ID`** (the program that ran) so a verifier knows
-  the honest engine produced the result.
-
-What stays **private**: the OHLCV candles and the strategy internals — they are
-guest inputs, never revealed by the receipt.
-
 ## Status
 
-Early development (0.1.0); 0.1.0 is the first published release. See
+**0.1.1 — the current release.** Early development (0.1.0); See
 [ROADMAP.md](ROADMAP.md).
 
 ## Documentation
@@ -87,6 +79,16 @@ Early development (0.1.0); 0.1.0 is the first published release. See
 - [docs/PROVING.md](docs/PROVING.md) — dev-mode vs. production proving, timing, memory
 - [docs/Cookbook.md](docs/Cookbook.md) — prove/verify recipes
 - [THREAT_MODEL.md](THREAT_MODEL.md), [SECURITY.md](SECURITY.md)
+
+## What is proved
+
+- A public **`report_hash`** — the canonical hash of the full `BacktestReport`.
+- A small set of **public metrics** (e.g. `sharpe`, `pnl`, `n_trades`).
+- Bound to a specific **`GUEST_ID`** (the program that ran) so a verifier knows
+  the honest engine produced the result.
+
+What stays **private**: the OHLCV candles and the strategy internals — they are
+guest inputs, never revealed by the receipt.
 
 ## Quickstart
 
@@ -101,17 +103,28 @@ nothing else is installed. Add `--dev` (or `RISC0_DEV_MODE=1`) for a fast,
 unsound receipt while developing; a real proof takes minutes. One runnable
 example per language lives under [`examples/`](examples/README.md).
 
-## Building everything from source
+## Use in any language
 
-```bash
-git clone https://github.com/wickra-lib/wickra-zk && cd wickra-zk
-cargo build --release                     # host, CLI, C ABI, Python and Node crates
-RISC0_DEV_MODE=1 cargo test --workspace   # dev-mode receipts: seconds, unsound
+The same `Prover` handle — construct, drive with `command(json) -> json`, read
+`version` — is reachable from every binding, and `prove` / `verify` return the
+same bytes in each of them:
+
+```python
+import json
+import wickra_zk
+
+prover = wickra_zk.Prover()
+print(json.loads(prover.command(json.dumps({"cmd": "version"}))))
+proof = json.loads(prover.command(json.dumps({"cmd": "prove", "spec": {"strategy": strategy}, "candles": candles})))
+journal = json.loads(prover.command(json.dumps({"cmd": "verify", "proof": proof})))
 ```
 
-The compiled guest is committed, so this needs no risc0 toolchain. Changing
-the guest does -- see [CONTRIBUTING.md](CONTRIBUTING.md) for the builder and
-the reproducible rebuild CI holds it to.
+`prove` blocks for as long as the zkVM runs — seconds with `RISC0_DEV_MODE=1`,
+minutes for a real receipt — in every binding alike; the command envelope is
+documented once, in [docs/ZK.md](docs/ZK.md#the-command-envelope). The C ABI hub (`bindings/c`) backs C,
+C++, C#, Go, Java and R; Rust, Python, Node.js and WASM are native (the WASM
+package verifies only: a browser checks a proof, it does not produce one). See
+each `bindings/<lang>/README.md` and the runnable [`examples/`](examples/README.md).
 
 ## Project layout
 
@@ -131,6 +144,18 @@ golden/                    frozen (spec, data) -> expected journals, one real
                            receipt, the case-to-dataset map
 fuzz/                      libfuzzer targets over the JSON boundary
 ```
+
+## Building everything from source
+
+```bash
+git clone https://github.com/wickra-lib/wickra-zk && cd wickra-zk
+cargo build --release                     # host, CLI, C ABI, Python and Node crates
+RISC0_DEV_MODE=1 cargo test --workspace   # dev-mode receipts: seconds, unsound
+```
+
+The compiled guest is committed, so this needs no risc0 toolchain. Changing
+the guest does -- see [CONTRIBUTING.md](CONTRIBUTING.md) for the builder and
+the reproducible rebuild CI holds it to.
 
 ## Testing
 
@@ -155,17 +180,6 @@ Run the suites with the commands in
   Dev mode produces an unsound receipt quickly, which is right for CI and wrong
   as the only thing ever exercised.
 
-## Benchmarks
-
-`crates/wickra-zk-bench` measures the proving path with criterion, and CodSpeed
-reports instruction counts on every pull request. Absolute proving times depend
-on the machine and on whether the receipt is real or dev-mode; the numbers worth
-watching are relative, which is what CodSpeed reports.
-
-```bash
-cargo bench -p wickra-zk-bench
-```
-
 ## Requirements
 
 - Linux or macOS. risc0 has no Windows host, so neither the crates nor any
@@ -179,6 +193,17 @@ cargo bench -p wickra-zk-bench
 - Per binding: Python 3.9+, Node.js 20+, a C toolchain and CMake, .NET 8 SDK,
   JDK 22+, Go 1.23+, R 4.1+ -- the floors the manifests declare.
 - See [CONTRIBUTING.md](CONTRIBUTING.md) for the full verify workflow.
+
+## Benchmarks
+
+`crates/wickra-zk-bench` measures the proving path with criterion, and CodSpeed
+reports instruction counts on every pull request. Absolute proving times depend
+on the machine and on whether the receipt is real or dev-mode; the numbers worth
+watching are relative, which is what CodSpeed reports.
+
+```bash
+cargo bench -p wickra-zk-bench
+```
 
 ## Ecosystem
 
@@ -215,15 +240,20 @@ Report vulnerabilities privately — see [SECURITY.md](SECURITY.md).
 
 ## License
 
-Dual-licensed under either of [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE)
-at your option.
+Licensed under either of
 
-The in-process prover links risc0's circuit crates, which depend on
-[malachite](https://crates.io/crates/malachite) (LGPL-3.0-only) for big-integer
-arithmetic. Every binary and package this repository publishes is built from
-source available here under the licences above, which satisfies the LGPL's
-relinking condition for statically linked libraries; risc0-zkvm itself ships
-the same way. `deny.toml` names the exception.
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or
+  <http://www.apache.org/licenses/LICENSE-2.0>)
+- MIT license ([LICENSE-MIT](LICENSE-MIT) or <http://opensource.org/licenses/MIT>)
+
+at your option. Use it, fork it, modify it, redistribute it — commercially or
+not — file issues, send pull requests; all welcome.
+
+### Contribution
+
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+dual licensed as above, without any additional terms or conditions.
 
 ## Disclaimer
 

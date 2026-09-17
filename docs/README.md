@@ -18,7 +18,7 @@ the thing is, so a change to the mechanism and a change to its description are
 reviewed together. A page describing *how to use it* belongs on the site, where
 it can be versioned, searched, and read without cloning anything.
 
-## Editing
+## Editing the docs
 
 The site is a separate repository at
 `https://github.com/wickra-lib/wickra-zk-site`; open a pull request there for
