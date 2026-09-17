@@ -41,8 +41,4 @@ exclude = [
     # publish, not before.
     "^https?://github\\.com/wickra-lib/wickra-zk/releases/tag/",
     "^https?://github\\.com/wickra-lib/wickra-zk/compare/",
-    # The first release is in flight (v0.1.0): the NuGet package and the Go
-    # module answer once its publish jobs finish. Remove both entries then.
-    "^https?://www\\.nuget\\.org/packages/Wickra\\.Zk",
-    "^https?://pkg\\.go\\.dev/github\\.com/wickra-lib/wickra-zk-go",
 ]

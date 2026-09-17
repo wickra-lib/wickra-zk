@@ -8,6 +8,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **The link check covers NuGet and pkg.go.dev.** Both time-boxed `lychee`
+  excludes written before the first release are gone: `Wickra.Zk` and its
+  four runtime packages answer on nuget.org, and pkg.go.dev indexes
+  `wickra-zk-go` since v0.1.1 (verified: 200 each), so the README badges
+  are checked like every other published link.
+
 - **`BENCHMARKS.md` carries measurements.** The first nightly bench that
   finished (2026-09-15) replaces the placeholder: execution 237 ms, a real
   proof 17 min 37 s, verification 19 ms on the `momentum` case, on a
@@ -23,6 +29,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   suite gains `verify/<case>`, the third measurement the document promised:
   one real receipt produced outside the timed loop, checked against the
   pinned guest id.
+
+- **The pinned `uv` bootstrap could not verify its download.**
+  `scripts/update-lockfiles.sh` named uv 0.12.14 but kept the release
+  checksums of 0.12.13, so `WICKRA_BOOTSTRAP_UV=1` fetched the
+  archive and then refused it. The pin and all four checksums now name
+  0.12.15, taken from the release's `.sha256` files.
 
 ## [0.1.1] - 2026-09-15
 
