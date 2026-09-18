@@ -22,7 +22,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
-- **Family pins follow the owners' releases:** wickra-backtest =0.1.4 -> =0.1.7, wickra-proof-core =0.1.2 -> =0.1.3. No code of this repository changes; the engine it links is the one those releases ship.
+- **Family pins follow the owners' releases:** wickra-backtest =0.1.4 -> =0.1.7, wickra-proof-core =0.1.2 -> =0.1.3, in the host
+  and in the guest. A different guest source is a different program: the docker rebuild produced a new artefact, and the image id
+  moves from `542491b0…` to **`cbdd10199ba8c50e3923c2d3be331e63f464293c5db5335335a35c9e59ef29c1`** — a verifier that pins the
+  old id rejects receipts from this release, which is the point of pinning. The committed real receipt (`golden/proofs/momentum.json`)
+  is re-proved for the new guest; its journal is the blessed one, byte for byte. No code of this repository changes.
 - **Every README follows wickra's shape.** A cross-repo scan compared the
   heading skeleton of each README against wickra's and this repository's
   differed throughout. The root README opens as wickra's does (banner, badges,
