@@ -819,7 +819,7 @@ version = "3.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "faf9468729b8cbcea668e36183cb69d317348c2e08e994829fb56ebfdfbaac34"
 dependencies = [
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -1369,7 +1369,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -2042,7 +2042,7 @@ checksum = "3640c1c38b8e4e43584d8df18be5fc6b0aa314ce6ebf51b53313d4306cca8e46"
 dependencies = [
  "hermit-abi",
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -3078,7 +3078,7 @@ dependencies = [
  "once_cell",
  "socket2",
  "tracing",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -3780,7 +3780,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -4280,10 +4280,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32497e9a4c7b38532efcdebeef879707aa9f794296a4f0244f6f69e9bc8574bd"
 dependencies = [
  "fastrand",
- "getrandom 0.3.4",
+ "getrandom 0.4.3",
  "once_cell",
  "rustix",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -4873,9 +4873,9 @@ dependencies = [
 
 [[package]]
 name = "wickra-backtest"
-version = "0.1.4"
+version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7fa9f0c071d1466cac34f23ea0ac20ecbe5df3fc744a094ea49924735623e1c8"
+checksum = "e24ea1f1190291f3021373e6fbbdf263f27664fa03c8ad4f295de52274c7dc52"
 dependencies = [
  "wickra-backtest-core",
  "wickra-backtest-data",
@@ -4883,9 +4883,9 @@ dependencies = [
 
 [[package]]
 name = "wickra-backtest-core"
-version = "0.1.4"
+version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a92723219f4eb739fc69871fd1c5d2958b33cdf3aeb6b4193826ef981d44ac65"
+checksum = "42834428a01fa2de6e52a1bdec23fc85d5ede7193ae95e8e4349a8b2c8796cda"
 dependencies = [
  "schemars 0.8.22",
  "serde",
@@ -4896,9 +4896,9 @@ dependencies = [
 
 [[package]]
 name = "wickra-backtest-data"
-version = "0.1.4"
+version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2ddd1a0cc11393db45a7536c3871abb76b6c91f0ff28665cecc972b0c5a811a"
+checksum = "837c3b9c33ecfb61fd80629def7b6189a44f91a3fe2359b3e91d9ff703978254"
 dependencies = [
  "serde_json",
  "wickra-backtest-core",
@@ -4917,9 +4917,9 @@ dependencies = [
 
 [[package]]
 name = "wickra-proof-core"
-version = "0.1.2"
+version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "656dec042319354a0c95482c4798b754bf237b73616dc64c5e38ebf95df5285f"
+checksum = "69d8ee490828845048f1163a9c462f3e33b0e260e509d4dc5f92c329bd51b7b0"
 dependencies = [
  "blake3",
  "serde",
@@ -4931,7 +4931,7 @@ dependencies = [
 
 [[package]]
 name = "wickra-zk"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "clap",
  "serde_json",
@@ -4940,7 +4940,7 @@ dependencies = [
 
 [[package]]
 name = "wickra-zk-bench"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "codspeed-criterion-compat",
  "serde_json",
@@ -4949,14 +4949,14 @@ dependencies = [
 
 [[package]]
 name = "wickra-zk-c"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "wickra-zk-host",
 ]
 
 [[package]]
 name = "wickra-zk-example"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "serde_json",
  "wickra-zk-host",
@@ -4964,7 +4964,7 @@ dependencies = [
 
 [[package]]
 name = "wickra-zk-host"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "proptest",
  "risc0-zkvm",
@@ -4978,11 +4978,11 @@ dependencies = [
 
 [[package]]
 name = "wickra-zk-methods"
-version = "0.1.1"
+version = "0.1.2"
 
 [[package]]
 name = "wickra-zk-node"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "napi",
  "napi-build",
@@ -4992,7 +4992,7 @@ dependencies = [
 
 [[package]]
 name = "wickra-zk-python"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "pyo3",
  "wickra-zk-host",
@@ -5014,7 +5014,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]

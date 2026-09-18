@@ -68,7 +68,7 @@ R prove and verify natively, and a WebAssembly build verifies in the browser.
 
 ## Status
 
-**0.1.1 — the current release.** Early development (0.1.0); See
+**0.1.2 — the current release.** Early development (0.1.0); See
 [ROADMAP.md](ROADMAP.md).
 
 ## Documentation

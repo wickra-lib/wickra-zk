@@ -6,6 +6,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-09-18
+
 ### Fixed
 
 - **The Java binding loads the library it ships.** The jar carries the native
@@ -20,6 +22,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **Family pins follow the owners' releases:** wickra-backtest =0.1.4 -> =0.1.7, wickra-proof-core =0.1.2 -> =0.1.3. No code of this repository changes; the engine it links is the one those releases ship.
 - **Every README follows wickra's shape.** A cross-repo scan compared the
   heading skeleton of each README against wickra's and this repository's
   differed throughout. The root README opens as wickra's does (banner, badges,
@@ -339,6 +342,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   links, sync-metadata, nightly prove/bench, tag-gated release).
 - Documentation set: `docs/{ARCHITECTURE,ZK,DETERMINISM,PROVING,Cookbook}.md`.
 
-[Unreleased]: https://github.com/wickra-lib/wickra-zk/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/wickra-lib/wickra-zk/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/wickra-lib/wickra-zk/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/wickra-lib/wickra-zk/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/wickra-lib/wickra-zk/releases/tag/v0.1.0

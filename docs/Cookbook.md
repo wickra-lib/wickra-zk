@@ -28,7 +28,7 @@ gate.
 
 ```bash
 wickra-zk version
-# {"version": "0.1.1", "guest_id": "<hex image id>"}
+# {"version": "0.1.2", "guest_id": "<hex image id>"}
 ```
 
 A verifier pins this `guest_id` and rejects receipts for any other program.
