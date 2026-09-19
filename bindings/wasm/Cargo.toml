@@ -7,7 +7,7 @@
 [package]
 name = "wickra-zk-wasm"
 description = "WebAssembly binding for wickra-zk: verify a zero-knowledge proof of backtest performance in the browser, and commit to the data it should be bound to."
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 rust-version = "1.90"
 license = "MIT OR Apache-2.0"
@@ -37,5 +37,5 @@ pedantic = { level = "warn", priority = -1 }
 # `Receipt::verify`, the canonical hash for `commit`, and nothing that needs a
 # prover or an operating system. A browser verifies a proof it receives; it
 # does not produce one.
-wickra-zk-host = { path = "../../crates/wickra-zk-host", version = "0.1.1", default-features = false }
+wickra-zk-host = { path = "../../crates/wickra-zk-host", version = "0.1.2", default-features = false }
 wasm-bindgen = "0.2"

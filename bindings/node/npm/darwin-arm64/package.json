@@ -1,6 +1,6 @@
 {
   "name": "wickra-zk-darwin-arm64",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Native binding for wickra-zk (darwin-arm64). Installed automatically as an optional dependency of wickra-zk on matching platforms.",
   "main": "wickra-zk.darwin-arm64.node",
   "files": [

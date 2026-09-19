@@ -8,7 +8,7 @@
 name = "wickra-zk-guest"
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.86"
+rust-version = "1.90"
 license = "MIT OR Apache-2.0"
 publish = false
 
@@ -35,8 +35,8 @@ risc0-zkvm = { version = "3.0", default-features = false, features = ["std"] }
 # Pinned to the exact published releases the workspace manifest names, for
 # the reason given there. Same versions, or the host and the guest disagree
 # about what a report is.
-wickra-backtest = { version = "=0.1.4", default-features = false }
-wickra-proof-core = { version = "=0.1.2", default-features = false }
+wickra-backtest = { version = "=0.1.7", default-features = false }
+wickra-proof-core = { version = "=0.1.3", default-features = false }
 
 serde = { version = "1", default-features = false, features = ["derive", "alloc"] }
 # The strategy crosses the host/guest boundary as JSON text (see main.rs).

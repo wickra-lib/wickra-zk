@@ -21,7 +21,7 @@
     <NativeRid Condition="'$(NativeRid)' == ''">linux-x64</NativeRid>
 
     <PackageId>Wickra.Zk.runtime.$(NativeRid)</PackageId>
-    <Version>0.1.1</Version>
+    <Version>0.1.2</Version>
     <Authors>kingchenc</Authors>
     <Description>The native wickra-zk prover library for $(NativeRid). A dependency of Wickra.Zk; not meant to be referenced directly.</Description>
     <PackageLicenseExpression>MIT OR Apache-2.0</PackageLicenseExpression>
