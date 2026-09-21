@@ -6,6 +6,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- **The guest is built at wickra-core 1.0.5.** The host and wasm locks moved in #62; the guest's lock, bound to the
+  committed artefact, follows here with the artefact risc0's container builds from it. wickra-core 1.0.5 changes no
+  crate code, so the guest computes what it computed -- but a different build is a different program, and the image id
+  moves from `cbdd1019…` to **`5fd57f51d640fb0da2ef44ae506e9c087d60ace76c644cfdef4776bb623e5122`**. The committed
+  real receipt (`golden/proofs/momentum.json`) is re-proved for the new guest; its journal is the blessed one, byte for
+  byte, only the `guest_id` it carries moves.
+
 ## [0.1.2] - 2026-09-18
 
 ### Fixed
