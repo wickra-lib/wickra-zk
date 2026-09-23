@@ -6,6 +6,20 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-09-23
+
+The guest is rebuilt at wickra-core 1.0.5, so the image id a verifier pins
+moves; what the guest computes does not. Everything else is maintenance: the
+refreshed dependency tree and toolchain pins.
+
+### Added
+
+- **The Node binding reports which artifact it loaded.** The loader generated
+  by `@napi-rs/cli` 3.10.4 exports `__napiBindingTarget` -- `'native'` for the
+  native addon, otherwise the WASI flavor it resolved -- and follows a
+  `NAPI_RS_NATIVE_LIBRARY_PATH` override to a WASI loader instead of
+  misreporting it as native. Typed in `index.d.ts`.
+
 ### Changed
 
 - **The guest is built at wickra-core 1.0.5.** The host and wasm locks moved in #62; the guest's lock, bound to the
@@ -14,6 +28,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   moves from `cbdd1019…` to **`5fd57f51d640fb0da2ef44ae506e9c087d60ace76c644cfdef4776bb623e5122`**. The committed
   real receipt (`golden/proofs/momentum.json`) is re-proved for the new guest; its journal is the blessed one, byte for
   byte, only the `guest_id` it carries moves.
+- **Built on wickra-core 1.0.5.** The lock takes the indicator core's latest
+  release, reached through `wickra-backtest`; nothing here names it.
+- **Third-party dependencies refreshed.** `Cargo.lock` takes 127 crates to their
+  newest semver-compatible versions, run across the family in one pass so every
+  repository resolves the same day's versions. No manifest changed.
+- **`@napi-rs/cli` 3.10.4** for the Node binding, the family's line.
+- **uv 0.12.18** for the lockfile bootstrap in `scripts/update-lockfiles.sh`,
+  with all four platform checksums moved together.
+- **The README's static badges are served by the organization** rather than
+  hot-linked from shields.io, so they no longer break when shields is down.
 
 ## [0.1.2] - 2026-09-18
 
@@ -355,7 +379,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   links, sync-metadata, nightly prove/bench, tag-gated release).
 - Documentation set: `docs/{ARCHITECTURE,ZK,DETERMINISM,PROVING,Cookbook}.md`.
 
-[Unreleased]: https://github.com/wickra-lib/wickra-zk/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/wickra-lib/wickra-zk/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/wickra-lib/wickra-zk/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/wickra-lib/wickra-zk/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/wickra-lib/wickra-zk/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/wickra-lib/wickra-zk/releases/tag/v0.1.0
