@@ -8,9 +8,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.1.3] - 2026-09-23
 
-The guest is rebuilt at wickra-core 1.0.5, so the image id a verifier pins
-moves; what the guest computes does not. Everything else is maintenance: the
-refreshed dependency tree and toolchain pins.
+The guest is rebuilt on the family's releases of this train -- wickra-core
+1.0.6, wickra-backtest 0.1.8, wickra-proof-core 0.1.4 -- so the image id a
+verifier pins moves; what the guest computes does not. The R package now builds
+for WebAssembly, verify-only. Everything else is maintenance: the refreshed
+dependency tree and toolchain pins.
 
 ### Added
 
@@ -22,12 +24,17 @@ refreshed dependency tree and toolchain pins.
 
 ### Changed
 
-- **The guest is built at wickra-core 1.0.5.** The host and wasm locks moved in #62; the guest's lock, bound to the
-  committed artefact, follows here with the artefact risc0's container builds from it. wickra-core 1.0.5 changes no
-  crate code, so the guest computes what it computed -- but a different build is a different program, and the image id
-  moves from `cbdd1019…` to **`5fd57f51d640fb0da2ef44ae506e9c087d60ace76c644cfdef4776bb623e5122`**. The committed
-  real receipt (`golden/proofs/momentum.json`) is re-proved for the new guest; its journal is the blessed one, byte for
-  byte, only the `guest_id` it carries moves.
+- **The guest is built on this train's family releases.** The guest pins its
+  engine exactly, like the host: `wickra-backtest` =0.1.7 -> =0.1.8 and
+  `wickra-proof-core` =0.1.3 -> =0.1.4, and its lock -- bound to the committed
+  artefact -- takes wickra-core 1.0.6 with them. None of the three changes crate
+  code, so the guest computes what it computed; but a different build is a
+  different program. The artefact is the one risc0's container builds
+  reproducibly (the `guest-build` job), and the image id moves from `cbdd1019…`
+  to **`1e4c18a4247ddb9b59b643909053c077f0228bebfb13b5dc4ff32f31fbf6e1a7`**. The
+  committed real receipt (`golden/proofs/momentum.json`) is re-proved for the
+  new guest, by the 0.1.3 prover it records; its journal is the blessed one,
+  byte for byte, only the `guest_id` it carries moves.
 - **Built on wickra-core 1.0.6.** The lock takes the indicator core's latest
   release, reached through `wickra-backtest`; nothing here names it.
 - **The family pins follow the owners' releases.** `wickra-backtest` =0.1.7 ->
