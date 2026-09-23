@@ -33,5 +33,13 @@ cast_possible_truncation = "allow"
 cast_possible_wrap = "allow"
 similar_names = "allow"
 
+[features]
+default = ["prove"]
+# The prover, forwarded to wickra-zk-host. Off, the C ABI verifies, commits and
+# hashes only -- the `prove` command answers that this build verifies only --
+# and builds for wasm32-unknown-emscripten, which is the R package's webR build
+# on r-universe (bindings/r/configure passes --no-default-features there).
+prove = ["wickra-zk-host/prove"]
+
 [dependencies]
-wickra-zk-host = { path = "../../crates/wickra-zk-host", version = "0.1.3" }
+wickra-zk-host = { path = "../../crates/wickra-zk-host", version = "0.1.3", default-features = false }

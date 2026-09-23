@@ -51,6 +51,18 @@ refreshed dependency tree and toolchain pins.
 - **The README's static badges are served by the organization** rather than
   hot-linked from shields.io, so they no longer break when shields is down.
 
+### Fixed
+
+- **The R package builds for WebAssembly, verify-only.** r-universe's webR build
+  compiles the C ABI from source for `wasm32-unknown-emscripten` with
+  `--no-default-features`, but the C ABI took `wickra-zk-host` with its default
+  `prove` feature regardless, so the prover's `nvtx` and `ring` went into the
+  build and it failed. `bindings/c` now forwards a `prove` feature (on by
+  default, so every native build is unchanged), and without it the C ABI
+  verifies, commits and hashes -- the `prove` command answers that this build
+  verifies only. Built in r-universe's toolchain (Rust nightly 2026-09-17, emcc
+  5.0.7) before release.
+
 ## [0.1.2] - 2026-09-18
 
 ### Fixed

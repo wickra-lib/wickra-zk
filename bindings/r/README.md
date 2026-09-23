@@ -32,6 +32,10 @@ nothing but a C toolchain (Rtools on Windows) for the thin `.Call` glue layer. T
 build against a local checkout instead, point it at the header and library with
 the environment variables below.
 
+In the browser (webR, r-universe's WebAssembly build) the package **verifies**: `configure`
+builds the C ABI from source without the prover, so `verify` and `commit` work and a `prove`
+command answers that this build verifies only. Proving runs the zkVM and needs a native host.
+
 ### Building from this repository (contributors)
 
 The package links the `wickra_zk` C ABI, located out-of-tree via two
