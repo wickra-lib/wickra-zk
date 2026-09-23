@@ -28,12 +28,16 @@ refreshed dependency tree and toolchain pins.
   moves from `cbdd1019…` to **`5fd57f51d640fb0da2ef44ae506e9c087d60ace76c644cfdef4776bb623e5122`**. The committed
   real receipt (`golden/proofs/momentum.json`) is re-proved for the new guest; its journal is the blessed one, byte for
   byte, only the `guest_id` it carries moves.
-- **Built on wickra-core 1.0.5.** The lock takes the indicator core's latest
+- **Built on wickra-core 1.0.6.** The lock takes the indicator core's latest
   release, reached through `wickra-backtest`; nothing here names it.
-- **Third-party dependencies refreshed.** `Cargo.lock` takes 136 crates to their
+- **The family pins follow the owners' releases.** `wickra-backtest` =0.1.7 ->
+  =0.1.8, `wickra-proof-core` =0.1.3 -> =0.1.4 -- the exact pins this repository
+  keeps on its siblings move to the versions those repositories release in the
+  same train, and every tracked lockfile follows.
+- **Third-party dependencies refreshed.** `Cargo.lock` takes 140 crates to their
   newest versions compatible with the Rust floor (the lock now resolves
   MSRV-aware, see below), run across the family in one pass so every repository
-  resolves the same day's versions. No manifest changed.
+  resolves the same day's versions. The refresh itself changes no manifest.
 - **The lockfile resolves for the Rust floor.** `.cargo/config.toml` sets
   `incompatible-rust-versions = "fallback"`, so `cargo update` takes the newest
   version the workspace's `rust-version` can build rather than the newest
