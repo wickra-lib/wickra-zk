@@ -1,6 +1,6 @@
 {
   "name": "wickra-zk-darwin-x64",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Native binding for wickra-zk (darwin-x64). Installed automatically as an optional dependency of wickra-zk on matching platforms.",
   "main": "wickra-zk.darwin-x64.node",
   "files": [

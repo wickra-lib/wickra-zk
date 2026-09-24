@@ -16,7 +16,7 @@ members = ["bindings/c", "bindings/python", "bindings/node",
 exclude = ["fuzz", "guest/methods/guest", "guest/builder"]
 
 [workspace.package]
-version = "0.1.2"
+version = "0.1.3"
 edition = "2021"
 rust-version = "1.90"
 license = "MIT OR Apache-2.0"
@@ -51,8 +51,8 @@ risc0-zkvm = { version = "3.0", default-features = false, features = ["std"] }
 # facade is 0.1.4 here. Move them together, and the guest manifest with them
 # (guest/methods/guest/Cargo.toml) -- a different guest source is a different
 # image id, and the committed ELF, id and real receipt then move too.
-wickra-backtest = "=0.1.7"
-wickra-proof-core = "=0.1.3"
+wickra-backtest = "=0.1.8"
+wickra-proof-core = "=0.1.4"
 # codspeed-criterion-compat is a drop-in for criterion: the benches keep their
 # criterion API and run as criterion locally, but under `cargo codspeed` they
 # report measurements instead of merely executing. Without the alias the

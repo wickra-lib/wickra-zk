@@ -6,14 +6,69 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-09-23
+
+The guest is rebuilt on the family's releases of this train -- wickra-core
+1.0.6, wickra-backtest 0.1.8, wickra-proof-core 0.1.4 -- so the image id a
+verifier pins moves; what the guest computes does not. The R package now builds
+for WebAssembly, verify-only. Everything else is maintenance: the refreshed
+dependency tree and toolchain pins.
+
+### Added
+
+- **The Node binding reports which artifact it loaded.** The loader generated
+  by `@napi-rs/cli` 3.10.4 exports `__napiBindingTarget` -- `'native'` for the
+  native addon, otherwise the WASI flavor it resolved -- and follows a
+  `NAPI_RS_NATIVE_LIBRARY_PATH` override to a WASI loader instead of
+  misreporting it as native. Typed in `index.d.ts`.
+
 ### Changed
 
-- **The guest is built at wickra-core 1.0.5.** The host and wasm locks moved in #62; the guest's lock, bound to the
-  committed artefact, follows here with the artefact risc0's container builds from it. wickra-core 1.0.5 changes no
-  crate code, so the guest computes what it computed -- but a different build is a different program, and the image id
-  moves from `cbdd1019…` to **`5fd57f51d640fb0da2ef44ae506e9c087d60ace76c644cfdef4776bb623e5122`**. The committed
-  real receipt (`golden/proofs/momentum.json`) is re-proved for the new guest; its journal is the blessed one, byte for
-  byte, only the `guest_id` it carries moves.
+- **The guest is built on this train's family releases.** The guest pins its
+  engine exactly, like the host: `wickra-backtest` =0.1.7 -> =0.1.8 and
+  `wickra-proof-core` =0.1.3 -> =0.1.4, and its lock -- bound to the committed
+  artefact -- takes wickra-core 1.0.6 with them. None of the three changes crate
+  code, so the guest computes what it computed; but a different build is a
+  different program. The artefact is the one risc0's container builds
+  reproducibly (the `guest-build` job), and the image id moves from `cbdd1019…`
+  to **`1e4c18a4247ddb9b59b643909053c077f0228bebfb13b5dc4ff32f31fbf6e1a7`**. The
+  committed real receipt (`golden/proofs/momentum.json`) is re-proved for the
+  new guest, by the 0.1.3 prover it records; its journal is the blessed one,
+  byte for byte, only the `guest_id` it carries moves.
+- **Built on wickra-core 1.0.6.** The lock takes the indicator core's latest
+  release, reached through `wickra-backtest`; nothing here names it.
+- **The family pins follow the owners' releases.** `wickra-backtest` =0.1.7 ->
+  =0.1.8, `wickra-proof-core` =0.1.3 -> =0.1.4 -- the exact pins this repository
+  keeps on its siblings move to the versions those repositories release in the
+  same train, and every tracked lockfile follows.
+- **Third-party dependencies refreshed.** `Cargo.lock` takes 140 crates to their
+  newest versions compatible with the Rust floor (the lock now resolves
+  MSRV-aware, see below), run across the family in one pass so every repository
+  resolves the same day's versions. The refresh itself changes no manifest.
+- **The lockfile resolves for the Rust floor.** `.cargo/config.toml` sets
+  `incompatible-rust-versions = "fallback"`, so `cargo update` takes the newest
+  version the workspace's `rust-version` can build rather than the newest
+  release -- the setting compile, copilot and shazam already carried, now
+  family-wide. Without it, a routine refresh elsewhere in the family raised the
+  icu crates to 2.3.0, which declares Rust 1.88, above a 1.86 floor. Re-resolved
+  under it, the lock needed no version the floor cannot build.
+- **`@napi-rs/cli` 3.10.4** for the Node binding, the family's line.
+- **uv 0.12.18** for the lockfile bootstrap in `scripts/update-lockfiles.sh`,
+  with all four platform checksums moved together.
+- **The README's static badges are served by the organization** rather than
+  hot-linked from shields.io, so they no longer break when shields is down.
+
+### Fixed
+
+- **The R package builds for WebAssembly, verify-only.** r-universe's webR build
+  compiles the C ABI from source for `wasm32-unknown-emscripten` with
+  `--no-default-features`, but the C ABI took `wickra-zk-host` with its default
+  `prove` feature regardless, so the prover's `nvtx` and `ring` went into the
+  build and it failed. `bindings/c` now forwards a `prove` feature (on by
+  default, so every native build is unchanged), and without it the C ABI
+  verifies, commits and hashes -- the `prove` command answers that this build
+  verifies only. Built in r-universe's toolchain (Rust nightly 2026-09-17, emcc
+  5.0.7) before release.
 
 ## [0.1.2] - 2026-09-18
 
@@ -355,7 +410,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   links, sync-metadata, nightly prove/bench, tag-gated release).
 - Documentation set: `docs/{ARCHITECTURE,ZK,DETERMINISM,PROVING,Cookbook}.md`.
 
-[Unreleased]: https://github.com/wickra-lib/wickra-zk/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/wickra-lib/wickra-zk/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/wickra-lib/wickra-zk/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/wickra-lib/wickra-zk/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/wickra-lib/wickra-zk/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/wickra-lib/wickra-zk/releases/tag/v0.1.0

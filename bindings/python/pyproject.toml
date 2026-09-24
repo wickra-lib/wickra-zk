@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "wickra-zk"
-version = "0.1.2"
+version = "0.1.3"
 description = "Prove your backtest — zero-knowledge, on-chain-verifiable performance without revealing your data or strategy."
 readme = "README.md"
 requires-python = ">=3.9"
