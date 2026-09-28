@@ -21,10 +21,11 @@ lock.
   artefact -- takes schemars 1.2.2 with them. Neither release changes what a
   report is, so the guest computes what it computed; but a different build is a
   different program. The artefact is the one risc0's container builds
-  reproducibly (the `guest-build` job), and the image id moves. The committed
-  real receipt (`golden/proofs/momentum.json`) is re-proved for the new guest,
-  by the 0.1.4 prover it records; its journal is the blessed one, byte for byte,
-  only the `guest_id` it carries moves.
+  reproducibly (the `guest-build` job), and the image id moves from `1e4c18a4…`
+  to **`beaf117bfc83fa052c3e981a0d5785f9a0c3753a1b4294e61465a5ba17a3bd6b`**. The
+  committed real receipt (`golden/proofs/momentum.json`) is re-proved for the
+  new guest, by the 0.1.4 prover it records; its journal is the blessed one,
+  byte for byte, only the `guest_id` it carries moves.
 - **The family pins follow the owners' releases.** `wickra-backtest` =0.1.8 ->
   =0.1.9, `wickra-proof-core` =0.1.4 -> =0.1.5 -- the exact pins this repository
   keeps on its siblings move to the versions those repositories release in the
