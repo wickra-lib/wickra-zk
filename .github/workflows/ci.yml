@@ -201,7 +201,7 @@ jobs:
       - uses: ./.github/actions/setup-rust
         with:
           components: llvm-tools-preview
-      - uses: taiki-e/install-action@94c31af3204a9f15ab40b35ad084410b905bbc73 # v2.87.17 (cargo-llvm-cov)
+      - uses: taiki-e/install-action@9983c65e42da123ff25d1f78505eb6de315aa172 # v2.87.20 (cargo-llvm-cov)
         with:
           tool: cargo-llvm-cov
       - run: cargo llvm-cov -p wickra-zk-host --lcov --output-path lcov.info
@@ -230,7 +230,7 @@ jobs:
           # with a codegen ICE unrelated to this code. Move the date deliberately,
           # in every repo at once.
           toolchain: nightly-2026-07-01
-      - uses: taiki-e/install-action@94c31af3204a9f15ab40b35ad084410b905bbc73 # v2.87.17 (cargo-fuzz)
+      - uses: taiki-e/install-action@9983c65e42da123ff25d1f78505eb6de315aa172 # v2.87.20 (cargo-fuzz)
         with:
           tool: cargo-fuzz
       # An explicit target: cargo-fuzz's default detection has picked the musl
@@ -455,7 +455,7 @@ jobs:
           echo "$out" | grep -q 'verify: valid'
           echo "$out" | grep -q "report_hash: $EXAMPLE_HASH"
 
-      - uses: r-lib/actions/setup-r@465b7d8e732ca3921382b1674c59bada9cbf3399 # v2.13.0
+      - uses: r-lib/actions/setup-r@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2.14.0
         with:
           use-public-rspm: true
       - name: R
@@ -478,7 +478,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: taiki-e/install-action@94c31af3204a9f15ab40b35ad084410b905bbc73 # v2.87.17
+      - uses: taiki-e/install-action@9983c65e42da123ff25d1f78505eb6de315aa172 # v2.87.20
         with:
           tool: cargo-deny
       - run: cargo deny check
@@ -500,7 +500,7 @@ jobs:
       # create. Everything pinned in a lockfile is still scanned in full and
       # transitively, because a lockfile needs no resolution.
       - name: osv-scanner
-        uses: google/osv-scanner-action/osv-scanner-action@6e4298ebc4db23e847df9b2e2de2939d6f066c67 # v2.5.1
+        uses: google/osv-scanner-action/osv-scanner-action@a345acffa64b0eaede81a3d9aae6141214d9c8fc # v2.6.0
         with:
           scan-args: |-
             --recursive
@@ -544,7 +544,7 @@ jobs:
       - uses: ./.github/actions/setup-rust
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Install cargo-semver-checks
-        uses: taiki-e/install-action@94c31af3204a9f15ab40b35ad084410b905bbc73 # v2.87.17
+        uses: taiki-e/install-action@9983c65e42da123ff25d1f78505eb6de315aa172 # v2.87.20
         timeout-minutes: 10 # fail fast on a stuck download instead of hanging the job
         with:
           tool: cargo-semver-checks
@@ -697,7 +697,7 @@ jobs:
         with:
           workspaces: bindings/wasm
       - name: Install wasm-pack
-        uses: taiki-e/install-action@94c31af3204a9f15ab40b35ad084410b905bbc73 # v2.87.17
+        uses: taiki-e/install-action@9983c65e42da123ff25d1f78505eb6de315aa172 # v2.87.20
         with:
           tool: wasm-pack
       # The crate's own unit tests, natively: the envelope answers verify,
@@ -761,7 +761,7 @@ jobs:
         with:
           shared-key: release
       - name: Install cbindgen
-        uses: taiki-e/install-action@94c31af3204a9f15ab40b35ad084410b905bbc73 # v2.87.17
+        uses: taiki-e/install-action@9983c65e42da123ff25d1f78505eb6de315aa172 # v2.87.20
         with:
           tool: cbindgen
       - name: Build the C ABI library (cdylib + staticlib)
@@ -945,7 +945,7 @@ jobs:
           shared-key: release
       - name: Build the C ABI library
         run: cargo build -p wickra-zk-c --release
-      - uses: r-lib/actions/setup-r@465b7d8e732ca3921382b1674c59bada9cbf3399 # v2.13.0
+      - uses: r-lib/actions/setup-r@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2.14.0
         with:
           r-version: "release"
           use-public-rspm: true
