@@ -14,7 +14,7 @@ fn prove_then_verify_roundtrips_in_dev_mode() {
     let out = verify(&proof).unwrap();
     assert_eq!(out.report_hash, proof.journal.report_hash);
     assert_eq!(out.dataset_commitment, spec.dataset_commitment);
-    assert!(!out.guest_id.is_empty());
+    assert_ne!(out.guest_id, "");
 }
 
 #[test]
