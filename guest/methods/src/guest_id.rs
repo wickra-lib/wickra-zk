@@ -3,17 +3,17 @@
 
 /// Image id of the committed guest ELF, as the words risc0 verifies against.
 pub const WICKRA_ZK_GUEST_ID: [u32; 8] = [
-    0x7b11_afbe,
-    0x05fa_83fc,
-    0x1a98_3e2c,
-    0xf985_570d,
-    0x3a75_c3a0,
-    0xe694_421b,
-    0xbaa5_6514,
-    0x6bbd_a317,
+    0xebae_6fb9,
+    0x827a_8aea,
+    0x1100_7200,
+    0x5705_3074,
+    0x9714_fd30,
+    0xc4ad_7c4d,
+    0x1508_e3de,
+    0x1310_52b9,
 ];
 
 /// The same image id as lower-case hex -- what a verifier pins and a
 /// release names. `wickra_zk_host::guest_id()` returns exactly this.
 pub const WICKRA_ZK_GUEST_ID_HEX: &str =
-    "beaf117bfc83fa052c3e981a0d5785f9a0c3753a1b4294e61465a5ba17a3bd6b";
+    "b96faeebea8a7a82007200117430055730fd14974d7cadc4dee30815b9521013";
