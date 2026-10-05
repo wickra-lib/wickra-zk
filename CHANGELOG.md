@@ -6,6 +6,23 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-05
+
+A follow-up release on the wickra 2.0 family.
+
+### Changed
+
+- **Built on wickra 2.0 and wickra-backtest 0.2.0.** `wickra-core` 2.0, the
+  formula-audit release of the indicator core, arrives through wickra-backtest;
+  the exact pin on `wickra-backtest` moves from =0.1.9 to =0.2.0 (root and
+  `guest/methods/guest/`); every tracked lockfile follows. Indicators the audit
+  corrected return the values of their published definitions; wickra's
+  changelog lists them, with the warmup changes and the new defaults.
+- **Built on wickra-proof-core 0.2.0.** The exact pin moves from =0.1.5 to
+  =0.2.0 in the host and the guest; the guest is rebuilt for the new family
+  crates, so its image id changes and the golden receipt is re-proved -- the
+  journal (report hash) is the same.
+
 ## [0.1.4] - 2026-09-27
 
 The guest is rebuilt on wickra-backtest 0.1.9 and wickra-proof-core 0.1.5,
@@ -445,7 +462,8 @@ dependency tree and toolchain pins.
   links, sync-metadata, nightly prove/bench, tag-gated release).
 - Documentation set: `docs/{ARCHITECTURE,ZK,DETERMINISM,PROVING,Cookbook}.md`.
 
-[Unreleased]: https://github.com/wickra-lib/wickra-zk/compare/v0.1.4...HEAD
+[Unreleased]: https://github.com/wickra-lib/wickra-zk/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/wickra-lib/wickra-zk/compare/v0.1.4...v0.2.0
 [0.1.4]: https://github.com/wickra-lib/wickra-zk/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/wickra-lib/wickra-zk/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/wickra-lib/wickra-zk/compare/v0.1.1...v0.1.2
