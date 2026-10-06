@@ -11,5 +11,5 @@ publish = false
 workspace = true
 
 [dependencies]
-wickra-zk-host = { path = "../../crates/wickra-zk-host", version = "0.1.4" }
+wickra-zk-host = { path = "../../crates/wickra-zk-host", version = "0.2.0" }
 serde_json = { workspace = true }

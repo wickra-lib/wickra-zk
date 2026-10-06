@@ -42,4 +42,4 @@ default = ["prove"]
 prove = ["wickra-zk-host/prove"]
 
 [dependencies]
-wickra-zk-host = { path = "../../crates/wickra-zk-host", version = "0.1.4", default-features = false }
+wickra-zk-host = { path = "../../crates/wickra-zk-host", version = "0.2.0", default-features = false }

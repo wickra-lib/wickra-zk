@@ -34,14 +34,14 @@ Maven:
 <dependency>
   <groupId>org.wickra</groupId>
   <artifactId>wickra-zk</artifactId>
-  <version>0.1.4</version>
+  <version>0.2.0</version>
 </dependency>
 ```
 
 Gradle:
 
 ```kotlin
-implementation("org.wickra:wickra-zk:0.1.4")
+implementation("org.wickra:wickra-zk:0.2.0")
 ```
 
 The native library ships prebuilt per platform inside the jar and is
