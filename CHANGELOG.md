@@ -6,7 +6,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-## [0.2.0] - 2026-10-05
+## [0.2.0] - 2026-10-06
 
 A follow-up release on the wickra 2.0 family.
 
@@ -19,9 +19,16 @@ A follow-up release on the wickra 2.0 family.
   corrected return the values of their published definitions; wickra's
   changelog lists them, with the warmup changes and the new defaults.
 - **Built on wickra-proof-core 0.2.0.** The exact pin moves from =0.1.5 to
-  =0.2.0 in the host and the guest; the guest is rebuilt for the new family
-  crates, so its image id changes and the golden receipt is re-proved -- the
-  journal (report hash) is the same.
+  =0.2.0 in the host and the guest; every tracked lockfile follows.
+- **The guest is rebuilt on this train's family releases.** Its lock -- bound to
+  the committed artefact -- takes wickra-core 2.0.0, wickra-backtest 0.2.0 and
+  wickra-proof-core 0.2.0, and a different build is a different program: the
+  artefact is the one risc0's container builds reproducibly (the `guest-build`
+  job), and the image id moves from `b96faeeb…` to
+  **`8efa8f7f19f20ebd96515b450a09f52b60e071f4219c4e7d8b5d6a88d90d4aac`**. The
+  committed real receipt (`golden/proofs/momentum.json`) is re-proved for the
+  new guest, by the 0.2.0 prover it records; its journal is the blessed one,
+  byte for byte, only the `guest_id` it carries moves.
 
 ## [0.1.4] - 2026-09-27
 
