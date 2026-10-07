@@ -52,7 +52,7 @@ env:
 jobs:
   fmt:
     name: Format
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 15 # backstop against a wedged job, not a budget
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -71,7 +71,7 @@ jobs:
 
   clippy-host:
     name: Clippy (host)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 30 # backstop against a wedged job, not a budget
     env:
       RISC0_DEV_MODE: "1"
@@ -90,7 +90,7 @@ jobs:
 
   clippy-guest:
     name: Clippy (guest, riscv)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 45 # backstop against a wedged job, not a budget
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -114,7 +114,7 @@ jobs:
 
   guest-build:
     name: Guest build (ELF + image id)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 45 # backstop against a wedged job, not a budget
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -155,7 +155,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest] # risc0 has no Windows target
+        os: [ubuntu-26.04, macos-latest] # risc0 has no Windows target
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60 # a cold release build of the prover takes ~30 min on a 4-core runner
     env:
@@ -174,7 +174,7 @@ jobs:
 
   msrv:
     name: MSRV (1.90)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 60 # a cold release build of the prover takes ~30 min on a 4-core runner
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -190,7 +190,7 @@ jobs:
 
   coverage:
     name: Coverage (host, dev-mode)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 45 # backstop against a wedged job, not a budget
     env:
       RISC0_DEV_MODE: "1"
@@ -218,7 +218,7 @@ jobs:
 
   fuzz-smoke:
     name: Fuzz (smoke)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 90 # a cold release build of the prover takes ~30 min on a 4-core runner
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -245,7 +245,7 @@ jobs:
 
   golden:
     name: Golden hash chain (dev-mode)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 60 # a cold release build of the prover takes ~30 min on a 4-core runner
     env:
       RISC0_DEV_MODE: "1"
@@ -261,7 +261,7 @@ jobs:
 
   cli-roundtrip:
     name: CLI roundtrip (dev-mode)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 60 # a cold release build of the prover takes ~30 min on a 4-core runner
     env:
       RISC0_DEV_MODE: "1"
@@ -288,7 +288,7 @@ jobs:
   # declarations that had drifted apart across six ecosystems.
   repo-checks:
     name: Repository checks
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 15 # backstop against a wedged job, not a budget
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -320,7 +320,7 @@ jobs:
   # library is staged once where the other bindings look for it.
   examples:
     name: Examples
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 90 # a cold release build of the prover takes ~30 min on a 4-core runner
     env:
       RISC0_DEV_MODE: "1"
@@ -473,7 +473,7 @@ jobs:
 
   supply-chain:
     name: cargo-deny
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 15 # backstop against a wedged job, not a budget
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -518,7 +518,7 @@ jobs:
   # `failure`, the commit shows red and a release gate reading check runs stops.
   links:
     name: External links (non-blocking)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 10 # backstop against a wedged job, not a budget
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -549,7 +549,7 @@ jobs:
   # out to six registries in one irreversible run.
   semver:
     name: Public API (cargo-semver-checks)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 30 # backstop: it builds rustdoc JSON for each crate and its baseline
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -598,13 +598,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest] # risc0 has no Windows host
+        os: [ubuntu-26.04, macos-latest] # risc0 has no Windows host
         python-version: ["3.9", "3.11", "3.12", "3.13"]
-        # GitHub builds no Python 3.9 for Ubuntu 26.04, the image ubuntu-latest
+        # GitHub builds no Python 3.9 for Ubuntu 26.04, the image ubuntu-26.04
         # moves to from 2026-10-19 (3.9 is end-of-life), so the floor's Linux
-        # cell runs on ubuntu-24.04; the other cells follow ubuntu-latest.
+        # cell runs on ubuntu-24.04; the other cells follow ubuntu-26.04.
         exclude:
-          - os: ubuntu-latest
+          - os: ubuntu-26.04
             python-version: "3.9"
         include:
           - os: ubuntu-24.04
@@ -666,7 +666,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest] # risc0 has no Windows host
+        os: [ubuntu-26.04, macos-latest] # risc0 has no Windows host
         node-version: ["22", "24"]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 90 # a cold release build of the prover takes ~30 min on a 4-core runner
@@ -707,7 +707,7 @@ jobs:
 
   wasm:
     name: WASM
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 45 # backstop against a wedged job, not a budget
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -764,7 +764,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest] # risc0 has no Windows host
+        os: [ubuntu-26.04, macos-latest] # risc0 has no Windows host
     runs-on: ${{ matrix.os }}
     timeout-minutes: 90 # a cold release build of the prover takes ~30 min on a 4-core runner
     # The binding tests drive the command envelope, not the proof system: a
@@ -812,7 +812,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest] # risc0 has no Windows host
+        os: [ubuntu-26.04, macos-latest] # risc0 has no Windows host
     runs-on: ${{ matrix.os }}
     timeout-minutes: 90 # a cold release build of the prover takes ~30 min on a 4-core runner
     # The binding tests drive the command envelope, not the proof system: a
@@ -846,7 +846,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest] # risc0 has no Windows host
+        os: [ubuntu-26.04, macos-latest] # risc0 has no Windows host
     runs-on: ${{ matrix.os }}
     timeout-minutes: 90 # a cold release build of the prover takes ~30 min on a 4-core runner
     # The binding tests drive the command envelope, not the proof system: a
@@ -914,7 +914,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest] # risc0 has no Windows host
+        os: [ubuntu-26.04, macos-latest] # risc0 has no Windows host
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60 # a cold release build of the prover takes ~30 min on a 4-core runner
     # The binding tests drive the command envelope, not the proof system: a
@@ -949,7 +949,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest] # risc0 has no Windows host
+        os: [ubuntu-26.04, macos-latest] # risc0 has no Windows host
     runs-on: ${{ matrix.os }}
     timeout-minutes: 90 # a cold release build of the prover takes ~30 min on a 4-core runner
     env:
@@ -1022,10 +1022,10 @@ jobs:
         # installs on manylinux_2_28 pairs with the base gcc 8 libstdc++, not
         # the gcc-toolset's. Each container builds with the gcc it ships.
         include:
-          - { os: ubuntu-latest, target: x86_64, manylinux: 2_28 }
+          - { os: ubuntu-26.04, target: x86_64, manylinux: 2_28 }
           - { os: ubuntu-24.04-arm, target: aarch64, manylinux: 2_28 }
-          - { os: ubuntu-latest, target: x86_64, manylinux: musllinux_1_2 }
-          - { os: ubuntu-latest, target: aarch64, manylinux: musllinux_1_2 }
+          - { os: ubuntu-26.04, target: x86_64, manylinux: musllinux_1_2 }
+          - { os: ubuntu-26.04, target: aarch64, manylinux: musllinux_1_2 }
     env:
       CC: gcc
       CXX: g++
@@ -1065,7 +1065,7 @@ jobs:
   # express the same request.
   binding-surface:
     name: Binding surface parity
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 15 # backstop against a wedged job, not a budget
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -1107,7 +1107,7 @@ jobs:
       - r
       - python-wheel-container-smoke
       - binding-surface
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     permissions: {}
     steps:
