@@ -55,6 +55,24 @@ ignore = [
   # -- and heapless 0.8, which dropped it, is unreachable while postcard
   # declares the 0.7 line. Not ours to replace; revisit when postcard moves.
   "RUSTSEC-2023-0089",
+  # ruzstd 0.7.3, RUSTSEC-2026-0344: a tiny zstd input can exhaust memory. The
+  # fix is 0.9.1, unreachable while risc0-zkvm 3.0.6 declares object ^0.36 --
+  #   ruzstd 0.7.3 <- object 0.36.7 <- risc0-zkvm 3.0.6 <- wickra-zk-host
+  # -- and object only runs in risc0's profiler, which is built only when
+  # RISC0_PPROF_OUT is set and then parses the guest ELF: the committed
+  # WICKRA_ZK_GUEST_ELF, never input from outside. Revisit when risc0 moves.
+  "RUSTSEC-2026-0344",
+  # zip 2.4.2, RUSTSEC-2026-0367 / -0368 / -0369 (GHSA-vv5m-jxxh-4627,
+  # GHSA-4v9h-p7m9-rh26, GHSA-4684-h2q9-2vcp): ZipArchive::extract and
+  # ZipStreamReader::extract preserve SUID/SGID bits and follow symlinks out of
+  # the destination. The fix is 9.0.0, unreachable while
+  #   zip 2.4.2 <- risc0-circuit-recursion 4.0.5 <- risc0-zkvm 3.0.6
+  # declares zip ^2.1. Nothing extracts to disk: risc0 opens its own embedded
+  # recursion_zkr.zip (include_bytes!) and reads entries into memory with
+  # by_name + read_exact. Revisit when risc0 moves.
+  "RUSTSEC-2026-0367",
+  "RUSTSEC-2026-0368",
+  "RUSTSEC-2026-0369",
 ]
 
 [licenses]
