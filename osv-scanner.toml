@@ -28,3 +28,19 @@ reason = "paste 1.0.15 is unmaintained, not vulnerable: a compile-time proc-macr
 [[IgnoredVulns]]
 id = "RUSTSEC-2023-0089"
 reason = "atomic-polyfill 1.0.3 is unmaintained, not vulnerable: a compile-time polyfill for atomics on targets without them, a no-op on every target wickra-zk builds. It arrives with risc0's in-process prover (atomic-polyfill <- heapless 0.7 <- postcard <- risc0-binfmt <- risc0-zkvm); heapless 0.8 dropped it and is unreachable while postcard declares the 0.7 line. Revisit when postcard moves."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0344"
+reason = "ruzstd 0.7.3: a tiny zstd input can exhaust memory. Fixed in 0.9.1, unreachable while risc0-zkvm 3.0.6 declares object ^0.36 (ruzstd <- object 0.36.7 <- risc0-zkvm <- wickra-zk-host). object only runs in risc0's profiler, which is built only when RISC0_PPROF_OUT is set and then parses the committed guest ELF, never input from outside. Revisit when risc0 moves."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0367"
+reason = "zip 2.4.2 (GHSA-vv5m-jxxh-4627): ZipArchive::extract preserves SUID/SGID bits. Fixed in 9.0.0, unreachable while risc0-circuit-recursion 4.0.5 declares zip ^2.1 (zip <- risc0-circuit-recursion <- risc0-zkvm <- wickra-zk-host). Nothing extracts to disk: risc0 opens its own embedded recursion_zkr.zip and reads entries into memory with by_name + read_exact. Revisit when risc0 moves."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0368"
+reason = "zip 2.4.2 (GHSA-4v9h-p7m9-rh26): ZipArchive::extract creates symlinks whose targets leave the destination directory. Fixed in 9.0.0, unreachable while risc0-circuit-recursion 4.0.5 declares zip ^2.1. Nothing extracts to disk: risc0 opens its own embedded recursion_zkr.zip and reads entries into memory with by_name + read_exact. Revisit when risc0 moves."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0369"
+reason = "zip 2.4.2 (GHSA-4684-h2q9-2vcp): ZipStreamReader::extract and ZipArchive::extract apply Unix permissions through symlinks. Fixed in 9.0.0, unreachable while risc0-circuit-recursion 4.0.5 declares zip ^2.1. Nothing extracts to disk: risc0 opens its own embedded recursion_zkr.zip and reads entries into memory with by_name + read_exact. Revisit when risc0 moves."
