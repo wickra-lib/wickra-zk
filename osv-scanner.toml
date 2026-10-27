@@ -44,3 +44,9 @@ reason = "zip 2.4.2 (GHSA-4v9h-p7m9-rh26): ZipArchive::extract creates symlinks 
 [[IgnoredVulns]]
 id = "RUSTSEC-2026-0369"
 reason = "zip 2.4.2 (GHSA-4684-h2q9-2vcp): ZipStreamReader::extract and ZipArchive::extract apply Unix permissions through symlinks. Fixed in 9.0.0, unreachable while risc0-circuit-recursion 4.0.5 declares zip ^2.1. Nothing extracts to disk: risc0 opens its own embedded recursion_zkr.zip and reads entries into memory with by_name + read_exact. Revisit when risc0 moves."
+
+# GHSA-qwgh-2vcv-g2f7 has no RustSec record, so cargo-deny does not report it
+# and deny.toml carries no counterpart.
+[[IgnoredVulns]]
+id = "GHSA-qwgh-2vcv-g2f7"
+reason = "block-buffer 0.10.4: a panic caught inside a compress or block-generator callback can leave EagerBuffer or ReadBuffer with an invalid cursor, so later use reads or writes out of bounds. Fixed in 0.12.1, unreachable while risc0 and arkworks declare the digest 0.10 line (block-buffer <- digest 0.10 <- sha2 0.10 / blake2 0.10 <- risc0-zkp, risc0-zkvm, ark-crypto-primitives), in all four lockfiles. Reaching it takes a compression function that panics mid-block and a caller that catches the panic and keeps hashing with the same state: the sha2 and blake2 compression functions do not panic, the one catch_unwind in wickra-zk (the C ABI around command_json) drops everything it ran instead of reusing it, and in the guest a panic ends the zkVM session. Revisit when risc0 moves."
