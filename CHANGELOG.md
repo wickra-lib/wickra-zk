@@ -6,6 +6,56 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-28
+
+A maintenance release on the wickra 2.1 family. It ships the security fixes in
+the dependency tree.
+
+### Changed
+
+- **Built on wickra-backtest 0.2.1 and wickra-proof-core 0.2.1.** The exact pins
+  move from =0.2.0 to =0.2.1 in the host and the guest; every tracked lockfile
+  follows and takes wickra-core 2.1.0, which adds `RunningDrawdown` and updates
+  `MaxDrawdown` in amortised O(1) with the same values.
+- **The guest is rebuilt on this train's family releases.** Its lock -- bound to
+  the committed artefact -- takes wickra-core 2.1.0, wickra-backtest 0.2.1 and
+  wickra-proof-core 0.2.1, and a different build is a different program: the
+  artefact is the one risc0's container builds reproducibly (the `guest-build`
+  job), and the image id moves from `8efa8f7f…` to
+  **`5ec10864cc57cf40b6a2af428fa761a10cb9d4daa7136bfefc5fcaa5caa9c0fe`**. The
+  committed real receipt (`golden/proofs/momentum.json`) is re-proved for the
+  new guest, by the 0.2.1 prover it records; its journal is the blessed one,
+  byte for byte, only the `guest_id` it carries moves.
+- **uv 0.13.5** for the lockfile bootstrap in `scripts/update-lockfiles.sh`.
+- **The ecosystem list quotes the backtest registry's count** (495) for the
+  products that resolve indicators through it, rather than the core's 514.
+
+### Fixed
+
+- **`central-publishing-maven-plugin` 0.12.0** for the Java binding. Since
+  early October the GitHub runners carry Maven 3.10.0, which writes
+  `maven-metadata-local.xml` and `_remote.repositories` into the staging
+  directory; 0.11.0 bundles them, and Central rejects the deployment with
+  "Bundle has content that does NOT have a .pom file".
+
+### Security
+
+- **rustls 0.23.46** in the lockfile, for RUSTSEC-2026-0346 to RUSTSEC-2026-0349:
+  TLS secrets in the `Debug` output of client session values, application data
+  sent to the outer server after an ECH rejection, Brotli certificate
+  decompression allocating before authentication, and a ServerHello downgrade to
+  classical key exchange.
+- **rustls-webpki 0.103.16 and webpki-roots 1.0.10** in the lockfile, for
+  RUSTSEC-2026-0382 and RUSTSEC-2026-0381: certificates chaining through the
+  distrusted emSign intermediates are refused.
+- **tokio 1.53.3** in the lockfile, for RUSTSEC-2026-0386.
+- **The ruzstd, zip and block-buffer advisories are assessed as unreachable**
+  (RUSTSEC-2026-0344, -0367 to -0369, GHSA-qwgh-2vcv-g2f7). risc0 pins the
+  affected lines: ruzstd runs only in risc0's profiler over the committed guest
+  ELF, zip only reads risc0's embedded archive into memory, and no compression
+  function on the digest 0.10 path panics. `deny.toml` and `osv-scanner.toml`
+  carry the reasoning per advisory; they go when risc0 moves.
+
 ## [0.2.0] - 2026-10-06
 
 A follow-up release on the wickra 2.0 family.
@@ -469,7 +519,8 @@ dependency tree and toolchain pins.
   links, sync-metadata, nightly prove/bench, tag-gated release).
 - Documentation set: `docs/{ARCHITECTURE,ZK,DETERMINISM,PROVING,Cookbook}.md`.
 
-[Unreleased]: https://github.com/wickra-lib/wickra-zk/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/wickra-lib/wickra-zk/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/wickra-lib/wickra-zk/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/wickra-lib/wickra-zk/compare/v0.1.4...v0.2.0
 [0.1.4]: https://github.com/wickra-lib/wickra-zk/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/wickra-lib/wickra-zk/compare/v0.1.2...v0.1.3
