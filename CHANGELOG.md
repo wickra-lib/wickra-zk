@@ -17,6 +17,15 @@ the dependency tree.
   move from =0.2.0 to =0.2.1 in the host and the guest; every tracked lockfile
   follows and takes wickra-core 2.1.0, which adds `RunningDrawdown` and updates
   `MaxDrawdown` in amortised O(1) with the same values.
+- **The guest is rebuilt on this train's family releases.** Its lock -- bound to
+  the committed artefact -- takes wickra-core 2.1.0, wickra-backtest 0.2.1 and
+  wickra-proof-core 0.2.1, and a different build is a different program: the
+  artefact is the one risc0's container builds reproducibly (the `guest-build`
+  job), and the image id moves from `8efa8f7f…` to
+  **`5ec10864cc57cf40b6a2af428fa761a10cb9d4daa7136bfefc5fcaa5caa9c0fe`**. The
+  committed real receipt (`golden/proofs/momentum.json`) is re-proved for the
+  new guest, by the 0.2.1 prover it records; its journal is the blessed one,
+  byte for byte, only the `guest_id` it carries moves.
 - **uv 0.13.5** for the lockfile bootstrap in `scripts/update-lockfiles.sh`.
 - **The ecosystem list quotes the backtest registry's count** (495) for the
   products that resolve indicators through it, rather than the core's 514.
