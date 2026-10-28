@@ -6,6 +6,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- **The locks follow wickra-core 2.1.1 and wickra-simd 2.1.1.** The guest lock
+  moves with them, so the guest is rebuilt from the `guest-build` job's
+  reproducible artefact and the image id moves from `5ec10864…` to
+  **`28c466595933fd05b0651adbaad9aea7c53ee144240da603f71116df3962f124`**. The
+  committed real receipt (`golden/proofs/momentum.json`) is re-proved for the
+  new guest; its journal is unchanged apart from the `guest_id` it carries.
+
 ## [0.2.1] - 2026-10-28
 
 A maintenance release on the wickra 2.1 family. It ships the security fixes in
