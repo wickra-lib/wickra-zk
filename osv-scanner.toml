@@ -45,6 +45,20 @@ reason = "zip 2.4.2 (GHSA-4v9h-p7m9-rh26): ZipArchive::extract creates symlinks 
 id = "RUSTSEC-2026-0369"
 reason = "zip 2.4.2 (GHSA-4684-h2q9-2vcp): ZipStreamReader::extract and ZipArchive::extract apply Unix permissions through symlinks. Fixed in 9.0.0, unreachable while risc0-circuit-recursion 4.0.5 declares zip ^2.1. Nothing extracts to disk: risc0 opens its own embedded recursion_zkr.zip and reads entries into memory with by_name + read_exact. Revisit when risc0 moves."
 
+# The three zip advisories below have no RustSec record, so cargo-deny does not
+# report them and deny.toml carries no counterpart.
+[[IgnoredVulns]]
+id = "GHSA-m665-v7pm-7grj"
+reason = "zip 2.4.2 (CVE-2026-115905): ZipArchive takes entry names from the central directory and ZipStreamReader from the local headers, so one archive can name different files to each and an extraction can overwrite files the other reader never listed. Fixed in 9.0.5, unreachable while risc0-circuit-recursion 4.0.5 declares zip ^2.1. Neither half of the differential is reachable: risc0 never uses ZipStreamReader and never extracts, it opens its own recursion_zkr.zip (include_bytes!, sha256-pinned in its build.rs) with ZipArchive and reads entries into memory with by_name + read_exact. Revisit when risc0 moves."
+
+[[IgnoredVulns]]
+id = "GHSA-8hxf-qr8p-62x4"
+reason = "zip 2.4.2 (CVE-2026-115906): an AES-encrypted entry truncated before its declared compressed size is returned without its HMAC being checked. Fixed in 9.0.0, unreachable while risc0-circuit-recursion 4.0.5 declares zip ^2.1. The AES reader is not compiled: risc0 builds zip with default-features off and only deflate, so aes-crypto is off (zip is locked only in the root Cargo.lock, with no aes dependency), and the one archive it reads is its own embedded, unencrypted recursion_zkr.zip. Revisit when risc0 moves."
+
+[[IgnoredVulns]]
+id = "GHSA-q7v9-x93c-xqv3"
+reason = "zip 2.4.2 (CVE-2026-115909): ZipArchive::extract allocates a symlink target buffer of the size the archive declares, so a tiny archive can abort the process or exhaust memory. Fixed in 9.0.0, unreachable while risc0-circuit-recursion 4.0.5 declares zip ^2.1. Nothing extracts: risc0 opens its own embedded recursion_zkr.zip and reads entries into memory with by_name + read_exact. Revisit when risc0 moves."
+
 # GHSA-qwgh-2vcv-g2f7 has no RustSec record, so cargo-deny does not report it
 # and deny.toml carries no counterpart.
 [[IgnoredVulns]]
