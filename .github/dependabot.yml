@@ -64,6 +64,8 @@ updates:
     directory: "/fuzz"
     schedule:
       interval: monthly
+      time: "06:00"
+      timezone: "Etc/UTC"
     open-pull-requests-limit: 5
     cooldown:
       default-days: 7
@@ -80,6 +82,8 @@ updates:
     directory: "/bindings/wasm"
     schedule:
       interval: monthly
+      time: "06:00"
+      timezone: "Etc/UTC"
     open-pull-requests-limit: 5
     cooldown:
       default-days: 7
@@ -94,6 +98,8 @@ updates:
     directory: "/bindings/python"
     schedule:
       interval: monthly
+      time: "06:00"
+      timezone: "Etc/UTC"
     open-pull-requests-limit: 10
     cooldown:
       default-days: 7
@@ -108,6 +114,8 @@ updates:
     directory: "/bindings/java"
     schedule:
       interval: monthly
+      time: "06:00"
+      timezone: "Etc/UTC"
     open-pull-requests-limit: 10
     cooldown:
       default-days: 7
@@ -122,6 +130,8 @@ updates:
     directory: "/bindings/csharp/WickraZk.Tests"
     schedule:
       interval: monthly
+      time: "06:00"
+      timezone: "Etc/UTC"
     open-pull-requests-limit: 10
     cooldown:
       default-days: 7
@@ -136,6 +146,8 @@ updates:
     directory: "/bindings/go"
     schedule:
       interval: monthly
+      time: "06:00"
+      timezone: "Etc/UTC"
     open-pull-requests-limit: 10
     cooldown:
       default-days: 7
@@ -150,6 +162,8 @@ updates:
     directory: "/bindings/node"
     schedule:
       interval: monthly
+      time: "06:00"
+      timezone: "Etc/UTC"
     open-pull-requests-limit: 10
     cooldown:
       default-days: 7
@@ -164,6 +178,8 @@ updates:
     directory: "/examples/node"
     schedule:
       interval: monthly
+      time: "06:00"
+      timezone: "Etc/UTC"
     open-pull-requests-limit: 10
     cooldown:
       default-days: 7
@@ -178,7 +194,16 @@ updates:
     directory: "/.github/requirements"
     schedule:
       interval: monthly
-    open-pull-requests-limit: 10
+      time: "06:00"
+      timezone: "Etc/UTC"
+    # Version-update pull requests disabled (0), as across the family.
+    # Dependabot edits the .txt directly and does not know which interpreter
+    # each lock was resolved against, so a bump lands a version the row cannot
+    # install: it resolves on Linux (dropping Windows-only dependencies such as
+    # pytest's colorama) and would move ci-dev-py39.txt past what 3.9 installs.
+    # Regenerate with scripts/update-lockfiles.sh instead. Security updates are
+    # exempt from this limit and still arrive.
+    open-pull-requests-limit: 0
     cooldown:
       default-days: 7
     commit-message:
@@ -193,6 +218,8 @@ updates:
     directory: "/examples/go"
     schedule:
       interval: monthly
+      time: "06:00"
+      timezone: "Etc/UTC"
     open-pull-requests-limit: 10
     cooldown:
       default-days: 7
