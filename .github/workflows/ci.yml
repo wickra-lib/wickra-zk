@@ -801,6 +801,19 @@ jobs:
           fallback: cargo-install
       - name: Build the C ABI library (cdylib + staticlib)
         run: cargo build -p wickra-zk-c --release
+      # wickra-zk-go ships this library in git, and GitHub refuses a pushed file
+      # over 100 MiB. It carries the whole risc0 prover, ~91 MiB on Linux x86_64
+      # (the largest platform), so a dependency bump that grows it past the
+      # limit goes red here, on its own PR, instead of failing the release's
+      # mirror push after the other registries have published.
+      - name: Check the library fits the Go module's repository
+        shell: bash
+        run: |
+          case "$RUNNER_OS" in
+            Linux) lib=target/release/libwickra_zk.so ;;
+            macOS) lib=target/release/libwickra_zk.dylib ;;
+          esac
+          bash .github/scripts/check-native-size.sh "$lib"
       - name: Rust unit tests
         run: cargo test -p wickra-zk-c
       # The generated header is platform-independent, so checking drift on one OS

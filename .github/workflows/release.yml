@@ -956,6 +956,12 @@ jobs:
             mkdir -p "$out/lib/$dir"; cp "$src" "$out/lib/$dir/"
           done
           echo "assembled module:"; find "$out" -type f | sort
+      # Before anything is pushed: every library under GitHub's 100 MiB file
+      # limit and the module under the Go proxy's 500 MiB (ci.yml runs the
+      # per-file check on every PR).
+      - name: Check the module fits GitHub and the Go module proxy
+        shell: bash
+        run: bash .github/scripts/check-native-size.sh --module wickra-zk-go-module
       - name: Set up Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
