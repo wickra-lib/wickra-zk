@@ -6,6 +6,19 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Security
+
+- **Three new zip 2.4.2 advisories are assessed as unreachable**
+  (GHSA-m665-v7pm-7grj, GHSA-8hxf-qr8p-62x4, GHSA-q7v9-x93c-xqv3). risc0 pins
+  zip ^2.1 with only `deflate`, so the AES reader is not built, and it only
+  reads its own embedded archive into memory: no stream reader, no extraction.
+  They have no RustSec record, so `osv-scanner.toml` carries the reasoning
+  and `deny.toml` has no counterpart.
+- **The GHSA-qwgh-2vcv-g2f7 entry is gone from `osv-scanner.toml`.** The
+  advisory now names block-buffer 0.11.0 up to 0.12.1 as affected, so the
+  0.10.4 in all four lockfiles is outside it and osv-scanner reported the
+  entry as unused.
+
 ### Changed
 
 - **The locks follow wickra-core 2.1.1 and wickra-simd 2.1.1.** The guest lock
