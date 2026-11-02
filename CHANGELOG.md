@@ -12,8 +12,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   (GHSA-m665-v7pm-7grj, GHSA-8hxf-qr8p-62x4, GHSA-q7v9-x93c-xqv3). risc0 pins
   zip ^2.1 with only `deflate`, so the AES reader is not built, and it only
   reads its own embedded archive into memory: no stream reader, no extraction.
-  They have no RustSec record, so `osv-scanner.toml` carries the reasoning
-  and `deny.toml` has no counterpart.
+  `osv-scanner.toml` carries the reasoning for all three. RustSec has since
+  published GHSA-q7v9-x93c-xqv3 as RUSTSEC-2026-0429, which made `cargo deny`
+  fail, so `deny.toml` ignores that id with the same reasoning. osv-scanner
+  groups it with the GHSA record it aliases, which the existing entry already
+  covers. The other two still have no RustSec record.
 - **The GHSA-qwgh-2vcv-g2f7 entry is gone from `osv-scanner.toml`.** The
   advisory now names block-buffer 0.11.0 up to 0.12.1 as affected, so the
   0.10.4 in all four lockfiles is outside it and osv-scanner reported the
