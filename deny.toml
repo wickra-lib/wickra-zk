@@ -73,6 +73,13 @@ ignore = [
   "RUSTSEC-2026-0367",
   "RUSTSEC-2026-0368",
   "RUSTSEC-2026-0369",
+  # zip 2.4.2, RUSTSEC-2026-0429 (GHSA-q7v9-x93c-xqv3): ZipArchive::extract
+  # sizes a symlink target buffer from the size the archive declares, so a tiny
+  # archive can abort the process. Fixed in 9.0.0, unreachable for the same
+  # zip ^2.1 declaration. Nothing extracts: risc0 reads its own embedded
+  # recursion_zkr.zip into memory with by_name + read_exact. Revisit when risc0
+  # moves.
+  "RUSTSEC-2026-0429",
 ]
 
 [licenses]
