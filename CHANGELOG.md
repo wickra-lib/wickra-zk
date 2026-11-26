@@ -33,10 +33,11 @@ Go 1.27, and ships the refreshed dependency tree.
   left behind; run every entry on the family's schedule and cooldown; gate the
   native library size wickra-zk-go ships in git; use setup-java's *-env-var
   inputs.
-- **The locks follow wickra-core 2.2.0 and the risc0 3.1 line.** The guest
-  lock moves with them, so the guest is rebuilt from the `guest-build` job's
-  reproducible artefact and the image id moves from `5ec10864…` to
-  **`34f2bd4ffba605de7382dcd8589f8e5e7778028e3ce660c5faa0059bad276a08`**. The
+- **The locks follow wickra-core 2.2.0, wickra-backtest and wickra-proof-core
+  0.2.2 and the risc0 3.1 line.** The guest manifest and lock move with them,
+  so the guest is rebuilt from the `guest-build` job's reproducible artefact and
+  the image id moves from `5ec10864…` to
+  **`fef4cbda4a98ab162d6c2c0b155938cf897c2d7fada46b7f653095c15f1687c9`**. The
   committed real receipt (`golden/proofs/momentum.json`) is re-proved for the
   new guest; its journal is unchanged apart from the `guest_id` it carries.
 - **The Python extension module function has a plain Rust name** with
