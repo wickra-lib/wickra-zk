@@ -31,37 +31,12 @@ reason = "atomic-polyfill 1.0.3 is unmaintained, not vulnerable: a compile-time 
 
 [[IgnoredVulns]]
 id = "RUSTSEC-2026-0344"
-reason = "ruzstd 0.7.3: a tiny zstd input can exhaust memory. Fixed in 0.9.1, unreachable while risc0-zkvm 3.0.6 declares object ^0.36 (ruzstd <- object 0.36.7 <- risc0-zkvm <- wickra-zk-host). object only runs in risc0's profiler, which is built only when RISC0_PPROF_OUT is set and then parses the committed guest ELF, never input from outside. Revisit when risc0 moves."
+reason = "ruzstd 0.7.3: a tiny zstd input can exhaust memory. Fixed in 0.9.1, unreachable while risc0-zkvm 3.1 declares object ^0.36 (ruzstd <- object 0.36.7 <- risc0-zkvm <- wickra-zk-host). object only runs in risc0's profiler, which is built only when RISC0_PPROF_OUT is set and then parses the committed guest ELF, never input from outside. Revisit when risc0 moves."
 
-[[IgnoredVulns]]
-id = "RUSTSEC-2026-0367"
-reason = "zip 2.4.2 (GHSA-vv5m-jxxh-4627): ZipArchive::extract preserves SUID/SGID bits. Fixed in 9.0.0, unreachable while risc0-circuit-recursion 4.0.5 declares zip ^2.1 (zip <- risc0-circuit-recursion <- risc0-zkvm <- wickra-zk-host). Nothing extracts to disk: risc0 opens its own embedded recursion_zkr.zip and reads entries into memory with by_name + read_exact. Revisit when risc0 moves."
-
-[[IgnoredVulns]]
-id = "RUSTSEC-2026-0368"
-reason = "zip 2.4.2 (GHSA-4v9h-p7m9-rh26): ZipArchive::extract creates symlinks whose targets leave the destination directory. Fixed in 9.0.0, unreachable while risc0-circuit-recursion 4.0.5 declares zip ^2.1. Nothing extracts to disk: risc0 opens its own embedded recursion_zkr.zip and reads entries into memory with by_name + read_exact. Revisit when risc0 moves."
-
-[[IgnoredVulns]]
-id = "RUSTSEC-2026-0369"
-reason = "zip 2.4.2 (GHSA-4684-h2q9-2vcp): ZipStreamReader::extract and ZipArchive::extract apply Unix permissions through symlinks. Fixed in 9.0.0, unreachable while risc0-circuit-recursion 4.0.5 declares zip ^2.1. Nothing extracts to disk: risc0 opens its own embedded recursion_zkr.zip and reads entries into memory with by_name + read_exact. Revisit when risc0 moves."
-
-# GHSA-m665-v7pm-7grj and GHSA-8hxf-qr8p-62x4 have no RustSec record, so
-# cargo-deny does not report them and deny.toml carries no counterpart.
-# GHSA-q7v9-x93c-xqv3 has one since RustSec published RUSTSEC-2026-0429 for the
-# same issue. osv-scanner groups the two records as aliases, so the GHSA entry
-# below covers both (a second entry for the RustSec id is reported as unused),
-# and deny.toml ignores the RustSec id.
-[[IgnoredVulns]]
-id = "GHSA-m665-v7pm-7grj"
-reason = "zip 2.4.2 (CVE-2026-115905): ZipArchive takes entry names from the central directory and ZipStreamReader from the local headers, so one archive can name different files to each and an extraction can overwrite files the other reader never listed. Fixed in 9.0.5, unreachable while risc0-circuit-recursion 4.0.5 declares zip ^2.1. Neither half of the differential is reachable: risc0 never uses ZipStreamReader and never extracts, it opens its own recursion_zkr.zip (include_bytes!, sha256-pinned in its build.rs) with ZipArchive and reads entries into memory with by_name + read_exact. Revisit when risc0 moves."
-
-[[IgnoredVulns]]
-id = "GHSA-8hxf-qr8p-62x4"
-reason = "zip 2.4.2 (CVE-2026-115906): an AES-encrypted entry truncated before its declared compressed size is returned without its HMAC being checked. Fixed in 9.0.0, unreachable while risc0-circuit-recursion 4.0.5 declares zip ^2.1. The AES reader is not compiled: risc0 builds zip with default-features off and only deflate, so aes-crypto is off (zip is locked only in the root Cargo.lock, with no aes dependency), and the one archive it reads is its own embedded, unencrypted recursion_zkr.zip. Revisit when risc0 moves."
-
-[[IgnoredVulns]]
-id = "GHSA-q7v9-x93c-xqv3"
-reason = "zip 2.4.2 (CVE-2026-115909): ZipArchive::extract allocates a symlink target buffer of the size the archive declares, so a tiny archive can abort the process or exhaust memory. Fixed in 9.0.0, unreachable while risc0-circuit-recursion 4.0.5 declares zip ^2.1. Nothing extracts: risc0 opens its own embedded recursion_zkr.zip and reads entries into memory with by_name + read_exact. Revisit when risc0 moves."
+# The zip 2.4.2 entries (RUSTSEC-2026-0367/0368/0369, GHSA-m665-v7pm-7grj,
+# GHSA-8hxf-qr8p-62x4, GHSA-q7v9-x93c-xqv3) were removed with the move to
+# risc0-zkvm 3.1: its 4.1 circuits ship the recursion kernels as crates, so zip
+# is no longer in any lockfile.
 
 # GHSA-qwgh-2vcv-g2f7 (block-buffer) was listed here for the digest 0.10 line
 # risc0 and arkworks declare. The advisory now names block-buffer 0.11.0 up to
