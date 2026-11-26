@@ -67,3 +67,43 @@ reason = "zip 2.4.2 (CVE-2026-115909): ZipArchive::extract allocates a symlink t
 # risc0 and arkworks declare. The advisory now names block-buffer 0.11.0 up to
 # 0.12.1 as affected, so the 0.10.4 in all four lockfiles is outside it, and
 # the entry was removed.
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0574"
+reason = "heapless < 0.9.4 reaches this graph only through postcard 1.1 (risc0-binfmt); it uses heapless::Vec/String of u8, and none of the affected APIs (SortedLinkedList, Spsc, IndexMap, Deque, HistoryBuf, the pools, vec::IntoIter dropping a panicking element) is used. postcard 1.x has no release on heapless 0.9; remove when it does."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0575"
+reason = "heapless < 0.9.4 reaches this graph only through postcard 1.1 (risc0-binfmt); it uses heapless::Vec/String of u8, and none of the affected APIs (SortedLinkedList, Spsc, IndexMap, Deque, HistoryBuf, the pools, vec::IntoIter dropping a panicking element) is used. postcard 1.x has no release on heapless 0.9; remove when it does."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0576"
+reason = "heapless < 0.9.4 reaches this graph only through postcard 1.1 (risc0-binfmt); it uses heapless::Vec/String of u8, and none of the affected APIs (SortedLinkedList, Spsc, IndexMap, Deque, HistoryBuf, the pools, vec::IntoIter dropping a panicking element) is used. postcard 1.x has no release on heapless 0.9; remove when it does."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0577"
+reason = "heapless < 0.9.4 reaches this graph only through postcard 1.1 (risc0-binfmt); it uses heapless::Vec/String of u8, and none of the affected APIs (SortedLinkedList, Spsc, IndexMap, Deque, HistoryBuf, the pools, vec::IntoIter dropping a panicking element) is used. postcard 1.x has no release on heapless 0.9; remove when it does."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0578"
+reason = "heapless < 0.9.4 reaches this graph only through postcard 1.1 (risc0-binfmt); it uses heapless::Vec/String of u8, and none of the affected APIs (SortedLinkedList, Spsc, IndexMap, Deque, HistoryBuf, the pools, vec::IntoIter dropping a panicking element) is used. postcard 1.x has no release on heapless 0.9; remove when it does."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0579"
+reason = "heapless < 0.9.4 reaches this graph only through postcard 1.1 (risc0-binfmt); it uses heapless::Vec/String of u8, and none of the affected APIs (SortedLinkedList, Spsc, IndexMap, Deque, HistoryBuf, the pools, vec::IntoIter dropping a panicking element) is used. postcard 1.x has no release on heapless 0.9; remove when it does."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0580"
+reason = "heapless < 0.9.4 reaches this graph only through postcard 1.1 (risc0-binfmt); it uses heapless::Vec/String of u8, and none of the affected APIs (SortedLinkedList, Spsc, IndexMap, Deque, HistoryBuf, the pools, vec::IntoIter dropping a panicking element) is used. postcard 1.x has no release on heapless 0.9; remove when it does."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0581"
+reason = "heapless < 0.9.4 reaches this graph only through postcard 1.1 (risc0-binfmt); it uses heapless::Vec/String of u8, and none of the affected APIs (SortedLinkedList, Spsc, IndexMap, Deque, HistoryBuf, the pools, vec::IntoIter dropping a panicking element) is used. postcard 1.x has no release on heapless 0.9; remove when it does."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0582"
+reason = "heapless < 0.9.4 reaches this graph only through postcard 1.1 (risc0-binfmt); it uses heapless::Vec/String of u8, and none of the affected APIs (SortedLinkedList, Spsc, IndexMap, Deque, HistoryBuf, the pools, vec::IntoIter dropping a panicking element) is used. postcard 1.x has no release on heapless 0.9; remove when it does."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0543"
+reason = "chrono is flagged unmaintained, not vulnerable; it arrives through the risc0 dependency tree with no chrono-free release. Remove when that dependency drops it."
