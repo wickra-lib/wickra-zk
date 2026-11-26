@@ -39,8 +39,10 @@ clap = { version = "4", features = ["derive"] }
 # in-process prover risc0 runs `r0vm` as a subprocess -- for dev-mode receipts
 # too -- so every crate, wheel and native package would need the risc0
 # toolchain installed beside it; with it, a `pip install` or a
-# `cargo install` is the whole prover.
-risc0-zkvm = { version = "3.0", default-features = false, features = ["std"] }
+# `cargo install` is the whole prover. The floor is 3.1: a receipt carries the
+# verifier parameters digest of the version that proved it, and a 3.0 verifier
+# rejects a 3.1 receipt, so no lockfile here may resolve below it.
+risc0-zkvm = { version = "3.1", default-features = false, features = ["std"] }
 # Pinned to exact published releases. They were git revs while the siblings
 # were unreleased; a git rev never goes red, it only gets older, and cargo
 # treats "this git URL at rev X" and the registry as different sources, so a
