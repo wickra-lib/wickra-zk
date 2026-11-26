@@ -50,7 +50,8 @@ impl PyProver {
 
 /// The native module (`wickra_zk._wickra_zk`).
 #[pymodule]
-fn _wickra_zk(module: &Bound<'_, PyModule>) -> PyResult<()> {
+#[pyo3(name = "_wickra_zk")]
+fn wickra_zk_extension(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add("__version__", env!("CARGO_PKG_VERSION"))?;
     module.add_class::<PyProver>()?;
     Ok(())

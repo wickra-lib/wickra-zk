@@ -8,15 +8,21 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Security
 
-- **Three new zip 2.4.2 advisories are assessed as unreachable**
-  (GHSA-m665-v7pm-7grj, GHSA-8hxf-qr8p-62x4, GHSA-q7v9-x93c-xqv3). risc0 pins
-  zip ^2.1 with only `deflate`, so the AES reader is not built, and it only
-  reads its own embedded archive into memory: no stream reader, no extraction.
-  `osv-scanner.toml` carries the reasoning for all three. RustSec has since
-  published GHSA-q7v9-x93c-xqv3 as RUSTSEC-2026-0429, which made `cargo deny`
-  fail, so `deny.toml` ignores that id with the same reasoning. osv-scanner
-  groups it with the GHSA record it aliases, which the existing entry already
-  covers. The other two still have no RustSec record.
+- **zip leaves the graph, and with it every zip waiver.** risc0-zkvm 3.0.6,
+  risc0-groth16 3.0.5 and risc0-circuit-recursion 4.0.5 were yanked;
+  risc0-zkvm 3.1.0 with the 4.1 circuits ships the recursion kernels as crates
+  instead of downloading and unpacking them, so zip 2.4.2 (RUSTSEC-2026-0367,
+  -0368, -0369, -0429, -0545, -0548, GHSA-m665-v7pm-7grj, GHSA-8hxf-qr8p-62x4)
+  and the build-script download that panicked on the MSRV floor are gone. The
+  zip entries are removed from `deny.toml` and `osv-scanner.toml`.
+- **url 2.5.9, rustix 1.1.6, quinn-proto 0.11.19 and quinn-udp 0.5.16** close
+  RUSTSEC-2026-0592, -0486, -0523, -0524 and -0538.
+- **heapless 0.7 and chrono are waived with reasons.** heapless < 0.9.4
+  (RUSTSEC-2026-0574 to -0582) arrives only through postcard 1.1 in
+  risc0-binfmt, which uses `heapless::Vec<u8>` and none of the affected APIs,
+  and postcard 1.x has no heapless 0.9 release; chrono (RUSTSEC-2026-0543) is
+  flagged unmaintained, not vulnerable. Both are in `osv-scanner.toml`;
+  `cargo deny` does not report them.
 - **The GHSA-qwgh-2vcv-g2f7 entry is gone from `osv-scanner.toml`.** The
   advisory now names block-buffer 0.11.0 up to 0.12.1 as affected, so the
   0.10.4 in all four lockfiles is outside it and osv-scanner reported the
@@ -24,12 +30,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
-- **The locks follow wickra-core 2.1.1 and wickra-simd 2.1.1.** The guest lock
-  moves with them, so the guest is rebuilt from the `guest-build` job's
+- **The locks follow wickra-core 2.2.0 and the risc0 3.1 line.** The guest
+  lock moves with them, so the guest is rebuilt from the `guest-build` job's
   reproducible artefact and the image id moves from `5ec10864…` to
-  **`28c466595933fd05b0651adbaad9aea7c53ee144240da603f71116df3962f124`**. The
+  **`34f2bd4ffba605de7382dcd8589f8e5e7778028e3ce660c5faa0059bad276a08`**. The
   committed real receipt (`golden/proofs/momentum.json`) is re-proved for the
   new guest; its journal is unchanged apart from the `guest_id` it carries.
+- **The Python extension module function has a plain Rust name** with
+  `#[pyo3(name = "_wickra_zk")]`, since clippy on Rust 1.100 denies
+  `used_underscore_items` on the code `#[pymodule]` generates. The module is
+  still `wickra_zk._wickra_zk`.
 
 ## [0.2.1] - 2026-10-28
 
