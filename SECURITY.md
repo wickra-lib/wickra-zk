@@ -3,11 +3,11 @@
 ## Supported versions
 
 wickra-zk is in early development. Security fixes are applied to the latest
-release, `0.2.1`.
+release, `0.2.2`.
 
 | Version | Supported |
 |---------|-----------|
-| `0.2.1` (latest) | ✅ |
+| `0.2.2` (latest) | ✅ |
 
 ## Reporting a vulnerability
 
