@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     branches: [main]
 
 permissions:
@@ -51,6 +52,7 @@ env:
 
 jobs:
   fmt:
+    if: ${{ !github.event.pull_request.draft }}
     name: Format
     runs-on: ubuntu-latest
     timeout-minutes: 15 # backstop against a wedged job, not a budget
@@ -70,6 +72,7 @@ jobs:
           cargo fmt --manifest-path bindings/wasm/Cargo.toml -- --check
 
   clippy-host:
+    if: ${{ !github.event.pull_request.draft }}
     name: Clippy (host)
     runs-on: ubuntu-latest
     timeout-minutes: 30 # backstop against a wedged job, not a budget
@@ -89,6 +92,7 @@ jobs:
       - run: cargo clippy --manifest-path bindings/wasm/Cargo.toml --all-targets -- -D warnings
 
   clippy-guest:
+    if: ${{ !github.event.pull_request.draft }}
     name: Clippy (guest, riscv)
     runs-on: ubuntu-latest
     timeout-minutes: 45 # backstop against a wedged job, not a budget
@@ -113,6 +117,7 @@ jobs:
         run: cargo +risc0 clippy --target riscv32im-risc0-zkvm-elf -- -D warnings
 
   guest-build:
+    if: ${{ !github.event.pull_request.draft }}
     name: Guest build (ELF + image id)
     runs-on: ubuntu-latest
     timeout-minutes: 45 # backstop against a wedged job, not a budget
@@ -151,6 +156,7 @@ jobs:
             guest/methods/src/guest_id.rs
 
   test:
+    if: ${{ !github.event.pull_request.draft }}
     name: Test (${{ matrix.os }})
     strategy:
       fail-fast: false
@@ -173,6 +179,7 @@ jobs:
       - run: cargo test --workspace
 
   msrv:
+    if: ${{ !github.event.pull_request.draft }}
     name: MSRV (1.90)
     runs-on: ubuntu-latest
     timeout-minutes: 60 # a cold release build of the prover takes ~30 min on a 4-core runner
@@ -189,6 +196,7 @@ jobs:
       - run: cargo check --workspace
 
   coverage:
+    if: ${{ !github.event.pull_request.draft }}
     name: Coverage (host, dev-mode)
     runs-on: ubuntu-latest
     timeout-minutes: 45 # backstop against a wedged job, not a budget
@@ -217,6 +225,7 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   fuzz-smoke:
+    if: ${{ !github.event.pull_request.draft }}
     name: Fuzz (smoke)
     runs-on: ubuntu-latest
     timeout-minutes: 90 # a cold release build of the prover takes ~30 min on a 4-core runner
@@ -244,6 +253,7 @@ jobs:
         working-directory: fuzz
 
   golden:
+    if: ${{ !github.event.pull_request.draft }}
     name: Golden hash chain (dev-mode)
     runs-on: ubuntu-latest
     timeout-minutes: 60 # a cold release build of the prover takes ~30 min on a 4-core runner
@@ -260,6 +270,7 @@ jobs:
       - run: cargo test -p wickra-zk-host --test golden
 
   cli-roundtrip:
+    if: ${{ !github.event.pull_request.draft }}
     name: CLI roundtrip (dev-mode)
     runs-on: ubuntu-latest
     timeout-minutes: 60 # a cold release build of the prover takes ~30 min on a 4-core runner
@@ -287,6 +298,7 @@ jobs:
   # a published wheel that declared a licence it did not carry, and version
   # declarations that had drifted apart across six ecosystems.
   repo-checks:
+    if: ${{ !github.event.pull_request.draft }}
     name: Repository checks
     runs-on: ubuntu-latest
     timeout-minutes: 15 # backstop against a wedged job, not a budget
@@ -319,6 +331,7 @@ jobs:
   # job (the C ABI, maturin, napi) to that same directory, and the native
   # library is staged once where the other bindings look for it.
   examples:
+    if: ${{ !github.event.pull_request.draft }}
     name: Examples
     runs-on: ubuntu-latest
     timeout-minutes: 90 # a cold release build of the prover takes ~30 min on a 4-core runner
@@ -478,6 +491,7 @@ jobs:
           echo "$out" | grep -q "report_hash: $EXAMPLE_HASH"
 
   supply-chain:
+    if: ${{ !github.event.pull_request.draft }}
     name: cargo-deny
     runs-on: ubuntu-latest
     timeout-minutes: 15 # backstop against a wedged job, not a budget
@@ -534,6 +548,7 @@ jobs:
   # A job-level continue-on-error would not do: the check run still concludes
   # `failure`, the commit shows red and a release gate reading check runs stops.
   links:
+    if: ${{ !github.event.pull_request.draft }}
     name: External links (non-blocking)
     runs-on: ubuntu-latest
     timeout-minutes: 10 # backstop against a wedged job, not a budget
@@ -565,6 +580,7 @@ jobs:
   # that a patch release keeps it, and a rename that slips through review goes
   # out to six registries in one irreversible run.
   semver:
+    if: ${{ !github.event.pull_request.draft }}
     name: Public API (cargo-semver-checks)
     runs-on: ubuntu-latest
     timeout-minutes: 30 # backstop: it builds rustdoc JSON for each crate and its baseline
@@ -611,6 +627,7 @@ jobs:
           echo "$checked crate(s) compared against their published baseline"
 
   python:
+    if: ${{ !github.event.pull_request.draft }}
     name: Python ${{ matrix.python-version }} on ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -679,6 +696,7 @@ jobs:
           fi
 
   node:
+    if: ${{ !github.event.pull_request.draft }}
     name: Node ${{ matrix.node-version }} on ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -730,6 +748,7 @@ jobs:
         run: cd bindings/node && node --test
 
   wasm:
+    if: ${{ !github.event.pull_request.draft }}
     name: WASM
     runs-on: ubuntu-latest
     timeout-minutes: 45 # backstop against a wedged job, not a budget
@@ -784,6 +803,7 @@ jobs:
         working-directory: bindings/wasm
 
   c-abi:
+    if: ${{ !github.event.pull_request.draft }}
     name: C ABI on ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -851,6 +871,7 @@ jobs:
           ctest --test-dir examples/c/build -C Release --output-on-failure
 
   csharp:
+    if: ${{ !github.event.pull_request.draft }}
     name: C# on ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -885,6 +906,7 @@ jobs:
         run: dotnet test bindings/csharp/WickraZk.Tests/WickraZk.Tests.csproj -c Release
 
   go:
+    if: ${{ !github.event.pull_request.draft }}
     name: Go on ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -953,6 +975,7 @@ jobs:
           go test ./...
 
   java:
+    if: ${{ !github.event.pull_request.draft }}
     name: Java on ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -994,6 +1017,7 @@ jobs:
           command: mvn -B -f bindings/java test
 
   r:
+    if: ${{ !github.event.pull_request.draft }}
     name: R on ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -1043,6 +1067,7 @@ jobs:
   # is invisible until the tag, where it is already too late. This builds the
   # same four Linux wheels on every pull request.
   python-wheel-container-smoke:
+    if: ${{ !github.event.pull_request.draft }}
     name: Python wheel (${{ matrix.target }} ${{ matrix.manylinux }} smoke)
     runs-on: ${{ matrix.os }}
     # A cold prover build inside a container with no cache: ~15 minutes where
@@ -1113,6 +1138,7 @@ jobs:
   # must produce the same canonical bytes, which only holds if every language can
   # express the same request.
   binding-surface:
+    if: ${{ !github.event.pull_request.draft }}
     name: Binding surface parity
     runs-on: ubuntu-latest
     timeout-minutes: 15 # backstop against a wedged job, not a budget
@@ -1130,7 +1156,7 @@ jobs:
   # checks are left out on purpose -- an outside outage must not hold a merge.
   ci-ok:
     name: ci-ok
-    if: always()
+    if: ${{ !github.event.pull_request.draft && (always()) }}
     needs:
       - fmt
       - clippy-host
