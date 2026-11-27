@@ -8,6 +8,7 @@ on:
   push:
     branches: [main]
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     branches: [main]
   schedule:
     - cron: '31 3 * * 0' # Sundays 03:31 UTC
@@ -31,6 +32,7 @@ env:
 
 jobs:
   analyze:
+    if: ${{ !github.event.pull_request.draft }}
     name: Analyze (${{ matrix.language }})
     runs-on: ubuntu-latest
     timeout-minutes: 90 # the go and c-cpp rows build the prover's C ABI in release: ~30 min cold
