@@ -6,8 +6,72 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-11-26
+
+A maintenance release: it follows wickra-core 2.2.0, builds on Rust 1.100 and
+Go 1.27, and ships the refreshed dependency tree.
+
+### Changed
+
+- **Built on wickra-core 2.2.0** (from 2.1.0). The lock takes the indicator
+  core's release; the caret requirement already admitted it. Saturated `Rsi` and
+  `StochRsi` values are now exactly 100 (and 0), and `TtmSqueeze` detrends its
+  momentum per bar, as the reference does, with a warmup of `2 * period - 1`;
+  anything here that runs those indicators can report different values with it.
+- **The family pins follow the owners' releases.** `wickra-backtest` =0.2.1 ->
+  =0.2.2, `wickra-proof-core` =0.2.1 -> =0.2.2 -- the exact pins this repository
+  keeps on its siblings move to the versions those repositories release in the
+  same train, and every tracked lockfile follows.
+- **Third-party dependencies refreshed.** `Cargo.lock` takes 161 crates at their
+  latest releases within the declared ranges. The npm and Python dev locks are
+  re-resolved the same way. The refresh itself changes no manifest.
+- **Dependabot's monthly updates** (GitHub Actions, Cargo, Maven, npm, NuGet): 7
+  pull requests, each checked against the versions the rest of the family holds.
+- **CI and release workflow:** point osv-scanner at the Python lockfiles it was
+  silently skipping; install the Node binding with npm ci now that the lock
+  names every platform package; correct the action version comments Dependabot
+  left behind; run every entry on the family's schedule and cooldown; gate the
+  native library size wickra-zk-go ships in git; use setup-java's *-env-var
+  inputs.
+- **The locks follow wickra-core 2.2.0, wickra-backtest and wickra-proof-core
+  0.2.2 and the risc0 3.1 line.** The guest manifest and lock move with them,
+  so the guest is rebuilt from the `guest-build` job's reproducible artefact and
+  the image id moves from `5ec10864…` to
+  **`fef4cbda4a98ab162d6c2c0b155938cf897c2d7fada46b7f653095c15f1687c9`**. The
+  committed real receipt (`golden/proofs/momentum.json`) is re-proved for the
+  new guest; its journal is unchanged apart from the `guest_id` it carries.
+- **The Python extension module function has a plain Rust name** with
+  `#[pyo3(name = "_wickra_zk")]`, since clippy on Rust 1.100 denies
+  `used_underscore_items` on the code `#[pymodule]` generates. The module is
+  still `wickra_zk._wickra_zk`.
+
+### Fixed
+
+- **Builds on Rust 1.100.** Its `clippy::used_underscore_items` fires on the
+  code `#[pymodule]` generates for an underscore-named module function. The
+  function has a plain name now and `#[pyo3(name = "_...")]` keeps the extension
+  module's import name unchanged.
+
 ### Security
 
+- **rustix 1.1.6** in the lockfile, for RUSTSEC-2026-0486: xattr functions
+  marked unwritten bytes as initialised when given a zero-length buffer.
+- **quinn-proto 0.11.19** in the lockfile, for RUSTSEC-2026-0523 and
+  RUSTSEC-2026-0524: a `MAX_STREAM_DATA` frame could open streams beyond the
+  limit, and a long Retry token could panic or exhaust memory in a QUIC client.
+- **quinn-udp 0.5.16** in the lockfile, for RUSTSEC-2026-0538: the receive loop
+  could spin after a truncated datagram.
+- **Assessed as not affecting this project:** RUSTSEC-2026-0574,
+  RUSTSEC-2026-0575, RUSTSEC-2026-0576, RUSTSEC-2026-0577, RUSTSEC-2026-0578,
+  RUSTSEC-2026-0579, RUSTSEC-2026-0580, RUSTSEC-2026-0581, RUSTSEC-2026-0582.
+  heapless < 0.9.4 reaches this graph only through postcard 1.1 (risc0-binfmt);
+  it uses heapless::Vec/String of u8, and none of the affected APIs
+  (SortedLinkedList, Spsc, IndexMap, Deque, HistoryBuf, the pools, vec::IntoIter
+  dropping a panicking element) is used. postcard 1.x has no release on heapless
+  0.9; remove when it does.
+- **Exceptions withdrawn:** RUSTSEC-2026-0367, RUSTSEC-2026-0368,
+  RUSTSEC-2026-0369, GHSA-qwgh-2vcv-g2f7 -- no lockfile carries an affected
+  version any more.
 - **zip leaves the graph, and with it every zip waiver.** risc0-zkvm 3.0.6,
   risc0-groth16 3.0.5 and risc0-circuit-recursion 4.0.5 were yanked;
   risc0-zkvm 3.1.0 with the 4.1 circuits ships the recursion kernels as crates
@@ -27,19 +91,6 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   advisory now names block-buffer 0.11.0 up to 0.12.1 as affected, so the
   0.10.4 in all four lockfiles is outside it and osv-scanner reported the
   entry as unused.
-
-### Changed
-
-- **The locks follow wickra-core 2.2.0 and the risc0 3.1 line.** The guest
-  lock moves with them, so the guest is rebuilt from the `guest-build` job's
-  reproducible artefact and the image id moves from `5ec10864…` to
-  **`34f2bd4ffba605de7382dcd8589f8e5e7778028e3ce660c5faa0059bad276a08`**. The
-  committed real receipt (`golden/proofs/momentum.json`) is re-proved for the
-  new guest; its journal is unchanged apart from the `guest_id` it carries.
-- **The Python extension module function has a plain Rust name** with
-  `#[pyo3(name = "_wickra_zk")]`, since clippy on Rust 1.100 denies
-  `used_underscore_items` on the code `#[pymodule]` generates. The module is
-  still `wickra_zk._wickra_zk`.
 
 ## [0.2.1] - 2026-10-28
 
@@ -554,7 +605,8 @@ dependency tree and toolchain pins.
   links, sync-metadata, nightly prove/bench, tag-gated release).
 - Documentation set: `docs/{ARCHITECTURE,ZK,DETERMINISM,PROVING,Cookbook}.md`.
 
-[Unreleased]: https://github.com/wickra-lib/wickra-zk/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/wickra-lib/wickra-zk/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/wickra-lib/wickra-zk/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/wickra-lib/wickra-zk/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/wickra-lib/wickra-zk/compare/v0.1.4...v0.2.0
 [0.1.4]: https://github.com/wickra-lib/wickra-zk/compare/v0.1.3...v0.1.4

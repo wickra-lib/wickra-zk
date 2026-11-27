@@ -19,7 +19,8 @@ path = "src/main.rs"
 [dependencies]
 # risc0 guest runtime. `std` here is risc0's guest std shim (no host OS), the
 # risc0 convention — it provides `env::read`/`env::commit` and the entry macro.
-risc0-zkvm = { version = "3.0", default-features = false, features = ["std"] }
+# Floor 3.1, as in the workspace manifest: host and guest stay on one line.
+risc0-zkvm = { version = "3.1", default-features = false, features = ["std"] }
 
 # The engine and the hasher. Both build for riscv32im-risc0-zkvm-elf as they
 # are: risc0's guest std shim carries what they use -- VecDeque, BTreeMap, the
@@ -35,8 +36,8 @@ risc0-zkvm = { version = "3.0", default-features = false, features = ["std"] }
 # Pinned to the exact published releases the workspace manifest names, for
 # the reason given there. Same versions, or the host and the guest disagree
 # about what a report is.
-wickra-backtest = { version = "=0.2.1", default-features = false }
-wickra-proof-core = { version = "=0.2.1", default-features = false }
+wickra-backtest = { version = "=0.2.2", default-features = false }
+wickra-proof-core = { version = "=0.2.2", default-features = false }
 
 serde = { version = "1", default-features = false, features = ["derive", "alloc"] }
 # The strategy crosses the host/guest boundary as JSON text (see main.rs).
